@@ -2964,47 +2964,9 @@
   
   function renderResult(data) {
     const d = data.parsed_data || {};
-    const mbti = (d.inferred_mbti || "").toUpperCase();
 
-    // MBTI 徽章 + 名称
-    document.getElementById("mbtiValue").textContent = mbti || "—";
-    document.getElementById("mbtiName").textContent = MBTI_NAMES[mbti] ? `${MBTI_NAMES[mbti]}` : "上传简历后显示";
-
-    // 特质标签 + 解读
-    const detail = MBTI_DETAIL[mbti];
-    const traitsEl = document.getElementById("mbtiTraits");
-    const insightBox = document.getElementById("mbtiInsightBox");
-    const insightEl = document.getElementById("mbtiInsight");
-    traitsEl.innerHTML = "";
-    if (detail) {
-      detail.traits.forEach(t => {
-        const span = document.createElement("span");
-        span.className = "mbti-trait";
-        span.style.color = detail.color;
-        span.style.borderColor = detail.color + "55";
-        span.style.background = detail.bg;
-        span.textContent = t;
-        traitsEl.appendChild(span);
-      });
-      insightEl.textContent = detail.insight;
-      insightBox.style.background = detail.bg;
-      insightBox.style.color = detail.color;
-      insightBox.style.display = "block";
-    }
-
-    // 头像
-    const avatarEl = document.getElementById("mbtiAvatar");
-    if (mbti && MBTI_IMAGES[mbti]) {
-      const img = document.createElement("img");
-      img.className = "mbti-avatar";
-      img.src = MBTI_IMAGES[mbti];
-      img.alt = mbti;
-      img.onerror = () => { avatarEl.parentNode.replaceChild(avatarEl, img); };
-      avatarEl.parentNode.replaceChild(img, avatarEl);
-    }
-
-    // 简介
-    document.getElementById("summaryText").textContent = d.candidate_summary || "上传简历后，这里将显示你的候选人简介...";
+    // MBTI 不再从简历推断，跳过展示
+    // 如果用户在选填框填了 MBTI，后续岗位推荐会用到
 
     // 岗位推荐
     const jobsEl = document.getElementById("jobsGrid");
@@ -4115,8 +4077,6 @@
       } else {
         StorageManager.remove(StorageManager.KEYS.ACTIVE_RESUME);
         // 清空结果显示
-        document.getElementById("mbtiValue").textContent = "—";
-        document.getElementById("mbtiName").textContent = "上传简历后显示";
         document.getElementById("jobsGrid").innerHTML = '';
       }
     }
