@@ -824,6 +824,10 @@
       grid-column: 1 / -1;
       margin: 8px 0 40px;
       padding: 0;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      height: calc(100vh - 240px);
     }
 
     .agent-panel {
@@ -835,6 +839,8 @@
       flex-direction: column;
       overflow: hidden;
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      flex: 1;
+      min-height: 0;
     }
 
     .agent-panel:hover {
@@ -982,6 +988,7 @@
     /* --- Messages area --- */
     .agent-messages {
       flex: 1;
+      min-height: 0;
       overflow-y: auto;
       display: flex;
       flex-direction: column;
@@ -1114,6 +1121,74 @@
     }
     .avatar-card.speaking.user .avatar-photo {
       box-shadow: 0 0 0 3px var(--accent), 0 4px 16px rgba(108, 99, 255, 0.2);
+    }
+
+    /* 面试启动栏 - 顶部下拉选择 */
+    .interview-start-bar {
+      padding: 16px 24px;
+      background: var(--white);
+      border-bottom: 1px solid var(--gray-200);
+    }
+    .start-bar-content {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+    .start-bar-select-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex: 1;
+      min-width: 240px;
+    }
+    .start-bar-select {
+      padding: 10px 16px;
+      border: 1.5px solid var(--gray-200);
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--gray-700);
+      background: var(--white);
+      outline: none;
+      cursor: pointer;
+      transition: border-color 0.2s;
+      min-width: 200px;
+    }
+    .start-bar-select:focus {
+      border-color: var(--accent);
+    }
+    .start-bar-custom-input {
+      flex: 1;
+      padding: 10px 16px;
+      border: 1.5px solid var(--gray-200);
+      border-radius: 8px;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s;
+      min-width: 160px;
+    }
+    .start-bar-custom-input:focus {
+      border-color: var(--accent);
+    }
+    .start-bar-btn {
+      padding: 10px 32px;
+      border: none;
+      border-radius: 8px;
+      background: linear-gradient(135deg, var(--accent), #7C6CF0);
+      color: #fff;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s;
+      white-space: nowrap;
+    }
+    .start-bar-btn:hover {
+      opacity: 0.9;
+    }
+    .start-bar-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
     }
 
     /* 面试区欢迎语 */
@@ -2907,6 +2982,28 @@
     </div>
   </div>
 
+<!-- 面试启动栏 - 下拉选择岗位 + 开始按钮 -->
+<div class="interview-start-bar" id="interviewStartBar">
+  <div class="start-bar-content">
+    <div class="start-bar-select-wrap">
+      <select id="positionSelect" class="start-bar-select">
+        <option value="">— 选择目标岗位 —</option>
+        <option value="产品经理">产品经理</option>
+        <option value="市场营销经理">市场营销经理</option>
+        <option value="销售经理">销售经理</option>
+        <option value="金融分析师">金融分析师</option>
+        <option value="人力资源经理">人力资源经理</option>
+        <option value="前端开发工程师">前端开发工程师</option>
+        <option value="后端开发工程师">后端开发工程师</option>
+        <option value="数据分析师">数据分析师</option>
+        <option value="__other__">其他（请填写）</option>
+      </select>
+      <input type="text" id="positionCustomText" class="start-bar-custom-input" placeholder="请输入目标岗位..." style="display:none;" />
+    </div>
+    <button class="start-bar-btn" id="startInterviewBtn">开始面试</button>
+  </div>
+</div>
+
 <!-- Agent 求职面板 -->
 <div class="agent-section">
   <div class="agent-panel">
@@ -2915,19 +3012,22 @@
       <div class="agent-header-left">
         <span class="agent-icon">🎤</span>
         <div class="agent-header-text">
-          <h3 id="agentTitle">面试模拟</h3>
-          <p id="agentSubtitle" style="font-size:13px;color:var(--gray-600);font-weight:500;">AI 数字人面试官，沉浸式模拟面试体验</p>
+          <h3 id="agentTitle" style="font-size:15px;">沉浸式模拟面试—<span id="interviewPositionLabel">-</span>岗位</h3>
         </div>
       </div>
-      <button class="btn-clear-chat" onclick="clearAgentChat()" title="新建对话">
-        <span>新建对话+</span>
-      </button>
     </div>
 
     <!-- Interview body: chat + avatar panels -->
     <div class="interview-body">
       <div class="interview-chat-area">
         <div class="agent-messages" id="agentMessages">
+        </div>
+        <!-- Input area -->
+        <div class="agent-input-area">
+          <textarea id="agentInput" class="agent-input" placeholder="输入你的想法，我来帮你分析..." rows="1"></textarea>
+          <button id="agentSendBtn" class="agent-send-btn" onclick="sendInterviewChat()">
+            <span>✈️</span>
+          </button>
         </div>
       </div>
       <div class="interview-avatar-panel">
@@ -2950,13 +3050,6 @@
       </div>
     </div>
 
-    <!-- Input area -->
-    <div class="agent-input-area">
-      <textarea id="agentInput" class="agent-input" placeholder="输入你的想法，我来帮你分析..." rows="1"></textarea>
-      <button id="agentSendBtn" class="agent-send-btn" onclick="sendInterviewChat()">
-        <span>✈️</span>
-      </button>
-    </div>
   </div>
 </div>
 
@@ -3684,6 +3777,7 @@
 
       setSpeaking(null);
       showInterviewGreeting();
+      if (typeof resetStartBar === 'function') resetStartBar();
       overlay.remove();
     });
 
@@ -3695,6 +3789,12 @@
   /**
    * 更新面试模拟进度显示条
    */
+  function updateInterviewPositionLabel() {
+    const label = document.getElementById('interviewPositionLabel');
+    if (label && interviewState.target_position) {
+      label.textContent = interviewState.target_position;
+    }
+  }
   function updateInterviewProgress() {
     // 清除旧的进度条
     const oldProgress = document.getElementById('interviewProgress');
@@ -3725,11 +3825,11 @@
       ${interviewState.target_position ? `<span style="color:var(--gray-500);font-size:12px;">| ${interviewState.target_position}</span>` : ''}
     `;
 
-    // 插入到 header 之后、messages 之前
-    const header = document.querySelector('.agent-header');
+    // 插入到消息区之前
     const messages = document.getElementById('agentMessages');
-    if (header && messages) {
-      header.parentNode.insertBefore(progress, messages);
+    const chatArea = messages && messages.closest('.interview-chat-area');
+    if (chatArea && messages) {
+      chatArea.insertBefore(progress, messages);
     }
   }
 
@@ -3776,6 +3876,7 @@
       if (data.interview_state) {
         interviewState = data.interview_state;
         updateInterviewProgress();
+        updateInterviewPositionLabel();
       }
 
       appendMsg("ai", reply, data.has_resume_template || false);
@@ -3837,7 +3938,7 @@
 
   // 初始化面试区
   showInterviewGreeting();
-  interviewInput.placeholder = "输入目标岗位开始面试，或输入你的回答...";
+  interviewInput.placeholder = "选择岗位后点击开始面试...";
   // 从用户资料加载名字
   try {
     const savedProfile = localStorage.getItem('userProfile');
@@ -3848,6 +3949,101 @@
       }
     }
   } catch(e) {};
+
+  // ── 面试启动栏（下拉选择岗位） ──
+  const startBar = document.getElementById('interviewStartBar');
+  const positionSelect = document.getElementById('positionSelect');
+  const customText = document.getElementById('positionCustomText');
+  const startBtn = document.getElementById('startInterviewBtn');
+
+  positionSelect.addEventListener('change', () => {
+    if (positionSelect.value === '__other__') {
+      customText.style.display = 'inline-block';
+      customText.focus();
+    } else {
+      customText.style.display = 'none';
+      customText.value = '';
+    }
+  });
+
+  customText.addEventListener('input', () => {
+    // 当用户输入时自动选中"其他"
+    if (customText.value.trim()) {
+      positionSelect.value = '__other__';
+    }
+  });
+
+  function getSelectedPosition() {
+    if (positionSelect.value === '__other__') {
+      return customText.value.trim();
+    }
+    return positionSelect.value;
+  }
+
+  startBtn.addEventListener('click', async () => {
+    const pos = getSelectedPosition();
+    if (!pos) return;
+    startBtn.disabled = true;
+    startBtn.textContent = '面试准备中...';
+
+    // 重置面试状态
+    interviewChatHistory = [];
+    interviewMessages.innerHTML = '';
+    interviewState = {
+      is_active: true,
+      target_position: pos,
+      interview_type: "",
+      current_question_index: 0,
+      total_questions: 8,
+      scores: [],
+      feedbacks: []
+    };
+    updateInterviewPositionLabel();
+
+    // 发送第一条消息启动面试
+    const resumeCtx = getResumeContext();
+    appendTyping();
+    isInterviewLoading = true;
+    interviewSendBtn.disabled = true;
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages: [{ role: "user", content: `我想面试${pos}岗位，请开始模拟面试` }],
+          mode: 'interview_sim',
+          resume_context: resumeCtx,
+          interview_state: interviewState
+        }),
+      });
+      const data = await res.json();
+      removeTyping();
+      if (!res.ok) throw new Error(data.detail || "请求失败");
+      const reply = data.reply || "";
+      interviewChatHistory.push({ role: "assistant", content: reply });
+      if (data.interview_state) {
+        interviewState = data.interview_state;
+        updateInterviewProgress();
+        updateInterviewPositionLabel();
+      }
+      appendMsg("ai", reply, data.has_resume_template || false);
+    } catch (err) {
+      removeTyping();
+      appendMsg("ai", "抱歉，启动面试失败：" + err.message);
+    } finally {
+      isInterviewLoading = false;
+      interviewSendBtn.disabled = false;
+      startBtn.disabled = false;
+      startBtn.textContent = '开始面试';
+    }
+  });
+
+  function resetStartBar() {
+    positionSelect.value = '';
+    customText.style.display = 'none';
+    customText.value = '';
+  }
 
   // ── 侧边栏 Agent（求职助手：默认问答 / 换赛道 / 修改简历 / 职业规划）──
   let sidebarChatHistory = [];
