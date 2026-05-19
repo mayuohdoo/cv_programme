@@ -11,6 +11,20 @@
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
     :root {
+      /* 宇宙背景色（第 1 步） */
+      --cosmos-deep: #071418;
+      --cosmos-mid: #0B1F24;
+      --cosmos-teal: #0F2A2E;
+      --cosmos-ink: #0A1C20;
+      --cosmos-line: rgba(255, 255, 255, 0.28);
+      --cosmos-line-soft: rgba(255, 255, 255, 0.12);
+      --cosmos-text-on-dark: #D8E8E6;
+      --star-pink: #FF8FAB;
+      --star-yellow: #FFD166;
+      --star-orange: #FF9F6B;
+      --star-purple: #B8A4FF;
+      --star-green: #6EEBC7;
+
       /* 樱花粉配色系统（品牌/装饰） */
       --sakura-primary: #FFB7C5;
       --sakura-light: #FFE4E9;
@@ -81,8 +95,8 @@
 
     body {
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
-      background: linear-gradient(to left, #e8dff5 0%, #f0e6f6 30%, #f8f4fa 60%, #fdf8fc 100%);
-      color: var(--gray-800);
+      background: linear-gradient(155deg, var(--cosmos-deep) 0%, var(--cosmos-mid) 38%, var(--cosmos-teal) 72%, var(--cosmos-ink) 100%);
+      color: var(--cosmos-text-on-dark);
       line-height: 1.4;
       min-height: 100vh;
       -webkit-font-smoothing: antialiased;
@@ -92,39 +106,59 @@
       position: relative;
     }
 
-    /* 背景装饰 - 樱花粉点缀 */
+    /* 宇宙背景装饰层（纯 SVG，不挡点击） */
+    .cosmic-bg {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .cosmic-bg svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .cosmic-bg .cosmic-drift {
+      animation: cosmicDrift 48s ease-in-out infinite;
+    }
+
+    @keyframes cosmicDrift {
+      0%, 100% { transform: translate(0, 0); }
+      50% { transform: translate(6px, -10px); }
+    }
+
+    /* 背景柔光星云（替代原樱花光晕） */
     body::before {
       content: '';
       position: fixed;
-      top: -50%;
-      right: -10%;
-      width: 600px;
-      height: 600px;
-      background: radial-gradient(circle, rgba(255, 183, 197, 0.08) 0%, transparent 70%);
+      top: -35%;
+      right: -15%;
+      width: 55vw;
+      height: 55vw;
+      max-width: 720px;
+      max-height: 720px;
+      background: radial-gradient(circle, rgba(78, 205, 196, 0.09) 0%, transparent 68%);
       border-radius: 50%;
       pointer-events: none;
       z-index: 0;
-      animation: float 20s ease-in-out infinite;
     }
 
     body::after {
       content: '';
       position: fixed;
-      bottom: -30%;
-      left: -10%;
-      width: 500px;
-      height: 500px;
-      background: radial-gradient(circle, rgba(255, 228, 233, 0.08) 0%, transparent 70%);
+      bottom: -25%;
+      left: -12%;
+      width: 48vw;
+      height: 48vw;
+      max-width: 620px;
+      max-height: 620px;
+      background: radial-gradient(circle, rgba(110, 235, 199, 0.06) 0%, transparent 70%);
       border-radius: 50%;
       pointer-events: none;
       z-index: 0;
-      animation: float 25s ease-in-out infinite reverse;
-    }
-
-    @keyframes float {
-      0%, 100% { transform: translate(0, 0) rotate(0deg); }
-      33% { transform: translate(30px, -30px) rotate(120deg); }
-      66% { transform: translate(-20px, 20px) rotate(240deg); }
     }
 
     /* 顶部导航栏 - 隐藏 */
@@ -170,6 +204,8 @@
       max-width: 1800px;
       padding: 0 32px;
       transition: margin-left 300ms cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      z-index: 1;
     }
 
     /* 主布局 */
@@ -2319,6 +2355,56 @@
   </style>
 </head>
 <body>
+
+<!-- 宇宙背景 SVG 装饰 -->
+<div class="cosmic-bg" aria-hidden="true">
+  <svg viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+    <g class="cosmic-drift" fill="none" stroke-linecap="round" stroke-linejoin="round">
+      <!-- 轨道 -->
+      <ellipse cx="720" cy="480" rx="520" ry="95" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+      <ellipse cx="260" cy="320" rx="140" ry="48" stroke="rgba(255,255,255,0.08)" stroke-width="1" transform="rotate(-18 260 320)"/>
+      <ellipse cx="1180" cy="620" rx="200" ry="70" stroke="rgba(255,255,255,0.09)" stroke-width="1" transform="rotate(12 1180 620)"/>
+      <!-- 右上：条纹行星 -->
+      <g transform="translate(1210 155)">
+        <circle r="58" stroke="rgba(255,255,255,0.32)" stroke-width="1.4"/>
+        <path d="M-48 -18h96M-50 -6h100M-52 6h104M-50 18h100M-46 30h92" stroke="rgba(255,255,255,0.22)" stroke-width="1"/>
+        <ellipse cx="0" cy="0" rx="78" ry="22" stroke="rgba(255,255,255,0.14)" stroke-width="1" transform="rotate(-20)"/>
+      </g>
+      <!-- 左中：带环行星 -->
+      <g transform="translate(155 410)">
+        <circle r="36" stroke="rgba(255,255,255,0.3)" stroke-width="1.3"/>
+        <ellipse cx="0" cy="0" rx="58" ry="14" stroke="rgba(255,255,255,0.2)" stroke-width="1" transform="rotate(-24)"/>
+      </g>
+      <!-- 右下：小行星 -->
+      <circle cx="1320" cy="760" r="22" stroke="rgba(255,255,255,0.24)" stroke-width="1.2" fill="none"/>
+      <!-- 卫星 -->
+      <g transform="translate(680 220)">
+        <rect x="-14" y="-6" width="28" height="12" rx="3" stroke="rgba(255,255,255,0.35)" stroke-width="1.2"/>
+        <line x1="-26" y1="0" x2="-14" y2="0" stroke="rgba(255,255,255,0.28)" stroke-width="1"/>
+        <line x1="14" y1="0" x2="26" y2="0" stroke="rgba(255,255,255,0.28)" stroke-width="1"/>
+        <circle cx="0" cy="14" r="3" fill="rgba(255,255,255,0.2)"/>
+      </g>
+      <!-- 白色小星星 -->
+      <circle cx="420" cy="120" r="2" fill="rgba(255,255,255,0.55)"/>
+      <circle cx="890" cy="80" r="1.5" fill="rgba(255,255,255,0.45)"/>
+      <circle cx="1050" cy="340" r="2" fill="rgba(255,255,255,0.5)"/>
+      <circle cx="200" cy="680" r="1.8" fill="rgba(255,255,255,0.4)"/>
+      <circle cx="540" cy="780" r="2.2" fill="rgba(255,255,255,0.5)"/>
+      <path d="M320 250l4 8 8 4-8 4-4 8-4-8-8-4 8-4z" fill="rgba(255,255,255,0.35)"/>
+      <path d="M960 520l3 6 6 3-6 3-3 6-3-6-6-3 6-3z" fill="rgba(255,255,255,0.3)"/>
+      <path d="M1240 420l3.5 7 7 3.5-7 3.5-3.5 7-3.5-7-7-3.5 7-3.5z" fill="rgba(255,255,255,0.28)"/>
+      <!-- 彩色点缀星 -->
+      <rect x="380" y="560" width="7" height="7" transform="rotate(45 383.5 563.5)" fill="#FF8FAB" opacity="0.85"/>
+      <rect x="720" y="140" width="6" height="6" transform="rotate(45 723 143)" fill="#FFD166" opacity="0.9"/>
+      <rect x="1100" y="280" width="8" height="8" transform="rotate(45 1104 284)" fill="#FF9F6B" opacity="0.85"/>
+      <rect x="180" y="240" width="6" height="6" transform="rotate(45 183 243)" fill="#B8A4FF" opacity="0.9"/>
+      <rect x="850" y="720" width="7" height="7" transform="rotate(45 853.5 723.5)" fill="#6EEBC7" opacity="0.85"/>
+      <circle cx="600" cy="400" r="3" fill="#FF8FAB" opacity="0.75"/>
+      <circle cx="1000" cy="650" r="2.5" fill="#FFD166" opacity="0.8"/>
+      <circle cx="300" cy="500" r="2.5" fill="#6EEBC7" opacity="0.75"/>
+    </g>
+  </svg>
+</div>
 
 <!-- 用户侧边栏 -->
 <aside id="profileSidebar" class="profile-sidebar" data-state="expanded">

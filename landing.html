@@ -10,7 +10,57 @@
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@700;900&family=Inter:wght@400;600;700;800;900&display=swap');
-body { margin: 0; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+:root {
+  --cosmos-deep: #071418;
+  --cosmos-mid: #0B1F24;
+  --cosmos-teal: #0F2A2E;
+  --cosmos-ink: #0A1C20;
+  --cosmos-text: #D8E8E6;
+}
+body {
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+  overflow-x: hidden;
+  background: linear-gradient(155deg, var(--cosmos-deep) 0%, var(--cosmos-mid) 38%, var(--cosmos-teal) 72%, var(--cosmos-ink) 100%);
+  color: var(--cosmos-text);
+}
+.cosmic-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.cosmic-bg svg { width: 100%; height: 100%; display: block; }
+.cosmic-bg .cosmic-drift { animation: cosmicDrift 48s ease-in-out infinite; }
+@keyframes cosmicDrift {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(6px, -10px); }
+}
+body::before {
+  content: '';
+  position: fixed;
+  top: -30%;
+  right: -12%;
+  width: 50vw;
+  height: 50vw;
+  max-width: 680px;
+  background: radial-gradient(circle, rgba(78, 205, 196, 0.09) 0%, transparent 68%);
+  pointer-events: none;
+  z-index: 0;
+}
+body::after {
+  content: '';
+  position: fixed;
+  bottom: -20%;
+  left: -10%;
+  width: 45vw;
+  height: 45vw;
+  max-width: 600px;
+  background: radial-gradient(circle, rgba(110, 235, 199, 0.06) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
 .float-card { transition: transform 0.4s ease, box-shadow 0.4s ease; transform-style: preserve-3d; }
 .float-card:hover { transform: perspective(800px) rotateY(0deg) rotateX(0deg) translateY(-10px) translateZ(20px) scale(1.03) !important; box-shadow: 0 32px 80px rgba(0,0,0,0.25); }
 .float-obj { animation: floatAnim 4s ease-in-out infinite; }
@@ -26,6 +76,38 @@ body { margin: 0; font-family: 'Inter', sans-serif; overflow-x: hidden; }
 </style>
 </head>
 <body>
+<div class="cosmic-bg" aria-hidden="true">
+  <svg viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+    <g class="cosmic-drift" fill="none" stroke-linecap="round" stroke-linejoin="round">
+      <ellipse cx="720" cy="480" rx="520" ry="95" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+      <ellipse cx="260" cy="320" rx="140" ry="48" stroke="rgba(255,255,255,0.08)" stroke-width="1" transform="rotate(-18 260 320)"/>
+      <ellipse cx="1180" cy="620" rx="200" ry="70" stroke="rgba(255,255,255,0.09)" stroke-width="1" transform="rotate(12 1180 620)"/>
+      <g transform="translate(1210 155)">
+        <circle r="58" stroke="rgba(255,255,255,0.32)" stroke-width="1.4"/>
+        <path d="M-48 -18h96M-50 -6h100M-52 6h104M-50 18h100M-46 30h92" stroke="rgba(255,255,255,0.22)" stroke-width="1"/>
+        <ellipse cx="0" cy="0" rx="78" ry="22" stroke="rgba(255,255,255,0.14)" stroke-width="1" transform="rotate(-20)"/>
+      </g>
+      <g transform="translate(155 410)">
+        <circle r="36" stroke="rgba(255,255,255,0.3)" stroke-width="1.3"/>
+        <ellipse cx="0" cy="0" rx="58" ry="14" stroke="rgba(255,255,255,0.2)" stroke-width="1" transform="rotate(-24)"/>
+      </g>
+      <circle cx="1320" cy="760" r="22" stroke="rgba(255,255,255,0.24)" stroke-width="1.2" fill="none"/>
+      <g transform="translate(680 220)">
+        <rect x="-14" y="-6" width="28" height="12" rx="3" stroke="rgba(255,255,255,0.35)" stroke-width="1.2"/>
+        <line x1="-26" y1="0" x2="-14" y2="0" stroke="rgba(255,255,255,0.28)" stroke-width="1"/>
+        <line x1="14" y1="0" x2="26" y2="0" stroke="rgba(255,255,255,0.28)" stroke-width="1"/>
+      </g>
+      <circle cx="420" cy="120" r="2" fill="rgba(255,255,255,0.55)"/>
+      <circle cx="1050" cy="340" r="2" fill="rgba(255,255,255,0.5)"/>
+      <path d="M320 250l4 8 8 4-8 4-4 8-4-8-8-4 8-4z" fill="rgba(255,255,255,0.35)"/>
+      <rect x="380" y="560" width="7" height="7" transform="rotate(45 383.5 563.5)" fill="#FF8FAB" opacity="0.85"/>
+      <rect x="720" y="140" width="6" height="6" transform="rotate(45 723 143)" fill="#FFD166" opacity="0.9"/>
+      <rect x="1100" y="280" width="8" height="8" transform="rotate(45 1104 284)" fill="#FF9F6B" opacity="0.85"/>
+      <rect x="180" y="240" width="6" height="6" transform="rotate(45 183 243)" fill="#B8A4FF" opacity="0.9"/>
+      <rect x="850" y="720" width="7" height="7" transform="rotate(45 853.5 723.5)" fill="#6EEBC7" opacity="0.85"/>
+    </g>
+  </svg>
+</div>
 <div id="root"></div>
 <script type="text/babel">
 function Ring({value, label, size=90, color='#6C63FF'}) {
@@ -70,7 +152,7 @@ function MiniLine({data}) {
 }
 
 function App() {
-  return <div className="min-h-screen relative px-4 py-10" style={{background:'linear-gradient(to left, #e8dff5 0%, #f0e6f6 30%, #f8f4fa 60%, #fdf8fc 100%)'}}>
+  return <div className="min-h-screen relative px-4 py-10 z-10" style={{background:'transparent'}}>
     {/* 3D 装饰物件 - 重复多个+放大 */}
     <img src="./3D/3dicons-copy-dynamic-gradient.png" className="float-obj absolute w-14" style={{top:'15%',left:'3%'}} alt=""/>
     <img src="./3D/3dicons-copy-dynamic-gradient.png" className="float-obj-3 absolute w-10" style={{top:'70%',right:'5%'}} alt=""/>
@@ -84,10 +166,10 @@ function App() {
     {/* Header - 大标题 + 大女生 */}
     <div className="max-w-[1100px] mx-auto flex items-center justify-between mb-6">
       <div>
-        <h1 className="text-6xl font-black text-[#2d1b69] mb-4" style={{fontFamily:'Noto Serif SC'}}>
-          小小求职<span className="text-[#6C63FF]">拿下</span>！
+        <h1 className="text-6xl font-black text-[#E8F4F2] mb-4" style={{fontFamily:'Noto Serif SC'}}>
+          小小求职<span className="text-[#8BE8D8]">拿下</span>！
         </h1>
-        <p className="text-gray-500 text-lg leading-relaxed">
+        <p className="text-[#9BB8B4] text-lg leading-relaxed">
           AI 帮你优化简历、匹配岗位、模拟面试、追踪投递进度<br/>让求职更高效，更有方向
         </p>
       </div>
