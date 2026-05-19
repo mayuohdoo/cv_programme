@@ -641,6 +641,7 @@ async def chat(request: ChatRequest) -> dict[str, Any]:
             else:
                 # ── 首次进入面试模式：激活状态 ──
                 new_state.is_active = True
+                new_state.current_question_index = 1  # 第一题
 
                 # 尝试从 AI 回复中提取目标岗位
                 pos_match = re.search(r'目标岗位[：:]\s*([^\n。]+)', clean_reply)

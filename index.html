@@ -850,10 +850,11 @@
 
     /* --- Header --- */
     .agent-header {
-      padding: 18px 24px;
+      padding: 18px 24px 12px;
       background: linear-gradient(135deg, #FFE4E9 0%, #FFF5F7 100%);
       border-bottom: 1px solid rgba(255, 183, 197, 0.2);
       display: flex;
+      flex-wrap: wrap;
       align-items: center;
       justify-content: space-between;
     }
@@ -1018,7 +1019,7 @@
       display: flex;
       flex-direction: column;
       gap: 16px;
-      padding: 8px 0 8px 20px;
+      padding: 8px 0 8px 32px;
     }
     .avatar-card {
       background: var(--white);
@@ -3803,16 +3804,15 @@
     // 未激活时不显示
     if (!interviewState.is_active) return;
 
-    const answered = interviewState.scores.length;
+    const answered = interviewState.current_question_index;
     const total = interviewState.total_questions;
     const pct = Math.round((answered / total) * 100);
 
     const progress = document.createElement('div');
     progress.id = 'interviewProgress';
     progress.style.cssText =
-      'display:flex;align-items:center;gap:12px;padding:10px 24px;' +
-      'background:var(--sakura-lighter);border-bottom:1px solid var(--gray-200);' +
-      'font-size:13px;color:var(--gray-700);';
+      'display:flex;align-items:center;gap:12px;padding:10px 0 2px;' +
+      'width:100%;font-size:13px;color:var(--gray-700);';
 
     progress.innerHTML = `
       <span>🎯 面试进度</span>
@@ -3825,11 +3825,10 @@
       ${interviewState.target_position ? `<span style="color:var(--gray-500);font-size:12px;">| ${interviewState.target_position}</span>` : ''}
     `;
 
-    // 插入到消息区之前
-    const messages = document.getElementById('agentMessages');
-    const chatArea = messages && messages.closest('.interview-chat-area');
-    if (chatArea && messages) {
-      chatArea.insertBefore(progress, messages);
+    // 插入到粉红标题栏底部
+    const header = document.querySelector('.agent-header');
+    if (header) {
+      header.appendChild(progress);
     }
   }
 
