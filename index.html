@@ -1101,28 +1101,6 @@
       0%, 100% { opacity: 1; }
       50% { opacity: 0.4; }
     }
-    /* Speaking state */
-    .avatar-card.speaking {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.15), 0 4px 16px rgba(108, 99, 255, 0.1);
-    }
-    .avatar-card.speaking .avatar-photo {
-      box-shadow: 0 0 0 3px var(--accent), 0 4px 16px rgba(108, 99, 255, 0.2);
-    }
-    .avatar-card.speaking.interviewer {
-      border-color: var(--sakura-primary);
-      box-shadow: 0 0 0 3px rgba(255, 183, 197, 0.2), 0 4px 16px rgba(255, 183, 197, 0.1);
-    }
-    .avatar-card.speaking.interviewer .avatar-photo {
-      box-shadow: 0 0 0 3px var(--sakura-primary), 0 4px 16px rgba(255, 183, 197, 0.2);
-    }
-    .avatar-card.speaking.user {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.2), 0 4px 16px rgba(108, 99, 255, 0.1);
-    }
-    .avatar-card.speaking.user .avatar-photo {
-      box-shadow: 0 0 0 3px var(--accent), 0 4px 16px rgba(108, 99, 255, 0.2);
-    }
 
     /* 面试启动栏 - 顶部下拉选择 */
     .interview-start-bar {
@@ -1176,7 +1154,7 @@
       padding: 10px 32px;
       border: none;
       border-radius: 8px;
-      background: linear-gradient(135deg, var(--accent), #7C6CF0);
+      background: linear-gradient(135deg, #FFB7C5 0%, #FF9DB3 100%);
       color: #fff;
       font-size: 14px;
       font-weight: 600;
@@ -3025,7 +3003,7 @@
       <div class="agent-header-left">
         <span class="agent-icon">🎤</span>
         <div class="agent-header-text">
-          <h3 id="agentTitle" style="font-size:15px;">沉浸式模拟面试—<span id="interviewPositionLabel">-</span>岗位</h3>
+          <h3 id="agentTitle" style="font-size:15px;">沉浸式模拟面试<span id="interviewPositionName"></span></h3>
         </div>
       </div>
     </div>
@@ -3724,10 +3702,6 @@
     interviewMessages.appendChild(msg);
     interviewMessages.scrollTop = interviewMessages.scrollHeight;
 
-    // 更新说话状态
-    if (role === 'ai') setSpeaking('interviewer');
-    else if (role === 'user') setSpeaking('user');
-
     return msg;
   }
 
@@ -3840,10 +3814,7 @@
         scores: [],
         feedbacks: []
       };
-      const oldProgress = document.getElementById('interviewProgress');
-      if (oldProgress) oldProgress.remove();
-
-      setSpeaking(null);
+      updateInterviewTitle();
       showInterviewGreeting();
       if (typeof resetStartBar === 'function') resetStartBar();
       overlay.remove();
@@ -3852,51 +3823,6 @@
     overlay.addEventListener("click", (e) => {
       if (e.target === overlay) overlay.remove();
     });
-  }
-
-  /**
-   * 更新面试模拟进度显示条
-   */
-  function updateInterviewPositionLabel() {
-    const label = document.getElementById('interviewPositionLabel');
-    if (label && interviewState.target_position) {
-      label.textContent = interviewState.target_position;
-    }
-  }
-  function updateInterviewProgress() {
-    // 清除旧的进度条
-    const oldProgress = document.getElementById('interviewProgress');
-    if (oldProgress) oldProgress.remove();
-
-    // 未激活时不显示
-    if (!interviewState.is_active) return;
-
-    const answered = interviewState.current_question_index;
-    const total = interviewState.total_questions;
-    const pct = Math.round((answered / total) * 100);
-
-    const progress = document.createElement('div');
-    progress.id = 'interviewProgress';
-    progress.style.cssText =
-      'display:flex;align-items:center;gap:12px;padding:10px 0 2px;' +
-      'width:100%;font-size:13px;color:var(--gray-700);';
-
-    progress.innerHTML = `
-      <span>🎯 面试进度</span>
-      <div style="flex:1;height:6px;background:var(--gray-200);border-radius:999px;overflow:hidden;">
-        <div style="width:${pct}%;height:100%;background:linear-gradient(90deg,#FFB7C5,#FF9DB3);border-radius:999px;transition:width 0.4s ease;"></div>
-      </div>
-      <span style="font-weight:700;color:var(--sakura-dark);white-space:nowrap;">
-        ${answered}/${total} 题
-      </span>
-      ${interviewState.target_position ? `<span style="color:var(--gray-500);font-size:12px;">| ${interviewState.target_position}</span>` : ''}
-    `;
-
-    // 插入到粉红标题栏底部
-    const header = document.querySelector('.agent-header');
-    if (header) {
-      header.appendChild(progress);
-    }
   }
 
   /**
@@ -3941,11 +3867,10 @@
       // 记录本轮之前的评分数量
       const prevScoreCount = interviewState.scores.length;
 
-      // 更新面试状态 & 进度显示
+      // 更新面试状态
       if (data.interview_state) {
         interviewState = data.interview_state;
-        updateInterviewProgress();
-        updateInterviewPositionLabel();
+        updateInterviewTitle();
       }
 
       const msgEl = appendMsg("ai", reply, data.has_resume_template || false);
@@ -3987,32 +3912,19 @@
     if (g) g.remove();
   }
 
-  /**
-   * 设置谁在"说话"（高亮对应的数字人形象）
-   */
-  function setSpeaking(speaker) {
-    const interviewerCard = document.getElementById('interviewerCard');
-    const userCard = document.getElementById('userCard');
-    const interviewerBadge = interviewerCard.querySelector('.avatar-badge');
-    const userBadge = userCard.querySelector('.avatar-badge');
-
-    interviewerCard.classList.remove('speaking');
-    userCard.classList.remove('speaking');
-    interviewerBadge.innerHTML = '<span class="dot"></span> 在线';
-    userBadge.innerHTML = '<span class="dot"></span> 在线';
-
-    if (speaker === 'interviewer') {
-      interviewerCard.classList.add('speaking');
-      interviewerBadge.innerHTML = '<span class="dot"></span> 讲话中';
-    } else if (speaker === 'user') {
-      userCard.classList.add('speaking');
-      userBadge.innerHTML = '<span class="dot"></span> 讲话中';
+  // 更新标题显示岗位名称
+  function updateInterviewTitle() {
+    const nameEl = document.getElementById('interviewPositionName');
+    if (nameEl && interviewState.target_position) {
+      nameEl.textContent = '——' + interviewState.target_position;
+    } else if (nameEl) {
+      nameEl.textContent = '';
     }
   }
 
   // 初始化面试区
   showInterviewGreeting();
-  interviewInput.placeholder = "选择岗位后点击开始面试...";
+  interviewInput.placeholder = "";
   // 从用户资料加载名字
   try {
     const savedProfile = localStorage.getItem('userProfile');
@@ -4072,7 +3984,7 @@
       scores: [],
       feedbacks: []
     };
-    updateInterviewPositionLabel();
+    updateInterviewTitle();
 
     // 发送第一条消息启动面试
     const resumeCtx = getResumeContext();
@@ -4098,8 +4010,7 @@
       interviewChatHistory.push({ role: "assistant", content: reply });
       if (data.interview_state) {
         interviewState = data.interview_state;
-        updateInterviewProgress();
-        updateInterviewPositionLabel();
+        updateInterviewTitle();
       }
       appendMsg("ai", reply, data.has_resume_template || false);
     } catch (err) {
