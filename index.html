@@ -1192,6 +1192,40 @@
       cursor: not-allowed;
     }
 
+    /* 面试操作引导按钮（评分后出现） */
+    .interview-actions {
+      display: flex;
+      gap: 10px;
+      padding: 4px 0 8px 48px;
+      flex-wrap: wrap;
+    }
+    .action-btn {
+      padding: 7px 18px;
+      border: 1.5px solid var(--gray-200);
+      border-radius: 8px;
+      background: var(--white);
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--gray-700);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .action-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: rgba(108, 99, 255, 0.04);
+    }
+    .action-btn-primary {
+      background: linear-gradient(135deg, var(--accent), #7C6CF0);
+      color: #fff;
+      border-color: transparent;
+    }
+    .action-btn-primary:hover {
+      opacity: 0.9;
+      border-color: transparent;
+      color: #fff;
+    }
+
     /* 面试区欢迎语 */
     .agent-messages .interview-greeting {
       padding: 40px 24px 20px;
@@ -2983,29 +3017,7 @@
     </div>
   </div>
 
-<!-- 面试启动栏 - 下拉选择岗位 + 开始按钮 -->
-<div class="interview-start-bar" id="interviewStartBar">
-  <div class="start-bar-content">
-    <div class="start-bar-select-wrap">
-      <select id="positionSelect" class="start-bar-select">
-        <option value="">— 选择目标岗位 —</option>
-        <option value="产品经理">产品经理</option>
-        <option value="市场营销经理">市场营销经理</option>
-        <option value="销售经理">销售经理</option>
-        <option value="金融分析师">金融分析师</option>
-        <option value="人力资源经理">人力资源经理</option>
-        <option value="前端开发工程师">前端开发工程师</option>
-        <option value="后端开发工程师">后端开发工程师</option>
-        <option value="数据分析师">数据分析师</option>
-        <option value="__other__">其他（请填写）</option>
-      </select>
-      <input type="text" id="positionCustomText" class="start-bar-custom-input" placeholder="请输入目标岗位..." style="display:none;" />
-    </div>
-    <button class="start-bar-btn" id="startInterviewBtn">开始面试</button>
-  </div>
-</div>
-
-<!-- Agent 求职面板 -->
+<!-- Agent 求职面板 / 面试辅导 -->
 <div class="agent-section">
   <div class="agent-panel">
     <!-- Header -->
@@ -3015,6 +3027,28 @@
         <div class="agent-header-text">
           <h3 id="agentTitle" style="font-size:15px;">沉浸式模拟面试—<span id="interviewPositionLabel">-</span>岗位</h3>
         </div>
+      </div>
+    </div>
+
+    <!-- 面试启动栏 - 下拉选择岗位 + 开始按钮（面试辅导专属） -->
+    <div class="interview-start-bar" id="interviewStartBar">
+      <div class="start-bar-content">
+        <div class="start-bar-select-wrap">
+          <select id="positionSelect" class="start-bar-select">
+            <option value="">— 选择目标岗位 —</option>
+            <option value="产品经理">产品经理</option>
+            <option value="市场营销经理">市场营销经理</option>
+            <option value="销售经理">销售经理</option>
+            <option value="金融分析师">金融分析师</option>
+            <option value="人力资源经理">人力资源经理</option>
+            <option value="前端开发工程师">前端开发工程师</option>
+            <option value="后端开发工程师">后端开发工程师</option>
+            <option value="数据分析师">数据分析师</option>
+            <option value="__other__">其他（请填写）</option>
+          </select>
+          <input type="text" id="positionCustomText" class="start-bar-custom-input" placeholder="请输入目标岗位..." style="display:none;" />
+        </div>
+        <button class="start-bar-btn" id="startInterviewBtn">开始面试</button>
       </div>
     </div>
 
@@ -3698,6 +3732,39 @@
   }
 
   /**
+   * 在 AI 消息下方追加操作引导按钮（继续讨论 / 下一题）
+   */
+  function appendInterviewActions(afterMsg) {
+    // 移除旧的按钮
+    const old = document.querySelector('.interview-actions');
+    if (old) old.remove();
+
+    const wrap = document.createElement("div");
+    wrap.className = "interview-actions";
+    wrap.innerHTML = `
+      <button class="action-btn" onclick="sendInterviewReply('discuss')">💬 继续讨论这个问题</button>
+      <button class="action-btn action-btn-primary" onclick="sendInterviewReply('next')">➡️ 下一道题目</button>
+    `;
+    afterMsg.parentNode.insertBefore(wrap, afterMsg.nextSibling);
+    interviewMessages.scrollTop = interviewMessages.scrollHeight;
+  }
+
+  /**
+   * 发送面试操作指令（继续讨论 / 下一题）
+   */
+  function sendInterviewReply(type) {
+    const actions = document.querySelector('.interview-actions');
+    if (actions) actions.remove();
+
+    const text = type === 'discuss'
+      ? '请就这个问题继续深入讨论，我想了解更多细节。'
+      : '请继续下一道题目。';
+
+    interviewInput.value = text;
+    sendInterviewChat();
+  }
+
+  /**
    * 添加打字指示器（面试区）
    */
   function appendTyping() {
@@ -3871,6 +3938,9 @@
       const reply = data.reply || "";
       interviewChatHistory.push({ role: "assistant", content: reply });
 
+      // 记录本轮之前的评分数量
+      const prevScoreCount = interviewState.scores.length;
+
       // 更新面试状态 & 进度显示
       if (data.interview_state) {
         interviewState = data.interview_state;
@@ -3878,7 +3948,12 @@
         updateInterviewPositionLabel();
       }
 
-      appendMsg("ai", reply, data.has_resume_template || false);
+      const msgEl = appendMsg("ai", reply, data.has_resume_template || false);
+
+      // 如果本轮有新的评分 → 在消息下方显示操作引导按钮
+      if (interviewState.scores.length > prevScoreCount) {
+        appendInterviewActions(msgEl);
+      }
 
     } catch (err) {
       removeTyping();

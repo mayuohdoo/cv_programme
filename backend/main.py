@@ -635,9 +635,10 @@ async def chat(request: ChatRequest) -> dict[str, Any]:
                 if has_feedback:
                     new_state.feedbacks.append(parsed["feedback"])
 
-                # 只有当本回合确认为"回答了上一题"（AI 给出评分）后，才推进题号
+                # 每当 AI 给出评分（即出了一道新题）时，推进题目计数
+                # 按提问数计算，不等用户回答
                 if has_score:
-                    new_state.current_question_index = len(new_state.scores)
+                    new_state.current_question_index = min(new_state.current_question_index + 1, new_state.total_questions)
             else:
                 # ── 首次进入面试模式：激活状态 ──
                 new_state.is_active = True
