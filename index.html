@@ -981,44 +981,25 @@
 
     /* --- Messages area --- */
     .agent-messages {
-      padding: 16px 24px;
-      min-height: 200px;
-      max-height: 420px;
+      padding: 0 24px 16px;
+      min-height: 300px;
+      max-height: 520px;
       overflow-y: auto;
       display: flex;
       flex-direction: column;
       gap: 12px;
     }
 
-    /* Preset questions */
-    .preset-questions {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      padding: 8px 0;
-      align-items: center;
-    }
-
-    .preset-question {
-      width: 100%;
-      max-width: 420px;
-      text-align: center;
-      padding: 12px 16px;
-      background: var(--sakura-lighter);
-      border: 1.5px solid var(--sakura-primary);
-      border-radius: var(--radius);
-      cursor: pointer;
-      transition: all 0.2s ease;
-      font-size: 13px;
+    /* 面试区欢迎语 */
+    .agent-messages .interview-greeting {
+      padding: 24px 24px 16px;
+      font-size: 15px;
       font-weight: 500;
-      color: var(--gray-700);
-      line-height: 1.5;
-    }
-
-    .preset-question:hover {
-      background: var(--sakura-light);
-      transform: translateX(4px);
-      box-shadow: var(--shadow-sm);
+      color: var(--gray-800);
+      background: var(--white);
+      text-align: center;
+      line-height: 1.8;
+      flex-shrink: 0;
     }
 
     /* Chat messages inside agent */
@@ -2758,31 +2739,8 @@
       </button>
     </div>
 
-    <!-- Function cards (horizontal) - only interview -->
-    <div class="agent-cards" id="agentCards">
-      <div class="agent-card active" data-mode="interview_sim">
-        <span class="card-icon">🎤</span>
-        <div class="card-info">
-          <span class="card-title">面试模拟</span>
-          <span class="card-desc">模拟真实面试场景练习</span>
-        </div>
-      </div>
-    </div>
-
     <!-- Chat messages area -->
     <div class="agent-messages" id="agentMessages">
-      <!-- Preset questions (shown initially) -->
-      <div class="preset-questions" id="presetQuestions">
-        <div class="preset-question" onclick="sendPresetQuestion(this)">
-          <span>有哪些技巧可以使简历更加吸引HR的注意？</span>
-        </div>
-        <div class="preset-question" onclick="sendPresetQuestion(this)">
-          <span>有什么秘诀可以使得简历在众多求职者中脱颖而出？</span>
-        </div>
-        <div class="preset-question" onclick="sendPresetQuestion(this)">
-          <span>有哪些常见的面试问题以及回答方式？</span>
-        </div>
-      </div>
     </div>
 
     <!-- Input area -->
@@ -3386,59 +3344,10 @@
   /**
    * 显示预设问题（面试区）
    */
-  function showPresetQuestions() {
-    let pq = document.getElementById("presetQuestions");
-    if (pq) pq.remove();
-
-    pq = document.createElement("div");
-    pq.className = "preset-questions";
-    pq.id = "presetQuestions";
-
-    const questions = [
-      "有哪些技巧可以使简历更加吸引HR的注意？",
-      "有什么秘诀可以使得简历在众多求职者中脱颖而出？",
-      "有哪些常见的面试问题以及回答方式？"
-    ];
-
-    questions.forEach(q => {
-      const el = document.createElement("div");
-      el.className = "preset-question";
-      el.onclick = () => sendPresetQuestion(el);
-      el.innerHTML = `<span>${q}</span>`;
-      pq.appendChild(el);
-    });
-
-    // 插入到消息区域最前面
-    interviewMessages.insertBefore(pq, interviewMessages.firstChild);
-  }
-
-  /**
-   * 隐藏预设问题（面试区）
-   */
-  function hidePresetQuestions() {
-    const pq = document.getElementById("presetQuestions");
-    if (pq) pq.remove();
-  }
-
-  /**
-   * 发送预设问题（面试区）
-   */
-  function sendPresetQuestion(el) {
-    const text = el.querySelector("span").textContent.trim();
-    if (!text) return;
-
-    hidePresetQuestions();
-    interviewInput.value = text;
-    sendInterviewChat();
-  }
-
   /**
    * 添加消息到面试对话区域
    */
   function appendMsg(role, content, isResume = false) {
-    // 移除预设问题（如果用户直接输入而非点击预设问题）
-    hidePresetQuestions();
-
     const msg = document.createElement("div");
     msg.className = `msg ${role}`;
 
@@ -3551,9 +3460,7 @@
       const oldProgress = document.getElementById('interviewProgress');
       if (oldProgress) oldProgress.remove();
 
-      // 重新显示预设问题
-      showPresetQuestions();
-
+      showInterviewGreeting();
       overlay.remove();
     });
 
@@ -3595,10 +3502,11 @@
       ${interviewState.target_position ? `<span style="color:var(--gray-500);font-size:12px;">| ${interviewState.target_position}</span>` : ''}
     `;
 
-    // 插入到 agent-cards 之后、agent-messages 之前
-    const cards = document.getElementById('agentCards');
-    if (cards && cards.nextSibling) {
-      cards.parentNode.insertBefore(progress, cards.nextSibling);
+    // 插入到 header 之后、messages 之前
+    const header = document.querySelector('.agent-header');
+    const messages = document.getElementById('agentMessages');
+    if (header && messages) {
+      header.parentNode.insertBefore(progress, messages);
     }
   }
 
@@ -3614,9 +3522,7 @@
     isInterviewLoading = true;
     interviewSendBtn.disabled = true;
 
-    // 隐藏预设问题（用户已开始对话）
-    hidePresetQuestions();
-
+    removeInterviewGreeting();
     appendMsg("user", text);
     interviewChatHistory.push({ role: "user", content: text });
     appendTyping();
@@ -3660,8 +3566,31 @@
     }
   }
 
-  // 初始化显示预设问题和输入框placeholder
-  showPresetQuestions();
+  /**
+   * 显示面试区欢迎语
+   */
+  function showInterviewGreeting() {
+    if (interviewMessages.querySelector('.interview-greeting')) return;
+    const el = document.createElement("div");
+    el.className = "interview-greeting";
+    el.innerHTML = "准备好了吗👋<br>输入目标岗位，AI 面试官将为你进行模拟面试";
+    if (interviewMessages.firstChild) {
+      interviewMessages.insertBefore(el, interviewMessages.firstChild);
+    } else {
+      interviewMessages.appendChild(el);
+    }
+  }
+
+  /**
+   * 移除面试区欢迎语
+   */
+  function removeInterviewGreeting() {
+    const g = interviewMessages.querySelector('.interview-greeting');
+    if (g) g.remove();
+  }
+
+  // 初始化
+  showInterviewGreeting();
   interviewInput.placeholder = "输入你的回答，我来给你评分和反馈...";
 
   // ── 侧边栏 Agent（求职助手：默认问答 / 换赛道 / 修改简历 / 职业规划）──
