@@ -243,13 +243,15 @@
       border-color: var(--sakura-primary);
     }
 
-    /* 结果面板 */
+    /* 结果面板 — 半透明玻璃，与宇宙背景统一 */
     .result-panel {
-      background: var(--white);
+      background: rgba(10, 28, 32, 0.42);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
       border-radius: var(--radius-lg);
       padding: var(--space-xl);
-      box-shadow: var(--shadow);
-      border: 2px solid var(--gray-200);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.1);
       height: 100%;
       display: flex;
       flex-direction: column;
@@ -294,53 +296,310 @@
       border-color: var(--accent);
     }
 
-    /* 岗位推荐 - 横向列表 */
-    .jobs-list {
+    /* ========== Job Planet — 岗位星球卡片专区 ========== */
+    .job-planet-zone .section-title {
+      color: #E8F4F2;
+      margin-bottom: 16px;
+    }
+    .job-planet-zone .section-title-hint {
+      color: rgba(155, 184, 180, 0.9);
+    }
+
+    .job-planet-zone .jobs-list {
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 22px;
     }
-    .job-row {
+
+    .job-planet-zone .job-card {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      padding: 22px 20px 18px;
+      padding-top: 20px;
+      border-radius: 20px;
+      background: rgba(12, 36, 40, 0.55);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+      transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+      overflow: visible;
+    }
+
+    .job-planet-zone .job-card::before {
+      display: none;
+    }
+
+    .job-planet-zone .job-card[data-match-level="high"] {
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2), 0 0 28px rgba(110, 235, 199, 0.12);
+    }
+    .job-planet-zone .job-card[data-match-level="mid"] {
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2), 0 0 24px rgba(255, 209, 102, 0.1);
+    }
+    .job-planet-zone .job-card[data-match-level="low"] {
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2), 0 0 20px rgba(184, 164, 255, 0.08);
+    }
+
+    .job-planet-zone .job-card:hover {
+      transform: translateY(-3px);
+      border-color: rgba(110, 235, 199, 0.35);
+      box-shadow: 0 14px 40px rgba(0, 0, 0, 0.28), 0 0 32px rgba(110, 235, 199, 0.15);
+    }
+
+    .job-planet-zone .job-card.is-placeholder {
+      opacity: 0.55;
+      cursor: default;
+      pointer-events: none;
+    }
+    .job-planet-zone .job-card.is-placeholder:hover {
+      transform: none;
+    }
+
+    .job-planet-zone .job-planet-head {
+      padding-right: 88px;
+      margin-bottom: 14px;
+    }
+
+    .job-planet-zone .job-header {
+      display: block;
+      margin-bottom: 10px;
+      min-height: auto;
+    }
+
+    .job-planet-zone .job-title {
+      font-size: 20px;
+      font-weight: 800;
+      color: #F0FAF8;
+      line-height: 1.35;
+      letter-spacing: 0.02em;
+      font-family: 'Noto Serif SC', serif;
+      margin: 0;
+    }
+
+    .job-planet-zone .job-planet-meta {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px 14px;
+    }
+
+    .job-planet-zone .industry-tag {
+      display: inline-block;
+      font-size: 12px;
+      font-weight: 600;
+      color: #B8E8E0;
+      background: rgba(110, 235, 199, 0.12);
+      border: 1px solid rgba(110, 235, 199, 0.28);
+      border-radius: 999px;
+      padding: 5px 12px;
+      margin-bottom: 0;
+    }
+
+    .job-planet-zone .job-salary {
       display: flex;
       align-items: center;
-      padding: 18px 20px;
-      background: rgba(255, 255, 255, 0.7);
-      backdrop-filter: blur(8px);
-      border: 1.5px solid rgba(200, 180, 255, 0.15);
-      border-radius: 14px;
-      transition: all 0.2s ease;
-      cursor: pointer;
+      gap: 10px;
+      margin: 0;
+      min-height: auto;
     }
-    .job-row:hover {
-      border-color: rgba(200, 180, 255, 0.4);
-      background: rgba(255, 255, 255, 0.9);
-      transform: translateX(4px);
-      box-shadow: 0 4px 16px rgba(200, 180, 255, 0.15);
-    }
-    .job-row-left {
-      flex: 1;
-      min-width: 0;
-    }
-    .job-row-title {
-      font-size: 16px;
-      font-weight: 700;
-      color: var(--gray-900);
-      margin-bottom: 4px;
-    }
-    .job-row-industry {
-      font-size: 12px;
-      font-weight: 500;
-      color: var(--gray-500);
-    }
-    .job-row-center {
-      text-align: center;
-      padding: 0 24px;
-    }
-    .job-row-salary {
-      font-size: 16px;
+
+    .job-planet-zone .salary-amount {
+      font-size: 18px;
       font-weight: 800;
-      color: #9C27B0;
+      color: #8BE8D8;
+      letter-spacing: 0.02em;
     }
+
+    .job-planet-zone .salary-city {
+      font-size: 11px;
+      font-weight: 600;
+      color: #9BB8B4;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 6px;
+      padding: 4px 10px;
+    }
+
+    /* 右上发光匹配徽章 */
+    .job-planet-zone .match-badge-wrapper {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      padding: 10px 12px;
+      border-radius: 14px;
+      background: rgba(8, 24, 28, 0.75);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      min-width: 72px;
+    }
+
+    .job-planet-zone .job-card[data-match-level="high"] .match-badge-wrapper {
+      box-shadow: 0 0 24px rgba(110, 235, 199, 0.35), inset 0 0 20px rgba(110, 235, 199, 0.08);
+      border-color: rgba(110, 235, 199, 0.4);
+    }
+    .job-planet-zone .job-card[data-match-level="mid"] .match-badge-wrapper {
+      box-shadow: 0 0 22px rgba(255, 209, 102, 0.3), inset 0 0 16px rgba(255, 209, 102, 0.06);
+      border-color: rgba(255, 209, 102, 0.35);
+    }
+    .job-planet-zone .job-card[data-match-level="low"] .match-badge-wrapper {
+      box-shadow: 0 0 20px rgba(184, 164, 255, 0.25);
+      border-color: rgba(184, 164, 255, 0.3);
+    }
+
+    .job-planet-zone .match-percentage {
+      font-size: 22px;
+      font-weight: 900;
+      line-height: 1;
+      letter-spacing: -0.5px;
+    }
+
+    .job-planet-zone .match-percentage[data-score="high"] {
+      color: #6EEBC7;
+      text-shadow: 0 0 16px rgba(110, 235, 199, 0.6);
+      background: none;
+      -webkit-text-fill-color: #6EEBC7;
+    }
+    .job-planet-zone .match-percentage[data-score="mid"] {
+      color: #FFD166;
+      text-shadow: 0 0 14px rgba(255, 209, 102, 0.5);
+      background: none;
+      -webkit-text-fill-color: #FFD166;
+    }
+    .job-planet-zone .match-percentage[data-score="low"] {
+      color: #B8A4FF;
+      text-shadow: 0 0 12px rgba(184, 164, 255, 0.4);
+      background: none;
+      -webkit-text-fill-color: #B8A4FF;
+    }
+
+    .job-planet-zone .match-badge {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 999px;
+      letter-spacing: 0.4px;
+      text-transform: none;
+      margin-left: 0;
+    }
+
+    .job-planet-zone .match-high {
+      background: rgba(110, 235, 199, 0.2);
+      color: #6EEBC7;
+      box-shadow: none;
+    }
+    .job-planet-zone .match-mid {
+      background: rgba(255, 209, 102, 0.2);
+      color: #FFD166;
+      box-shadow: none;
+    }
+    .job-planet-zone .match-low {
+      background: rgba(184, 164, 255, 0.2);
+      color: #B8A4FF;
+      box-shadow: none;
+    }
+
+    .job-planet-zone .job-planet-modules {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .job-planet-zone .job-planet-module {
+      padding: 12px 14px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .job-planet-zone .job-planet-module-head {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .job-planet-zone .job-planet-module-icon {
+      font-size: 14px;
+      line-height: 1;
+    }
+
+    .job-planet-zone .job-planet-module-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: #8BE8D8;
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+    }
+
+    .job-planet-zone .job-planet-module-body {
+      font-size: 13px;
+      line-height: 1.65;
+      color: rgba(216, 232, 230, 0.92);
+    }
+
+    .job-planet-zone .job-reason {
+      min-height: auto;
+      font-weight: 450;
+      color: rgba(216, 232, 230, 0.92);
+    }
+
+    .job-planet-zone .skill-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .job-planet-zone .skill-tag {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 10px;
+      background: rgba(184, 164, 255, 0.15);
+      border: 1px solid rgba(184, 164, 255, 0.35);
+      color: #D4C8FF;
+      border-radius: 999px;
+    }
+
+    .job-planet-zone .skill-complete {
+      font-size: 12px;
+      color: #6EEBC7;
+      font-weight: 600;
+    }
+
+    .job-planet-zone .career-path {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      line-height: 1.55;
+    }
+
+    .job-planet-zone .path-stage {
+      font-weight: 600;
+      color: #E8F4F2;
+    }
+
+    .job-planet-zone .path-arrow {
+      color: #6EEBC7;
+      font-weight: 700;
+    }
+
+    .job-planet-zone .job-planet-empty {
+      text-align: center;
+      padding: 40px 20px;
+      color: #9BB8B4;
+      font-size: 14px;
+    }
+
+    /* 旧版 job-row 占位（已弃用，保留避免冲突） */
     .job-row-city {
       font-size: 11px;
       color: var(--gray-500);
@@ -456,17 +715,18 @@
       display: none;
     }
 
-    /* 岗位推荐 */
+    /* 岗位推荐区标题（通用，Job Planet 内由 .job-planet-zone 覆盖颜色） */
     .section-title {
-      font-size: 14px; font-weight: 800;
-      text-transform: uppercase; letter-spacing: 0.8px;
-      color: var(--gray-800); 
+      font-size: 14px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--gray-800);
       margin-bottom: 12px;
       display: flex;
       align-items: center;
       gap: 12px;
     }
-    
     .section-title-hint {
       font-size: 12px;
       font-weight: 500;
@@ -474,264 +734,6 @@
       text-transform: none;
       letter-spacing: 0;
       font-style: italic;
-    }
-
-    .jobs-grid {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 16px;
-    }
-
-    .job-card {
-      border: 2px solid var(--gray-200);
-      border-radius: 12px;
-      padding: 20px;
-      padding-top: 24px;
-      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-      background: var(--white);
-      display: flex;
-      flex-direction: column;
-      position: relative;
-      overflow: visible;
-    }
-    
-    /* 匹配度渐变背景 - 顶部装饰条 */
-    .job-card[data-match-level="high"]::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 5px;
-      background: linear-gradient(90deg, #FF9DB3 0%, #FFB7C5 50%, #FF9DB3 100%);
-      border-radius: 10px 10px 0 0;
-      z-index: 1;
-    }
-    
-    .job-card[data-match-level="mid"]::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 5px;
-      background: linear-gradient(90deg, #FFD4DC 0%, #FFE4E9 50%, #FFD4DC 100%);
-      border-radius: 10px 10px 0 0;
-      z-index: 1;
-    }
-    
-    .job-card[data-match-level="low"]::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 5px;
-      background: linear-gradient(90deg, #E5E5E5 0%, #F5F5F5 50%, #E5E5E5 100%);
-      border-radius: 10px 10px 0 0;
-      z-index: 1;
-    }
-    
-    .job-card:hover {
-      border-color: var(--sakura-primary);
-      box-shadow: 0 8px 24px rgba(255,183,197,0.2);
-      transform: translateY(-4px);
-    }
-    .job-card:active {
-      transform: translateY(-2px);
-    }
-    .job-card .job-header {
-      display: flex; 
-      justify-content: space-between;
-      align-items: flex-start; 
-      margin-bottom: 12px;
-      min-height: 56px;
-    }
-    .job-card .job-title {
-      font-size: 19px;
-      font-weight: 800;
-      color: var(--gray-900);
-      line-height: 1.3;
-      letter-spacing: 0.1px;
-      flex: 1;
-      font-family: 'Noto Serif SC', serif;
-    }
-    .job-card .match-badge {
-      font-size: 11px; 
-      font-weight: 800; 
-      padding: 4px 10px;
-      border-radius: 999px; 
-      flex-shrink: 0; 
-      margin-left: 8px;
-      text-transform: uppercase;
-      letter-spacing: 0.3px;
-    }
-    .match-high { 
-      background: linear-gradient(135deg, #ede9fe 0%, #e0d4fc 100%); 
-      color: #6C63FF;
-      box-shadow: 0 2px 8px rgba(108, 99, 255, 0.15);
-    }
-    .match-mid { 
-      background: linear-gradient(135deg, #fce4ec 0%, #f8bbd0 100%); 
-      color: #e91e63;
-      box-shadow: 0 2px 8px rgba(233, 30, 99, 0.15);
-    }
-    .match-low { 
-      background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); 
-      color: #1976d2;
-    }
-
-    .job-card .industry-tag {
-      display: inline-block; 
-      font-size: 12px; 
-      font-weight: 600;
-      background: var(--sakura-lighter); 
-      color: var(--sakura-dark);
-      border: 1.5px solid var(--sakura-primary);
-      border-radius: 6px; 
-      padding: 4px 10px;
-      margin-bottom: 12px;
-    }
-    .job-card .job-reason { 
-      font-size: 13px; 
-      color: var(--gray-600); 
-      line-height: 1.7;
-      min-height: 44px;
-      font-weight: 500;
-    }
-
-    /* ========== 新增功能样式 ========== */
-    
-    /* 匹配度徽章 - 大号设计 */
-    .match-badge-wrapper {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 3px;
-      flex-shrink: 0;
-    }
-    .match-percentage {
-      font-size: 26px;
-      font-weight: 900;
-      font-family: 'Inter', sans-serif;
-      line-height: 1;
-      letter-spacing: -0.5px;
-    }
-    
-    /* 匹配度颜色渐变 */
-    .match-percentage[data-score="high"] {
-      background: linear-gradient(135deg, #15803d 0%, #22c55e 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      filter: drop-shadow(0 2px 4px rgba(21, 128, 61, 0.2));
-    }
-    .match-percentage[data-score="mid"] {
-      background: linear-gradient(135deg, #a16207 0%, #eab308 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      filter: drop-shadow(0 2px 4px rgba(161, 98, 7, 0.2));
-    }
-    .match-percentage[data-score="low"] {
-      color: var(--gray-500);
-      font-weight: 800;
-    }
-    .match-low { background: var(--gray-200); color: var(--gray-600); }
-
-    /* 信息分组 */
-    .job-section {
-      display: flex;
-      gap: 8px;
-      padding: 10px;
-      background: var(--sakura-lighter);
-      border-radius: var(--radius-sm);
-      margin-top: 8px;
-      align-items: flex-start;
-    }
-    .section-icon {
-      font-size: 16px;
-      flex-shrink: 0;
-      line-height: 1;
-    }
-    .section-title {
-      font-size: 10px;
-      font-weight: 700;
-      color: var(--gray-600);
-      margin-bottom: 4px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-    .section-content {
-      flex: 1;
-      min-width: 0;
-    }
-
-    /* 技能标签 */
-    .skill-tags {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 4px;
-    }
-    .skill-tag {
-      font-size: 10px;
-      font-weight: 600;
-      padding: 3px 8px;
-      background: var(--white);
-      border: 1.5px solid var(--sakura-primary);
-      color: var(--sakura-dark);
-      border-radius: 999px;
-      white-space: nowrap;
-    }
-    .skill-complete {
-      font-size: 11px;
-      color: #15803d;
-      font-weight: 600;
-    }
-
-    /* 成长路径 */
-    .career-path {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 4px;
-      font-size: 10px;
-      line-height: 1.5;
-    }
-    .path-stage {
-      font-weight: 600;
-      color: var(--gray-700);
-    }
-    .path-arrow {
-      color: var(--sakura-primary);
-      font-weight: 700;
-    }
-    
-    /* ========== 结束：新增功能样式 ========== */
-
-    /* 薪资信息样式 */
-    .job-salary {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin: 10px 0;
-      min-height: 32px;
-    }
-    .salary-amount {
-      font-size: 17px;
-      font-weight: 800;
-      color: var(--sakura-primary);
-      letter-spacing: 0.3px;
-      font-family: 'Inter', sans-serif;
-    }
-    .salary-city {
-      font-size: 10px;
-      font-weight: 600;
-      color: var(--gray-600);
-      background: var(--gray-100);
-      border: 1px solid var(--gray-200);
-      border-radius: 4px;
-      padding: 3px 8px;
     }
 
     /* ── 简历诊断卡片 ── */
@@ -2594,56 +2596,72 @@
   <div class="result-panel">
     <div id="resultContent" class="result-content">
 
-      <!-- 岗位推荐 -->
-      <div class="section-title">
-        推荐岗位
-        <span class="section-title-hint">💡 上传简历后智能匹配</span>
+      <!-- 岗位推荐 — Job Planet -->
+      <div class="job-planet-zone">
+        <div class="section-title">
+          推荐岗位
+          <span class="section-title-hint">💡 上传简历后智能匹配</span>
+        </div>
+        <div id="jobsGrid" class="jobs-list">
+          <div class="job-card is-placeholder" data-match-level="high">
+            <div class="match-badge-wrapper">
+              <span class="match-percentage" data-score="high">—</span>
+              <span class="match-badge match-high">高匹配</span>
+            </div>
+            <div class="job-planet-head">
+              <div class="job-header"><div class="job-title">岗位推荐 1</div></div>
+              <div class="job-planet-meta">
+                <span class="industry-tag">行业</span>
+                <div class="job-salary"><span class="salary-amount">--K</span><span class="salary-city">城市</span></div>
+              </div>
+            </div>
+            <div class="job-planet-modules">
+              <div class="job-planet-module">
+                <div class="job-planet-module-head"><span class="job-planet-module-icon">💡</span><span class="job-planet-module-title">推荐原因</span></div>
+                <div class="job-planet-module-body"><div class="job-reason">上传简历后显示匹配原因</div></div>
+              </div>
+            </div>
+          </div>
+          <div class="job-card is-placeholder" data-match-level="high">
+            <div class="match-badge-wrapper">
+              <span class="match-percentage" data-score="high">—</span>
+              <span class="match-badge match-high">高匹配</span>
+            </div>
+            <div class="job-planet-head">
+              <div class="job-header"><div class="job-title">岗位推荐 2</div></div>
+              <div class="job-planet-meta">
+                <span class="industry-tag">行业</span>
+                <div class="job-salary"><span class="salary-amount">--K</span><span class="salary-city">城市</span></div>
+              </div>
+            </div>
+            <div class="job-planet-modules">
+              <div class="job-planet-module">
+                <div class="job-planet-module-head"><span class="job-planet-module-icon">💡</span><span class="job-planet-module-title">推荐原因</span></div>
+                <div class="job-planet-module-body"><div class="job-reason">上传简历后显示匹配原因</div></div>
+              </div>
+            </div>
+          </div>
+          <div class="job-card is-placeholder" data-match-level="mid">
+            <div class="match-badge-wrapper">
+              <span class="match-percentage" data-score="mid">—</span>
+              <span class="match-badge match-mid">中匹配</span>
+            </div>
+            <div class="job-planet-head">
+              <div class="job-header"><div class="job-title">岗位推荐 3</div></div>
+              <div class="job-planet-meta">
+                <span class="industry-tag">行业</span>
+                <div class="job-salary"><span class="salary-amount">--K</span><span class="salary-city">城市</span></div>
+              </div>
+            </div>
+            <div class="job-planet-modules">
+              <div class="job-planet-module">
+                <div class="job-planet-module-head"><span class="job-planet-module-icon">💡</span><span class="job-planet-module-title">推荐原因</span></div>
+                <div class="job-planet-module-body"><div class="job-reason">上传简历后显示匹配原因</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-      <div id="jobsGrid" class="jobs-list">
-        <div class="job-row" style="opacity: 0.5;">
-          <div class="job-row-left">
-            <div class="job-row-title">岗位推荐 1</div>
-            <div class="job-row-industry">行业</div>
-          </div>
-          <div class="job-row-center">
-            <div class="job-row-salary">--K</div>
-            <div class="job-row-city">城市</div>
-          </div>
-          <div class="job-row-right">
-            <span class="match-badge match-high">高匹配</span>
-          </div>
-        </div>
-        <div class="job-row" style="opacity: 0.5;">
-          <div class="job-row-left">
-            <div class="job-row-title">岗位推荐 2</div>
-            <div class="job-row-industry">行业</div>
-          </div>
-          <div class="job-row-center">
-            <div class="job-row-salary">--K</div>
-            <div class="job-row-city">城市</div>
-          </div>
-          <div class="job-row-right">
-            <span class="match-badge match-high">高匹配</span>
-          </div>
-        </div>
-        <div class="job-row" style="opacity: 0.5;">
-          <div class="job-row-left">
-            <div class="job-row-title">岗位推荐 3</div>
-            <div class="job-row-industry">行业</div>
-          </div>
-          <div class="job-row-center">
-            <div class="job-row-salary">--K</div>
-            <div class="job-row-city">城市</div>
-          </div>
-          <div class="job-row-right">
-            <span class="match-badge match-mid">中匹配</span>
-          </div>
-        </div>
-      </div>
-
-    </div>
-  </div>
-
 <!-- Agent 求职面板 -->
 <div class="agent-section">
   <div class="agent-panel">
@@ -3041,7 +3059,35 @@
   };
 
   // ========== 主页上传功能已移除，现在使用侧边栏上传 ==========
-  
+
+  /** Job Planet 占位卡片 HTML（仅展示用） */
+  function buildJobPlanetPlaceholderHTML() {
+    function card(n, level, scoreAttr, matchClass, label) {
+      return '<div class="job-card is-placeholder" data-match-level="' + level + '">' +
+        '<div class="match-badge-wrapper">' +
+        '<span class="match-percentage" data-score="' + scoreAttr + '">—</span>' +
+        '<span class="match-badge ' + matchClass + '">' + label + '</span></div>' +
+        '<div class="job-planet-head">' +
+        '<div class="job-header"><div class="job-title">岗位推荐 ' + n + '</div></div>' +
+        '<div class="job-planet-meta"><span class="industry-tag">行业</span>' +
+        '<div class="job-salary"><span class="salary-amount">--K</span><span class="salary-city">城市</span></div></div></div>' +
+        '<div class="job-planet-modules"><div class="job-planet-module">' +
+        '<div class="job-planet-module-head"><span class="job-planet-module-icon">💡</span><span class="job-planet-module-title">推荐原因</span></div>' +
+        '<div class="job-planet-module-body"><div class="job-reason">上传简历后显示匹配原因</div></div></div></div></div>';
+    }
+    return card(1, 'high', 'high', 'match-high', '高匹配')
+      + card(2, 'high', 'high', 'match-high', '高匹配')
+      + card(3, 'mid', 'mid', 'match-mid', '中匹配');
+  }
+
+  function buildJobPlanetModule(icon, title, bodyHtml) {
+    return '<div class="job-planet-module">' +
+      '<div class="job-planet-module-head">' +
+      '<span class="job-planet-module-icon">' + icon + '</span>' +
+      '<span class="job-planet-module-title">' + title + '</span></div>' +
+      '<div class="job-planet-module-body">' + bodyHtml + '</div></div>';
+  }
+
   function renderResult(data) {
     const d = data.parsed_data || {};
 
@@ -3091,86 +3137,63 @@
             `;
           }
           
-          // 构建推荐原因模块
-          const reasonHTML = `
-            <div class="job-section">
-              <div class="section-icon">💡</div>
-              <div class="section-content">
-                <div class="section-title">推荐原因</div>
-                <div class="job-reason">${job.reason || ""}</div>
-              </div>
-            </div>
-          `;
-          
-          // 构建缺失技能模块
-          const missingSkillsHTML = `
-            <div class="job-section">
-              <div class="section-icon">📚</div>
-              <div class="section-content">
-                <div class="section-title">需要学习</div>
-                <div class="skill-tags">
-                  ${renderMissingSkills(job.missing_skills)}
-                </div>
-              </div>
-            </div>
-          `;
-          
-          // 构建成长路径模块（仅当有内容时显示）
+          const scoreLevel = matchScore >= 80 ? 'high' : matchScore >= 60 ? 'mid' : 'low';
+
+          const reasonHTML = buildJobPlanetModule('💡', '推荐原因',
+            '<div class="job-reason">' + (job.reason || '') + '</div>');
+
+          const missingSkillsHTML = buildJobPlanetModule('📚', '需要学习',
+            '<div class="skill-tags">' + renderMissingSkills(job.missing_skills) + '</div>');
+
           const careerPathContent = renderCareerPath(job.career_path);
-          const careerPathHTML = careerPathContent ? `
-            <div class="job-section">
-              <div class="section-icon">🚀</div>
-              <div class="section-content">
-                <div class="section-title">成长路径</div>
-                <div class="career-path">
-                  ${careerPathContent}
-                </div>
-              </div>
-            </div>
-          ` : '';
-          
-          // 组装完整卡片HTML
-          card.innerHTML = `
-            <div class="job-header">
-              <div class="job-title" data-job-title="${job.title || ""}" data-city="${job.salary_range?.city || d.city || ''}" style="cursor: pointer; text-decoration: underline; text-decoration-color: transparent; transition: text-decoration-color 0.2s;">${job.title || ""}</div>
-              <div class="match-badge-wrapper">
-                <span class="match-percentage" data-score="${matchScore >= 80 ? 'high' : matchScore >= 60 ? 'mid' : 'low'}">${matchScore}%</span>
-                <span class="match-badge ${matchInfo.class}">${matchInfo.level}</span>
-              </div>
-            </div>
-            <div class="industry-tag">${job.industry || ""}</div>
-            ${salaryHTML}
-            ${reasonHTML}
-            ${missingSkillsHTML}
-            ${careerPathHTML}
-          `;
-          
-          // 只给岗位名称添加点击跳转事件
+          const careerPathHTML = careerPathContent
+            ? buildJobPlanetModule('🚀', '成长路径', '<div class="career-path">' + careerPathContent + '</div>')
+            : '';
+
+          const titleAttrs = ' data-job-title="' + (job.title || '') + '" data-city="' + (job.salary_range?.city || d.city || '') + '" style="cursor: pointer; text-decoration: underline; text-decoration-color: transparent; transition: text-decoration-color 0.2s;"';
+
+          card.innerHTML =
+            '<div class="match-badge-wrapper">' +
+              '<span class="match-percentage" data-score="' + scoreLevel + '">' + matchScore + '%</span>' +
+              '<span class="match-badge ' + matchInfo.class + '">' + matchInfo.level + '</span>' +
+            '</div>' +
+            '<div class="job-planet-head">' +
+              '<div class="job-header">' +
+                '<div class="job-title"' + titleAttrs + '>' + (job.title || '') + '</div>' +
+              '</div>' +
+              '<div class="job-planet-meta">' +
+                '<span class="industry-tag">' + (job.industry || '') + '</span>' +
+                salaryHTML +
+              '</div>' +
+            '</div>' +
+            '<div class="job-planet-modules">' +
+              reasonHTML + missingSkillsHTML + careerPathHTML +
+            '</div>';
+
           const jobTitleEl = card.querySelector('.job-title');
           if (jobTitleEl) {
             jobTitleEl.addEventListener('mouseenter', () => {
-              jobTitleEl.style.textDecorationColor = 'var(--sakura-primary)';
+              jobTitleEl.style.textDecorationColor = '#6EEBC7';
             });
             jobTitleEl.addEventListener('mouseleave', () => {
               jobTitleEl.style.textDecorationColor = 'transparent';
             });
             jobTitleEl.addEventListener('click', (e) => {
-              e.stopPropagation(); // 防止事件冒泡
+              e.stopPropagation();
               try {
                 const jobTitle = encodeURIComponent(job.title || '');
                 const city = job.salary_range?.city || d.city || '';
-                const cityParam = city && city !== '全国' ? `&city=${encodeURIComponent(city)}` : '';
-                const bossUrl = `https://www.zhipin.com/job_detail/?query=${jobTitle}${cityParam}`;
+                const cityParam = city && city !== '全国' ? '&city=' + encodeURIComponent(city) : '';
+                const bossUrl = 'https://www.zhipin.com/job_detail/?query=' + jobTitle + cityParam;
                 window.open(bossUrl, '_blank');
               } catch (error) {
                 console.error('Failed to open job portal:', error);
-                // 降级：使用不带城市参数的URL
-                const fallbackUrl = `https://www.zhipin.com/job_detail/?query=${encodeURIComponent(job.title || '')}`;
+                const fallbackUrl = 'https://www.zhipin.com/job_detail/?query=' + encodeURIComponent(job.title || '');
                 window.open(fallbackUrl, '_blank');
               }
             });
           }
-          
+
           jobsEl.appendChild(card);
         } catch (error) {
           console.error('Failed to render job card:', error, job);
@@ -3179,51 +3202,13 @@
       
       // 如果所有卡片都渲染失败
       if (jobsEl.children.length === 0) {
-        jobsEl.innerHTML = '<div class="empty-state" style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--gray-500);">岗位数据加载失败</div>';
+        jobsEl.innerHTML = '<div class="job-planet-empty">岗位数据加载失败</div>';
       }
     } else {
-      // 显示空状态的岗位卡片
-      jobsEl.innerHTML = `
-        <div class="job-card" style="opacity: 0.5; cursor: default;">
-          <div class="job-header">
-            <div class="job-title">岗位推荐 1</div>
-            <span class="match-badge match-high">高</span>
-          </div>
-          <div class="industry-tag">行业</div>
-          <div class="job-salary">
-            <span class="salary-amount">--K</span>
-            <span class="salary-city">城市</span>
-          </div>
-          <div class="job-reason">上传简历后显示匹配原因</div>
-        </div>
-        <div class="job-card" style="opacity: 0.5; cursor: default;">
-          <div class="job-header">
-            <div class="job-title">岗位推荐 2</div>
-            <span class="match-badge match-high">高</span>
-          </div>
-          <div class="industry-tag">行业</div>
-          <div class="job-salary">
-            <span class="salary-amount">--K</span>
-            <span class="salary-city">城市</span>
-          </div>
-          <div class="job-reason">上传简历后显示匹配原因</div>
-        </div>
-        <div class="job-card" style="opacity: 0.5; cursor: default;">
-          <div class="job-header">
-            <div class="job-title">岗位推荐 3</div>
-            <span class="match-badge match-mid">中</span>
-          </div>
-          <div class="industry-tag">行业</div>
-          <div class="job-salary">
-            <span class="salary-amount">--K</span>
-            <span class="salary-city">城市</span>
-          </div>
-          <div class="job-reason">上传简历后显示匹配原因</div>
-        </div>
-      `;
+      jobsEl.innerHTML = buildJobPlanetPlaceholderHTML();
     }
 
-    // 简历诊断
+
     const diag = d.resume_diagnosis || {};
     const diagPanel = document.getElementById("diagnosisPanel");
     document.getElementById("diagScore").textContent = diag.overall_score || "—";
