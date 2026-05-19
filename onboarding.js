@@ -129,6 +129,8 @@
           '<div class="ob-identity-option" data-identity="fresh">\uD83C\uDF93 \u5E94\u5C4A\u751F\u79CB\u62DB/\u6625\u62DB</div>' +
           '<div class="ob-identity-option" data-identity="experienced">\uD83D\uDCBC \u6709\u5DE5\u4F5C\u7ECF\u9A8C</div>' +
         '</div>' +
+        '<div class="ob-section-label">MBTI\uFF08\u9009\u586B\uFF0C\u8F85\u52A9\u5C97\u4F4D\u63A8\u8350\uFF09</div>' +
+        '<input type="text" id="obMbtiInput" class="ob-nickname-input" placeholder="\u5982 INFP\u3001ENTJ...\u6CA1\u6709\u53EF\u4EE5\u8DF3\u8FC7" maxlength="4" style="text-transform:uppercase" />' +
         '<button class="ob-finish-btn ob-btn-disabled" id="obFinishBtn">\u5B8C\u6210\u8BBE\u7F6E \u2728</button>' +
       '</div>';
 
