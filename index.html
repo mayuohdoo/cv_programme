@@ -447,121 +447,96 @@
     }
 
     .job-card {
-      border: 2px solid var(--gray-200);
-      border-radius: 12px;
-      padding: 20px;
-      padding-top: 24px;
-      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-      background: var(--white);
+      border: 1px solid rgba(108, 99, 255, 0.1);
+      border-radius: 16px;
+      padding: 20px 24px;
+      transition: all 0.25s ease;
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(8px);
       display: flex;
       flex-direction: column;
+      gap: 12px;
       position: relative;
-      overflow: visible;
+      overflow: hidden;
+      margin-bottom: 12px;
     }
     
-    /* 匹配度渐变背景 - 顶部装饰条 */
+    /* 左侧色条 */
     .job-card[data-match-level="high"]::before {
       content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 5px;
-      background: linear-gradient(90deg, #FF9DB3 0%, #FFB7C5 50%, #FF9DB3 100%);
-      border-radius: 10px 10px 0 0;
-      z-index: 1;
+      position: absolute; top: 0; left: 0; bottom: 0;
+      width: 4px;
+      background: linear-gradient(180deg, #6C63FF, #9C27B0);
+      border-radius: 16px 0 0 16px;
     }
-    
     .job-card[data-match-level="mid"]::before {
       content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 5px;
-      background: linear-gradient(90deg, #FFD4DC 0%, #FFE4E9 50%, #FFD4DC 100%);
-      border-radius: 10px 10px 0 0;
-      z-index: 1;
+      position: absolute; top: 0; left: 0; bottom: 0;
+      width: 4px;
+      background: linear-gradient(180deg, #9C27B0, #E040FB);
+      border-radius: 16px 0 0 16px;
     }
-    
     .job-card[data-match-level="low"]::before {
       content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 5px;
-      background: linear-gradient(90deg, #E5E5E5 0%, #F5F5F5 50%, #E5E5E5 100%);
-      border-radius: 10px 10px 0 0;
-      z-index: 1;
+      position: absolute; top: 0; left: 0; bottom: 0;
+      width: 4px;
+      background: #ddd;
+      border-radius: 16px 0 0 16px;
     }
     
     .job-card:hover {
-      border-color: var(--sakura-primary);
-      box-shadow: 0 8px 24px rgba(255,183,197,0.2);
-      transform: translateY(-4px);
-    }
-    .job-card:active {
-      transform: translateY(-2px);
+      border-color: rgba(108, 99, 255, 0.2);
+      box-shadow: 0 8px 24px rgba(108, 99, 255, 0.08);
+      transform: translateX(4px);
     }
     .job-card .job-header {
       display: flex; 
       justify-content: space-between;
-      align-items: flex-start; 
-      margin-bottom: 12px;
-      min-height: 56px;
+      align-items: center; 
     }
     .job-card .job-title {
-      font-size: 19px;
-      font-weight: 800;
-      color: var(--gray-900);
+      font-size: 17px;
+      font-weight: 700;
+      color: #1a1a1a;
       line-height: 1.3;
-      letter-spacing: 0.1px;
       flex: 1;
-      font-family: 'Noto Serif SC', serif;
     }
     .job-card .match-badge {
-      font-size: 11px; 
-      font-weight: 800; 
-      padding: 4px 10px;
-      border-radius: 999px; 
+      font-size: 10px; 
+      font-weight: 700; 
+      padding: 3px 8px;
+      border-radius: 6px; 
       flex-shrink: 0; 
       margin-left: 8px;
-      text-transform: uppercase;
-      letter-spacing: 0.3px;
     }
     .match-high { 
-      background: linear-gradient(135deg, #ede9fe 0%, #e0d4fc 100%); 
+      background: rgba(108, 99, 255, 0.1); 
       color: #6C63FF;
-      box-shadow: 0 2px 8px rgba(108, 99, 255, 0.15);
     }
     .match-mid { 
-      background: linear-gradient(135deg, #fce4ec 0%, #f8bbd0 100%); 
-      color: #e91e63;
-      box-shadow: 0 2px 8px rgba(233, 30, 99, 0.15);
+      background: rgba(156, 39, 176, 0.1); 
+      color: #9C27B0;
     }
     .match-low { 
-      background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); 
-      color: #1976d2;
+      background: rgba(0, 0, 0, 0.05); 
+      color: #888;
     }
 
     .job-card .industry-tag {
       display: inline-block; 
-      font-size: 12px; 
+      font-size: 11px; 
       font-weight: 600;
-      background: var(--sakura-lighter); 
-      color: var(--sakura-dark);
-      border: 1.5px solid var(--sakura-primary);
+      background: rgba(108, 99, 255, 0.06); 
+      color: #6C63FF;
+      border: 1px solid rgba(108, 99, 255, 0.15);
       border-radius: 6px; 
-      padding: 4px 10px;
-      margin-bottom: 12px;
+      padding: 3px 8px;
     }
     .job-card .job-reason { 
       font-size: 13px; 
-      color: var(--gray-600); 
-      line-height: 1.7;
-      min-height: 44px;
-      font-weight: 500;
+      color: #666; 
+      line-height: 1.6;
+      font-weight: 400;
     }
 
     /* ========== 新增功能样式 ========== */
@@ -575,56 +550,41 @@
       flex-shrink: 0;
     }
     .match-percentage {
-      font-size: 26px;
-      font-weight: 900;
+      font-size: 18px;
+      font-weight: 800;
       font-family: 'Inter', sans-serif;
       line-height: 1;
-      letter-spacing: -0.5px;
     }
-    
-    /* 匹配度颜色渐变 */
     .match-percentage[data-score="high"] {
-      background: linear-gradient(135deg, #15803d 0%, #22c55e 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      filter: drop-shadow(0 2px 4px rgba(21, 128, 61, 0.2));
+      color: #6C63FF;
     }
     .match-percentage[data-score="mid"] {
-      background: linear-gradient(135deg, #a16207 0%, #eab308 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      filter: drop-shadow(0 2px 4px rgba(161, 98, 7, 0.2));
+      color: #9C27B0;
     }
     .match-percentage[data-score="low"] {
-      color: var(--gray-500);
-      font-weight: 800;
+      color: #888;
     }
-    .match-low { background: var(--gray-200); color: var(--gray-600); }
 
     /* 信息分组 */
     .job-section {
       display: flex;
       gap: 8px;
-      padding: 10px;
-      background: var(--sakura-lighter);
-      border-radius: var(--radius-sm);
-      margin-top: 8px;
+      padding: 8px 12px;
+      background: rgba(108, 99, 255, 0.03);
+      border-radius: 10px;
       align-items: flex-start;
     }
     .section-icon {
-      font-size: 16px;
+      font-size: 14px;
       flex-shrink: 0;
-      line-height: 1;
+      line-height: 1.4;
     }
     .section-title {
       font-size: 10px;
       font-weight: 700;
-      color: var(--gray-600);
-      margin-bottom: 4px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
+      color: #888;
+      margin-bottom: 2px;
+      letter-spacing: 0.3px;
     }
     .section-content {
       flex: 1;
@@ -640,16 +600,16 @@
     .skill-tag {
       font-size: 10px;
       font-weight: 600;
-      padding: 3px 8px;
-      background: var(--white);
-      border: 1.5px solid var(--sakura-primary);
-      color: var(--sakura-dark);
-      border-radius: 999px;
+      padding: 2px 7px;
+      background: rgba(108, 99, 255, 0.06);
+      border: 1px solid rgba(108, 99, 255, 0.15);
+      color: #6C63FF;
+      border-radius: 4px;
       white-space: nowrap;
     }
     .skill-complete {
       font-size: 11px;
-      color: #15803d;
+      color: #6C63FF;
       font-weight: 600;
     }
 
@@ -659,15 +619,15 @@
       flex-wrap: wrap;
       align-items: center;
       gap: 4px;
-      font-size: 10px;
+      font-size: 11px;
       line-height: 1.5;
     }
     .path-stage {
       font-weight: 600;
-      color: var(--gray-700);
+      color: #444;
     }
     .path-arrow {
-      color: var(--sakura-primary);
+      color: #6C63FF;
       font-weight: 700;
     }
     
@@ -678,21 +638,18 @@
       display: flex;
       align-items: center;
       gap: 8px;
-      margin: 10px 0;
-      min-height: 32px;
     }
     .salary-amount {
-      font-size: 17px;
+      font-size: 15px;
       font-weight: 800;
-      color: var(--sakura-primary);
-      letter-spacing: 0.3px;
+      color: #6C63FF;
       font-family: 'Inter', sans-serif;
     }
     .salary-city {
       font-size: 10px;
       font-weight: 600;
-      color: var(--gray-600);
-      background: var(--gray-100);
+      color: #888;
+      background: rgba(108, 99, 255, 0.06);
       border: 1px solid var(--gray-200);
       border-radius: 4px;
       padding: 3px 8px;
@@ -2962,12 +2919,6 @@
   <div class="result-panel">
     <div id="resultContent" class="result-content">
 
-      <!-- MBTI 选填 -->
-      <div class="mbti-optional">
-        <label class="mbti-optional-label">MBTI（选填，辅助分析）</label>
-        <input type="text" id="mbtiInput" class="mbti-optional-input" placeholder="如 INFP、ENTJ..." maxlength="4" />
-      </div>
-
       <!-- 岗位推荐 -->
       <div class="section-title">
         推荐岗位
@@ -3424,6 +3375,9 @@
   
   function renderResult(data) {
     const d = data.parsed_data || {};
+
+    // MBTI 不再从简历推断，跳过展示
+    // 如果用户在选填框填了 MBTI，后续岗位推荐会用到
 
     // 岗位推荐
     const jobsEl = document.getElementById("jobsGrid");
