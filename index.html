@@ -3826,7 +3826,7 @@
   }
 
   /**
-   * 发送消息到面试 Agent
+   * 发送消息到面试 Agent（流式）
    */
   async function sendInterviewChat() {
     const text = interviewInput.value.trim();
@@ -3840,13 +3840,31 @@
     removeInterviewGreeting();
     appendMsg("user", text);
     interviewChatHistory.push({ role: "user", content: text });
-    appendTyping();
+
+    // 记录本轮之前的评分数量
+    const prevScoreCount = interviewState.scores.length;
 
     // 获取简历上下文
     const resumeCtx = getResumeContext();
 
+    // 创建一个空的 AI 消息气泡
+    const msgEl = document.createElement("div");
+    msgEl.className = "msg ai";
+    const avatar = document.createElement("div");
+    avatar.className = "msg-avatar";
+    avatar.textContent = "🤖";
+    const bubble = document.createElement("div");
+    bubble.className = "msg-bubble";
+    bubble.textContent = "";
+    msgEl.appendChild(avatar);
+    msgEl.appendChild(bubble);
+    interviewMessages.appendChild(msgEl);
+    interviewMessages.scrollTop = interviewMessages.scrollHeight;
+
+    let fullReply = "";
+
     try {
-      const res = await fetch(`${API_BASE_URL}/chat`, {
+      const res = await fetch(`${API_BASE_URL}/chat/stream`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -3856,33 +3874,54 @@
           interview_state: interviewState
         }),
       });
-      const data = await res.json();
-      removeTyping();
 
-      if (!res.ok) throw new Error(data.detail || "请求失败");
-
-      const reply = data.reply || "";
-      interviewChatHistory.push({ role: "assistant", content: reply });
-
-      // 记录本轮之前的评分数量
-      const prevScoreCount = interviewState.scores.length;
-
-      // 更新面试状态
-      if (data.interview_state) {
-        interviewState = data.interview_state;
-        updateInterviewTitle();
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.detail || "请求失败");
       }
 
-      const msgEl = appendMsg("ai", reply, data.has_resume_template || false);
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
 
-      // 如果本轮有新的评分 → 在消息下方显示操作引导按钮
-      if (interviewState.scores.length > prevScoreCount) {
-        appendInterviewActions(msgEl);
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+
+        // 按 \n\n 分割 SSE 事件
+        const parts = buffer.split("\n\n");
+        buffer = parts.pop() || ""; // 保留不完整片段
+
+        for (const part of parts) {
+          if (!part.startsWith("data: ")) continue;
+          try {
+            const data = JSON.parse(part.slice(6));
+            if (data.type === "chunk") {
+              fullReply += data.content;
+              bubble.textContent = fullReply.replace(/\*\*(.+?)\*\*/g, '$1').replace(/\*(.+?)\*/g, '$1').replace(/__(.+?)__/g, '$1').replace(/#{1,6}\s/g, '').replace(/`{1,3}/g, '').replace(/>\s/g, '');
+              interviewMessages.scrollTop = interviewMessages.scrollHeight;
+            } else if (data.type === "done") {
+              // 流结束，处理最终状态
+              interviewChatHistory.push({ role: "assistant", content: data.reply || fullReply });
+
+              if (data.interview_state) {
+                interviewState = data.interview_state;
+                updateInterviewTitle();
+              }
+
+              // 如果本轮有新的评分 → 在消息下方显示操作引导按钮
+              if (interviewState.scores.length > prevScoreCount) {
+                appendInterviewActions(msgEl);
+              }
+            }
+          } catch (e) {
+            console.warn("SSE parse error:", e);
+          }
+        }
       }
-
     } catch (err) {
-      removeTyping();
-      appendMsg("ai", "抱歉，出了点问题：" + err.message);
+      bubble.textContent = "抱歉，出了点问题：" + err.message;
     } finally {
       isInterviewLoading = false;
       interviewSendBtn.disabled = false;
@@ -3988,12 +4027,27 @@
 
     // 发送第一条消息启动面试
     const resumeCtx = getResumeContext();
-    appendTyping();
+
+    // 创建空的 AI 消息气泡
+    const msgEl = document.createElement("div");
+    msgEl.className = "msg ai";
+    const avatar = document.createElement("div");
+    avatar.className = "msg-avatar";
+    avatar.textContent = "🤖";
+    const bubble = document.createElement("div");
+    bubble.className = "msg-bubble";
+    bubble.textContent = "";
+    msgEl.appendChild(avatar);
+    msgEl.appendChild(bubble);
+    interviewMessages.appendChild(msgEl);
+    interviewMessages.scrollTop = interviewMessages.scrollHeight;
+
     isInterviewLoading = true;
     interviewSendBtn.disabled = true;
+    let fullReply = "";
 
     try {
-      const res = await fetch(`${API_BASE_URL}/chat`, {
+      const res = await fetch(`${API_BASE_URL}/chat/stream`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -4003,19 +4057,46 @@
           interview_state: interviewState
         }),
       });
-      const data = await res.json();
-      removeTyping();
-      if (!res.ok) throw new Error(data.detail || "请求失败");
-      const reply = data.reply || "";
-      interviewChatHistory.push({ role: "assistant", content: reply });
-      if (data.interview_state) {
-        interviewState = data.interview_state;
-        updateInterviewTitle();
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.detail || "请求失败");
       }
-      appendMsg("ai", reply, data.has_resume_template || false);
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+
+        const parts = buffer.split("\n\n");
+        buffer = parts.pop() || "";
+
+        for (const part of parts) {
+          if (!part.startsWith("data: ")) continue;
+          try {
+            const data = JSON.parse(part.slice(6));
+            if (data.type === "chunk") {
+              fullReply += data.content;
+              bubble.textContent = fullReply.replace(/\*\*(.+?)\*\*/g, '$1').replace(/\*(.+?)\*/g, '$1').replace(/__(.+?)__/g, '$1').replace(/#{1,6}\s/g, '').replace(/`{1,3}/g, '').replace(/>\s/g, '');
+              interviewMessages.scrollTop = interviewMessages.scrollHeight;
+            } else if (data.type === "done") {
+              interviewChatHistory.push({ role: "assistant", content: data.reply || fullReply });
+              if (data.interview_state) {
+                interviewState = data.interview_state;
+                updateInterviewTitle();
+              }
+            }
+          } catch (e) {
+            console.warn("SSE parse error:", e);
+          }
+        }
+      }
     } catch (err) {
-      removeTyping();
-      appendMsg("ai", "抱歉，启动面试失败：" + err.message);
+      bubble.textContent = "抱歉，启动面试失败：" + err.message;
     } finally {
       isInterviewLoading = false;
       interviewSendBtn.disabled = false;

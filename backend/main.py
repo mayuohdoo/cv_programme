@@ -14,9 +14,9 @@ import fitz  # PyMuPDF
 from openai import OpenAI
 from docx import Document
 from dotenv import load_dotenv
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi import FastAPI, File, HTTPException, UploadFile, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel
 
 load_dotenv()
@@ -81,6 +81,13 @@ def _to_json_with_fallback(response_text: str) -> dict[str, Any]:
         return json.loads(object_match.group(1))
 
     raise ValueError("AI response is not valid JSON")
+
+
+def _serialize_model(model) -> dict:
+    """兼容 Pydantic v1 (dict) 和 v2 (model_dump) 的序列化"""
+    if hasattr(model, 'model_dump'):
+        return model.model_dump()
+    return model.dict()
 
 
 def _parse_resume_with_ai(raw_text: str) -> dict[str, Any]:
@@ -473,72 +480,66 @@ class ChatRequest(BaseModel):
     interview_state: InterviewState = InterviewState()
 
 
-@app.post("/chat")
-async def chat(request: ChatRequest) -> dict[str, Any]:
-    try:
-        # 选择系统提示词
-        mode_prompts = {
-            "default": DEFAULT_SYSTEM_PROMPT,
-            "career_switch": CAREER_SWITCH_PROMPT,
-            "resume_tailor": RESUME_TAILOR_PROMPT,
-            "career_planning": CAREER_PLANNING_PROMPT,
-            "interview_sim": INTERVIEW_SIM_PROMPT,
-        }
-        system = mode_prompts.get(request.mode, DEFAULT_SYSTEM_PROMPT)
+def _build_chat_messages(request: ChatRequest, rag_context: str = "") -> tuple[list[dict], dict]:
+    """
+    构建发送给 AI 的消息列表，返回 (messages, metadata)。
+    rag_context 是可选的 RAG 检索结果上下文。
+    """
+    # 选择系统提示词
+    mode_prompts = {
+        "default": DEFAULT_SYSTEM_PROMPT,
+        "career_switch": CAREER_SWITCH_PROMPT,
+        "resume_tailor": RESUME_TAILOR_PROMPT,
+        "career_planning": CAREER_PLANNING_PROMPT,
+        "interview_sim": INTERVIEW_SIM_PROMPT,
+    }
+    system = mode_prompts.get(request.mode, DEFAULT_SYSTEM_PROMPT)
 
-        # 如果有简历上下文，在 system prompt 最前面注入简历数据
-        ctx = request.resume_context
-        print(f"🔍 [DEBUG] has_resume={ctx.has_resume}, has_text={bool(ctx.resume_text)}, has_skills={bool(ctx.extracted_skills)}, has_diag={ctx.resume_diagnosis is not None}")
-        if ctx and ctx.has_resume:
-            # 构建简历数据块
-            resume_block = "\n【用户简历数据】\n"
-            city_str = f"（{ctx.city}）" if ctx.city else ""
-            resume_block += f"候选人简介: {ctx.candidate_summary or '暂无'} {city_str}\n"
+    # 如果有简历上下文，在 system prompt 最前面注入简历数据
+    ctx = request.resume_context
+    print(f"🔍 [DEBUG] has_resume={ctx.has_resume}, has_text={bool(ctx.resume_text)}, has_skills={bool(ctx.extracted_skills)}, has_diag={ctx.resume_diagnosis is not None}")
+    if ctx and ctx.has_resume:
+        resume_block = "\n【用户简历数据】\n"
+        city_str = f"（{ctx.city}）" if ctx.city else ""
+        resume_block += f"候选人简介: {ctx.candidate_summary or '暂无'} {city_str}\n"
 
-            mbti_line = f"MBTI: {ctx.inferred_mbti or '未知'}"
-            if ctx.mbti_description:
-                mbti_line += f" — {ctx.mbti_description}"
-            resume_block += mbti_line + "\n"
+        mbti_line = f"MBTI: {ctx.inferred_mbti or '未知'}"
+        if ctx.mbti_description:
+            mbti_line += f" — {ctx.mbti_description}"
+        resume_block += mbti_line + "\n"
 
-            if ctx.extracted_skills:
-                resume_block += f"技能标签: {'、'.join(ctx.extracted_skills[:15])}\n"
+        if ctx.extracted_skills:
+            resume_block += f"技能标签: {'、'.join(ctx.extracted_skills[:15])}\n"
 
-            diag = ctx.resume_diagnosis
-            if diag and isinstance(diag, dict):
-                score = diag.get("overall_score")
-                comment = diag.get("overall_comment", "")
-                if score is not None:
-                    resume_block += f"简历评分: {score}/100" + (f" — {comment}" if comment else "") + "\n"
+        diag = ctx.resume_diagnosis
+        if diag and isinstance(diag, dict):
+            score = diag.get("overall_score")
+            comment = diag.get("overall_comment", "")
+            if score is not None:
+                resume_block += f"简历评分: {score}/100" + (f" — {comment}" if comment else "") + "\n"
 
-            # 岗位推荐
-            if ctx.job_recommendations:
-                resume_block += f"\n推荐岗位（共{len(ctx.job_recommendations)}个）:\n"
-                for i, j in enumerate(ctx.job_recommendations, 1):
-                    title = j.get('title', '未知')
-                    industry = j.get('industry', '未知')
-                    score = j.get('match_score', '')
-                    score_str = f"（{score}分）" if score else ""
-                    reason = j.get('reason', '')
-                    reason_str = f" — {reason}" if reason else ""
-                    sr = j.get('salary_range', {})
-                    salary_str = ""
-                    if sr and sr.get('min_salary') and sr.get('max_salary'):
-                        sc = sr.get('city', '')
-                        salary_str = f" {sr['min_salary']}-{sr['max_salary']}K" + (f"（{sc}）" if sc else "")
-                    ms = j.get('missing_skills', [])
-                    ms_str = f" 需补:{','.join(ms[:3])}" if ms else ""
-                    cp = j.get('career_path', '')
-                    cp_str = f" 成长:{cp}" if cp else ""
-                    resume_block += f"  {i}. {title}（{industry}）{score_str}{salary_str}{ms_str}\n"
-                    if reason:
-                        resume_block += f"     理由: {reason}\n"
+        if ctx.job_recommendations:
+            resume_block += f"\n推荐岗位（共{len(ctx.job_recommendations)}个）:\n"
+            for i, j in enumerate(ctx.job_recommendations, 1):
+                title = j.get('title', '未知')
+                industry = j.get('industry', '未知')
+                score = j.get('match_score', '')
+                score_str = f"（{score}分）" if score else ""
+                sr = j.get('salary_range', {})
+                salary_str = ""
+                if sr and sr.get('min_salary') and sr.get('max_salary'):
+                    sc = sr.get('city', '')
+                    salary_str = f" {sr['min_salary']}-{sr['max_salary']}K" + (f"（{sc}）" if sc else "")
+                ms = j.get('missing_skills', [])
+                ms_str = f" 需补:{','.join(ms[:3])}" if ms else ""
+                cp = j.get('career_path', '')
+                cp_str = f" 成长:{cp}" if cp else ""
+                resume_block += f"  {i}. {title}（{industry}）{score_str}{salary_str}{ms_str}\n"
 
-            # 简历原文
-            if ctx.resume_text:
-                resume_block += f"\n【简历原文】\n{ctx.resume_text[:2000]}\n"
+        if ctx.resume_text:
+            resume_block += f"\n【简历原文】\n{ctx.resume_text[:2000]}\n"
 
-            # 强制规则（放在 resume 数据之后、角色 prompt 之前）
-            force_rules = """
+        force_rules = """
 ⚠️ 强制规则（必须100%遵守）：
 用户已经上传了完整的简历，上面就是全部简历数据。
 1. 禁止询问任何简历中已有的信息，包括：姓名、学历、专业、学校、技能、工作经验、项目经历、城市等
@@ -548,63 +549,99 @@ async def chat(request: ChatRequest) -> dict[str, Any]:
 5. 绝对不要以"请先告诉我以下信息"开头
 
 """
-            system = resume_block + force_rules + system
+        system = resume_block + force_rules + system
 
+    # 如果是面试模拟模式，添加面试状态信息
+    metadata = {"rag_status": "disabled", "rag_sources": []}
 
-        # 如果是面试模拟模式，添加面试状态信息
-        if request.mode == "interview_sim":
-            interview_state = request.interview_state
-            if interview_state.is_active:
-                # 面试进行中，添加进度信息
-                progress_info = f"""
-                
+    if request.mode == "interview_sim":
+        interview_state = request.interview_state
+        if interview_state.is_active:
+            progress_info = f"""
+
 【面试模拟状态】
 目标岗位: {interview_state.target_position or "未指定"}
 面试类型: {interview_state.interview_type or "未指定"}
 当前问题: {interview_state.current_question_index + 1}/{interview_state.total_questions}
 已完成的题目: {len(interview_state.scores)}/{interview_state.total_questions}
 """
-                system += progress_info
-                
-                # 如果已经有分数，添加历史分数信息
-                if interview_state.scores:
-                    avg_score = sum(interview_state.scores) / len(interview_state.scores)
-                    system += f"平均得分: {avg_score:.1f}/10\n"
-                    
-                    # 添加最近一次反馈
-                    if interview_state.feedbacks and len(interview_state.feedbacks) > 0:
-                        latest_feedback = interview_state.feedbacks[-1]
-                        system += f"上次反馈: {latest_feedback[:100]}...\n"
+            system += progress_info
+            if interview_state.scores:
+                avg_score = sum(interview_state.scores) / len(interview_state.scores)
+                system += f"平均得分: {avg_score:.1f}/10\n"
+                if interview_state.feedbacks and len(interview_state.feedbacks) > 0:
+                    latest_feedback = interview_state.feedbacks[-1]
+                    system += f"上次反馈: {latest_feedback[:100]}...\n"
 
-        # ===== RAG 知识库检索（仅 interview_sim 模式）=====
-        rag_status = "disabled"
-        rag_sources = []
-        
-        if request.mode == "interview_sim":
-            try:
-                from rag.pipeline import execute_rag_with_fallback
-                # 获取用户最新消息作为查询
-                user_query = ""
-                for msg in reversed(request.messages):
-                    if msg.role == "user":
-                        user_query = msg.content
-                        break
-                
-                if user_query:
-                    rag_result = await execute_rag_with_fallback(user_query)
-                    rag_status = rag_result.status.value if hasattr(rag_result.status, 'value') else str(rag_result.status)
-                    rag_sources = rag_result.sources
-                    
-                    # 如果检索到相关内容，注入系统提示词
-                    if rag_result.context_text:
-                        system = rag_result.context_text + "\n\n" + system
-            except Exception as e:
-                print(f"⚠️ RAG 检索失败（降级为纯AI）: {e}")
-                rag_status = "fallback"
+        # 注入 RAG 上下文（如果有）
+        if rag_context:
+            system = rag_context + "\n\n" + system
 
-        messages = [{"role": "system", "content": system}]
-        for msg in request.messages:
-            messages.append({"role": msg.role, "content": msg.content})
+    messages = [{"role": "system", "content": system}]
+    for msg in request.messages:
+        messages.append({"role": msg.role, "content": msg.content})
+
+    return messages, metadata
+
+
+def _update_interview_state(interview_state: InterviewState, clean_reply: str) -> InterviewState | None:
+    """处理面试状态更新，返回更新后的状态（如果没有变化返回 None）"""
+    new_state = copy.deepcopy(interview_state)
+
+    if new_state.is_active:
+        parsed = _parse_interview_feedback(clean_reply)
+        has_score = parsed["score"] is not None
+        has_feedback = parsed["feedback"] is not None
+
+        if has_score:
+            new_state.scores.append(parsed["score"])
+        if has_feedback:
+            new_state.feedbacks.append(parsed["feedback"])
+        if has_score:
+            new_state.current_question_index = min(new_state.current_question_index + 1, new_state.total_questions)
+    else:
+        new_state.is_active = True
+        new_state.current_question_index = 1
+
+        pos_match = re.search(r'目标岗位[：:]\s*([^\n。]+)', clean_reply)
+        if pos_match:
+            new_state.target_position = pos_match.group(1).strip()
+
+        type_match = re.search(r'(技术面|行为面|综合面)', clean_reply)
+        if type_match:
+            new_state.interview_type = type_match.group(1)
+
+    return new_state
+
+
+async def _do_rag(request: ChatRequest) -> tuple[str, str, list]:
+    """执行 RAG 检索，返回 (rag_context_text, rag_status, rag_sources)"""
+    if request.mode != "interview_sim":
+        return "", "disabled", []
+    try:
+        from rag.pipeline import execute_rag_with_fallback
+        user_query = ""
+        for msg in reversed(request.messages):
+            if msg.role == "user":
+                user_query = msg.content
+                break
+        if not user_query:
+            return "", "disabled", []
+        rag_result = await execute_rag_with_fallback(user_query)
+        status = rag_result.status.value if hasattr(rag_result.status, 'value') else str(rag_result.status)
+        context = rag_result.context_text or ""
+        sources = rag_result.sources or []
+        return context, status, sources
+    except Exception as e:
+        print(f"⚠️ RAG 检索失败（降级为纯AI）: {e}")
+        return "", "fallback", []
+
+
+@app.post("/chat")
+async def chat(request: ChatRequest) -> dict[str, Any]:
+    try:
+        rag_context, rag_status, rag_sources = await _do_rag(request)
+        messages, metadata = _build_chat_messages(request, rag_context=rag_context)
 
         response = client.chat.completions.create(
             model=ZHIPU_MODEL,
@@ -612,49 +649,12 @@ async def chat(request: ChatRequest) -> dict[str, Any]:
         )
         reply = response.choices[0].message.content
 
-        # 检测是否包含简历模板
         has_resume_template = "[RESUME_TEMPLATE]" in reply
         clean_reply = reply.replace("[RESUME_TEMPLATE]", "").strip()
 
-        # 处理面试状态更新
-        interview_state = request.interview_state
         updated_interview_state = None
-
         if request.mode == "interview_sim":
-            # 深拷贝当前状态用于更新
-            new_state = copy.deepcopy(interview_state)
-
-            if new_state.is_active:
-                # ── 面试进行中：解析 AI 回复中的评分和反馈 ──
-                parsed = _parse_interview_feedback(clean_reply)
-                has_score = parsed["score"] is not None
-                has_feedback = parsed["feedback"] is not None
-
-                if has_score:
-                    new_state.scores.append(parsed["score"])
-                if has_feedback:
-                    new_state.feedbacks.append(parsed["feedback"])
-
-                # 每当 AI 给出评分（即出了一道新题）时，推进题目计数
-                # 按提问数计算，不等用户回答
-                if has_score:
-                    new_state.current_question_index = min(new_state.current_question_index + 1, new_state.total_questions)
-            else:
-                # ── 首次进入面试模式：激活状态 ──
-                new_state.is_active = True
-                new_state.current_question_index = 1  # 第一题
-
-                # 尝试从 AI 回复中提取目标岗位
-                pos_match = re.search(r'目标岗位[：:]\s*([^\n。]+)', clean_reply)
-                if pos_match:
-                    new_state.target_position = pos_match.group(1).strip()
-
-                # 尝试提取面试类型
-                type_match = re.search(r'(技术面|行为面|综合面)', clean_reply)
-                if type_match:
-                    new_state.interview_type = type_match.group(1)
-
-            updated_interview_state = new_state
+            updated_interview_state = _update_interview_state(request.interview_state, clean_reply)
 
         return {
             "reply": clean_reply,
@@ -666,6 +666,50 @@ async def chat(request: ChatRequest) -> dict[str, Any]:
         }
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"Chat failed: {exc}") from exc
+
+
+@app.post("/chat/stream")
+async def chat_stream(request: ChatRequest):
+    try:
+        rag_context, rag_status, rag_sources = await _do_rag(request)
+        messages, metadata = _build_chat_messages(request, rag_context=rag_context)
+
+        def generate():
+            full_reply = ""
+            stream = client.chat.completions.create(
+                model=ZHIPU_MODEL,
+                messages=messages,
+                stream=True,
+            )
+            for chunk in stream:
+                if chunk.choices and chunk.choices[0].delta and chunk.choices[0].delta.content:
+                    content = chunk.choices[0].delta.content
+                    full_reply += content
+                    yield f"data: {json.dumps({'type': 'chunk', 'content': content}, ensure_ascii=False)}\n\n"
+
+            # 所有 token 发送完毕，发送 done 事件
+            has_resume_template = "[RESUME_TEMPLATE]" in full_reply
+            clean_reply = full_reply.replace("[RESUME_TEMPLATE]", "").strip()
+
+            updated_interview_state = None
+            if request.mode == "interview_sim":
+                updated_interview_state = _update_interview_state(request.interview_state, clean_reply)
+
+            done_data = {
+                "type": "done",
+                "reply": clean_reply,
+                "has_resume_template": has_resume_template,
+                "interview_state": (
+                    _serialize_model(updated_interview_state) if updated_interview_state else None
+                ),
+                "rag_status": rag_status,
+                "rag_sources": rag_sources,
+            }
+            yield f"data: {json.dumps(done_data, ensure_ascii=False)}\n\n"
+
+        return StreamingResponse(generate(), media_type="text/event-stream")
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Chat stream failed: {exc}") from exc
 
 
 @app.get("/demo")
