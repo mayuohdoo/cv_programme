@@ -1154,12 +1154,13 @@
     .position-picker-left .cat-item.active { background: #ede9fe; color: #6C63FF; font-weight: 700; }
     .position-picker-right {
       flex: 1; overflow-y: auto; padding: 8px;
-      display: flex; flex-wrap: wrap; align-content: flex-start; gap: 6px;
+      display: flex; flex-direction: column; gap: 4px;
     }
     .position-picker-right .job-item {
       padding: 7px 12px; font-size: 13px; color: #444;
       background: #f8f6ff; border-radius: 8px;
       cursor: pointer; transition: all 0.15s; border: 1px solid transparent;
+      width: 100%;
     }
     .position-picker-right .job-item:hover { background: #ede9fe; color: #6C63FF; border-color: #6C63FF; }
 
@@ -1408,6 +1409,39 @@
       cursor: not-allowed;
       transform: none;
       box-shadow: none;
+    }
+
+    /* 语音输入按钮 */
+    .mic-btn {
+      width: 42px;
+      height: 42px;
+      background: var(--white);
+      color: var(--gray-500);
+      border: 2px solid var(--gray-200);
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+    }
+    .mic-btn:hover {
+      border-color: var(--sakura-primary);
+      color: var(--sakura-dark);
+      background: var(--sakura-lighter);
+    }
+    .mic-btn.recording {
+      background: #fff0f0;
+      border-color: #FF6B6B;
+      color: #FF6B6B;
+      animation: mic-pulse 1.2s ease-in-out infinite;
+      box-shadow: 0 0 0 4px rgba(255, 107, 107, 0.15);
+    }
+    @keyframes mic-pulse {
+      0%, 100% { box-shadow: 0 0 0 4px rgba(255, 107, 107, 0.15); }
+      50% { box-shadow: 0 0 0 8px rgba(255, 107, 107, 0.05); }
     }
 
     /* --- Clear chat confirmation modal --- */
@@ -3063,6 +3097,9 @@
         <!-- Input area -->
         <div class="agent-input-area">
           <textarea id="agentInput" class="agent-input" placeholder="输入你的想法，我来帮你分析..." rows="1"></textarea>
+          <button id="micBtn" class="mic-btn" onclick="toggleMic()" title="语音输入">
+            <span>🎤</span>
+          </button>
           <button id="agentSendBtn" class="agent-send-btn" onclick="sendInterviewChat()">
             <span>✈️</span>
           </button>
@@ -3872,6 +3909,7 @@
 
     interviewInput.value = "";
     interviewInput.style.height = "auto";
+    finalTranscript = "";
     isInterviewLoading = true;
     interviewSendBtn.disabled = true;
 
@@ -4014,6 +4052,88 @@
     } else if (speaker === 'user') {
       userCard.classList.add('speaking');
       userBadge.innerHTML = '<span class="dot"></span> 讲话中';
+    }
+  }
+
+  // ── Web Speech API 语音输入 ──
+  const micBtn = document.getElementById('micBtn');
+  let recognition = null;
+  let isRecording = false;
+  let finalTranscript = '';
+
+  function initRecognition() {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      micBtn.style.display = 'none';
+      console.warn('浏览器不支持语音识别');
+      return null;
+    }
+    const recog = new SpeechRecognition();
+    recog.lang = 'zh-CN';
+    recog.continuous = true;
+    recog.interimResults = true;
+    recog.maxAlternatives = 1;
+
+    recog.onresult = (e) => {
+      let interimTranscript = '';
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        const t = e.results[i][0].transcript;
+        if (e.results[i].isFinal) {
+          finalTranscript += t;
+        } else {
+          interimTranscript += t;
+        }
+      }
+      interviewInput.value = finalTranscript + interimTranscript;
+      interviewInput.style.height = 'auto';
+      interviewInput.style.height = Math.min(interviewInput.scrollHeight, 120) + 'px';
+    };
+
+    recog.onerror = (e) => {
+      console.warn('语音识别错误:', e.error);
+      stopRecording();
+    };
+
+    recog.onend = () => {
+      if (isRecording) {
+        try { recog.start(); } catch(e) {}
+      }
+    };
+
+    return recog;
+  }
+
+  function toggleMic() {
+    if (isRecording) {
+      stopRecording();
+      if (interviewInput.value.trim()) {
+        sendInterviewChat();
+      }
+    } else {
+      startRecording();
+    }
+  }
+
+  function startRecording() {
+    if (!recognition) {
+      recognition = initRecognition();
+      if (!recognition) return;
+    }
+    finalTranscript = interviewInput.value;
+    isRecording = true;
+    micBtn.classList.add('recording');
+    micBtn.title = '点击停止录音';
+    setSpeaking('user');
+    try { recognition.start(); } catch(e) {}
+  }
+
+  function stopRecording() {
+    isRecording = false;
+    micBtn.classList.remove('recording');
+    micBtn.title = '语音输入';
+    setSpeaking(null);
+    if (recognition) {
+      try { recognition.stop(); } catch(e) {}
     }
   }
 
