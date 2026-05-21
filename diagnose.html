@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Diagnostic Page</title>
+  <style>
+    body { font-family: monospace; padding: 20px; }
+    .test { margin: 10px 0; padding: 10px; border: 1px solid #ccc; }
+    .pass { background: #d4edda; }
+    .fail { background: #f8d7da; }
+    pre { background: #f5f5f5; padding: 10px; overflow-x: auto; }
+  </style>
+</head>
+<body>
+  <h1>Resume Upload Diagnostic</h1>
+  <div id="results"></div>
+
+  <script>
+    const API_BASE_URL = "https://cv-programme.onrender.com";
+    const results = document.getElementById('results');
+
+    function addTest(name, status, details) {
+      const div = document.createElement('div');
+      div.className = `test ${status}`;
+      div.innerHTML = `
+        <h3>${name}: ${status.toUpperCase()}</h3>
+        <pre>${details}</pre>
+      `;
+      results.appendChild(div);
+    }
+
+    // Test 1: Check if API_BASE_URL is defined
+    addTest('API_BASE_URL defined', 
+      typeof API_BASE_URL !== 'undefined' ? 'pass' : 'fail',
+      `API_BASE_URL = "${API_BASE_URL}"`
+    );
+
+    // Test 2: Check CORS preflight
+    fetch(`${API_BASE_URL}/upload`, {
+      method: 'OPTIONS',
+      headers: {
+        'Origin': window.location.origin,
+        'Access-Control-Request-Method': 'POST'
+      }
+    })
+    .then(response => {
+      addTest('CORS Preflight', 'pass', 
+        `Status: ${response.status}\n` +
+        `Headers:\n${Array.from(response.headers.entries()).map(([k,v]) => `  ${k}: ${v}`).join('\n')}`
+      );
+    })
+    .catch(error => {
+      addTest('CORS Preflight', 'fail', error.message);
+    });
+
+    // Test 3: Check if backend is reachable
+    fetch(`${API_BASE_URL}/`)
+    .then(response => response.json())
+    .then(data => {
+      addTest('Backend Reachable', 'pass', JSON.stringify(data, null, 2));
+    })
+    .catch(error => {
+      addTest('Backend Reachable', 'fail', error.message);
+    });
+
+    // Test 4: Test file upload with a dummy file
+    const testBlob = new Blob(['test content'], { type: 'application/pdf' });
+    const testFile = new File([testBlob], 'test.pdf', { type: 'application/pdf' });
+    const formData = new FormData();
+    formData.append('file', testFile);
+
+    fetch(`${API_BASE_URL}/upload`, {
+      method: 'POST',
+      body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+      addTest('File Upload Test', 
+        data.parse_status === 'success' ? 'pass' : 'fail',
+        JSON.stringify(data, null, 2)
+      );
+    })
+    .catch(error => {
+      addTest('File Upload Test', 'fail', error.message);
+    });
+
+    // Test 5: Check browser info
+    addTest('Browser Info', 'pass',
+      `User Agent: ${navigator.userAgent}\n` +
+      `Location: ${window.location.href}\n` +
+      `Origin: ${window.location.origin}`
+    );
+  </script>
+</body>
+</html>

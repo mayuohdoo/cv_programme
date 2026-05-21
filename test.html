@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API连接测试</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-result { margin: 10px 0; padding: 10px; border-radius: 5px; }
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+        .info { background-color: #d1ecf1; color: #0c5460; }
+    </style>
+</head>
+<body>
+    <h1>🧪 API连接测试</h1>
+    <div id="results"></div>
+    
+    <script>
+        const API_BASE_URL = "https://cv-programme.onrender.com";
+        const resultsDiv = document.getElementById('results');
+        
+        function addResult(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `test-result ${type}`;
+            div.textContent = message;
+            resultsDiv.appendChild(div);
+        }
+        
+        async function testAPI() {
+            addResult('开始测试API连接...', 'info');
+            
+            // 测试1: 检查API文档
+            try {
+                const response = await fetch(`${API_BASE_URL}/docs`);
+                if (response.ok) {
+                    addResult('✅ 后端API服务正常', 'success');
+                } else {
+                    addResult(`❌ 后端API异常: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                addResult(`❌ 后端API连接失败: ${error.message}`, 'error');
+            }
+            
+            // 测试2: 检查CORS
+            try {
+                const response = await fetch(`${API_BASE_URL}/upload`, {
+                    method: 'OPTIONS',
+                    headers: {
+                        'Origin': window.location.origin,
+                        'Access-Control-Request-Method': 'POST'
+                    }
+                });
+                if (response.ok) {
+                    addResult('✅ CORS配置正确', 'success');
+                } else {
+                    addResult(`❌ CORS配置异常: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                addResult(`❌ CORS测试失败: ${error.message}`, 'error');
+            }
+            
+            // 测试3: 模拟上传请求（不发送文件）
+            try {
+                const formData = new FormData();
+                const response = await fetch(`${API_BASE_URL}/upload`, {
+                    method: 'POST',
+                    body: formData
+                });
+                // 这里应该返回400错误（没有文件），但不应该是网络错误
+                if (response.status === 400) {
+                    addResult('✅ 上传端点可访问（返回400是正常的，因为没有发送文件）', 'success');
+                } else {
+                    addResult(`⚠️ 上传端点响应异常: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                addResult(`❌ 上传端点测试失败: ${error.message}`, 'error');
+            }
+            
+            addResult('测试完成！', 'info');
+        }
+        
+        // 页面加载后自动测试
+        window.onload = testAPI;
+    </script>
+</body>
+</html>

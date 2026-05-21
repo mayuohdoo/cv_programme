@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: resume-demo-backend
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    rootDir: backend
+    envVars:
+      - key: ZHIPU_API_KEY
+        sync: false
+      - key: ZHIPU_MODEL
+        value: glm-4-flash
+      - key: MAX_FILE_SIZE_MB
+        value: 5
+      - key: ALLOWED_ORIGINS
+        value: https://catarina-xxxcc.github.io,https://cv-programme-git-main-catarina-xxxccs-projects.vercel.app
+      - key: DEEPSEEK_API_KEY
+        sync: false
+      - key: DEEPSEEK_BASE_URL
+        value: https://api.deepseek.com
+      - key: SUPABASE_URL
+        value: https://crizpngpudekwrddhoik.supabase.co
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: RAG_TOP_K
+        value: "3"
+      - key: RAG_SIMILARITY_THRESHOLD
+        value: "0.7"

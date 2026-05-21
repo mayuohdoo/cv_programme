@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>招聘申请表单 - 测试页面</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+    
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 12px;
+      padding: 40px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+    }
+    
+    h1 {
+      color: #333;
+      margin-bottom: 10px;
+      font-size: 28px;
+    }
+    
+    .subtitle {
+      color: #666;
+      margin-bottom: 30px;
+      font-size: 14px;
+    }
+    
+    .form-group {
+      margin-bottom: 20px;
+    }
+    
+    label {
+      display: block;
+      color: #333;
+      font-weight: 500;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+    
+    .required {
+      color: #e74c3c;
+    }
+    
+    input, textarea, select {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #e0e0e0;
+      border-radius: 6px;
+      font-size: 14px;
+      transition: border-color 0.3s;
+      font-family: inherit;
+    }
+    
+    input:focus, textarea:focus, select:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+    
+    textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+    
+    .submit-btn {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      margin-top: 10px;
+    }
+    
+    .submit-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    }
+    
+    .tip {
+      background: #fff3cd;
+      border-left: 4px solid #ffc107;
+      padding: 15px;
+      border-radius: 4px;
+      margin-bottom: 30px;
+      font-size: 14px;
+      color: #856404;
+    }
+    
+    .tip strong {
+      display: block;
+      margin-bottom: 5px;
+    }
+    
+    .success-message {
+      display: none;
+      background: #d4edda;
+      border-left: 4px solid #28a745;
+      padding: 15px;
+      border-radius: 4px;
+      margin-top: 20px;
+      color: #155724;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🎯 招聘申请表单</h1>
+    <p class="subtitle">这是一个测试页面，用于验证简历自动填充扩展的功能</p>
+    
+    <div class="tip">
+      <strong>💡 测试步骤：</strong>
+      1. 确保已安装并配置好"简历自动填充"扩展<br>
+      2. 点击浏览器工具栏中的扩展图标<br>
+      3. 点击"✨ 自动填充"按钮<br>
+      4. 观察下方表单是否被自动填充
+    </div>
+    
+    <form id="applicationForm">
+      <div class="form-group">
+        <label for="name">姓名 <span class="required">*</span></label>
+        <input type="text" id="name" name="name" placeholder="请输入您的姓名" required>
+      </div>
+      
+      <div class="form-group">
+        <label for="email">邮箱 <span class="required">*</span></label>
+        <input type="email" id="email" name="email" placeholder="example@email.com" required>
+      </div>
+      
+      <div class="form-group">
+        <label for="phone">联系电话 <span class="required">*</span></label>
+        <input type="tel" id="phone" name="phone" placeholder="请输入手机号码" required>
+      </div>
+      
+      <div class="form-group">
+        <label for="school">毕业院校</label>
+        <input type="text" id="school" name="school" placeholder="请输入毕业院校">
+      </div>
+      
+      <div class="form-group">
+        <label for="major">专业</label>
+        <input type="text" id="major" name="major" placeholder="请输入专业">
+      </div>
+      
+      <div class="form-group">
+        <label for="degree">学历</label>
+        <select id="degree" name="degree">
+          <option value="">请选择学历</option>
+          <option value="高中">高中</option>
+          <option value="大专">大专</option>
+          <option value="本科">本科</option>
+          <option value="硕士">硕士</option>
+          <option value="博士">博士</option>
+        </select>
+      </div>
+      
+      <div class="form-group">
+        <label for="graduation">毕业时间</label>
+        <input type="text" id="graduation" name="graduation" placeholder="例如：2024-06">
+      </div>
+      
+      <div class="form-group">
+        <label for="experience">工作经验</label>
+        <textarea id="experience" name="experience" placeholder="请简要描述您的工作经验"></textarea>
+      </div>
+      
+      <div class="form-group">
+        <label for="skills">专业技能</label>
+        <textarea id="skills" name="skills" placeholder="请列出您的主要技能"></textarea>
+      </div>
+      
+      <div class="form-group">
+        <label for="introduction">自我介绍</label>
+        <textarea id="introduction" name="introduction" placeholder="请简要介绍自己"></textarea>
+      </div>
+      
+      <button type="submit" class="submit-btn">提交申请</button>
+    </form>
+    
+    <div id="successMessage" class="success-message">
+      ✅ 表单提交成功！（这只是一个测试页面，数据不会被真正提交）
+    </div>
+  </div>
+  
+  <script>
+    // 表单提交处理
+    document.getElementById('applicationForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      // 收集表单数据
+      const formData = new FormData(this);
+      const data = {};
+      formData.forEach((value, key) => {
+        data[key] = value;
+      });
+      
+      console.log('表单数据:', data);
+      
+      // 显示成功消息
+      const successMessage = document.getElementById('successMessage');
+      successMessage.style.display = 'block';
+      
+      // 滚动到成功消息
+      successMessage.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      
+      // 3秒后隐藏
+      setTimeout(() => {
+        successMessage.style.display = 'none';
+      }, 3000);
+    });
+    
+    // 监听输入变化，用于调试
+    document.querySelectorAll('input, textarea, select').forEach(field => {
+      field.addEventListener('change', function() {
+        console.log(`字段 ${this.name} 已更新:`, this.value);
+      });
+    });
+  </script>
+</body>
+</html>

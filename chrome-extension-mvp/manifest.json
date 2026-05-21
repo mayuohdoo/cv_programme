@@ -1,0 +1,59 @@
+{
+  "manifest_version": 3,
+  "name": "小小求职拿下 - 简历自动填充 MVP",
+  "version": "0.4.0",
+  "description": "一键自动填充招聘表单，快速投递简历，支持 PDF/DOCX/TXT，AI 智能解析，多段工作经验",
+  "permissions": [
+    "storage",
+    "activeTab",
+    "scripting"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "externally_connectable": {
+    "matches": [
+      "https://catarina-xxxcc.github.io/*",
+      "https://cv-programme.vercel.app/*",
+      "http://localhost:*/*",
+      "http://127.0.0.1:*/*"
+    ]
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": [
+        "field-matcher.js",
+        "autofill-engine.js",
+        "application-storage.js",
+        "info-extractor.js",
+        "floating-ui.js",
+        "content.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_popup": "popup-v4-local.html",
+    "default_icon": {
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "128": "icons/icon128.png"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "libs/pdf.min.js",
+        "libs/pdf.worker.min.js",
+        "libs/mammoth.browser.min.js",
+        "settings.html"
+      ],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}

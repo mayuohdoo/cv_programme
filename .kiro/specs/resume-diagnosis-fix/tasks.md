@@ -1,0 +1,128 @@
+# Implementation Plan
+
+- [ ] 1. Write bug condition exploration test
+  - **Property 1: Bug Condition** - 简历质量问题检测失效
+  - **CRITICAL**: This test MUST FAIL on unfixed code - failure confirms the bug exists
+  - **DO NOT attempt to fix the test or the code when it fails**
+  - **NOTE**: This test encodes the expected behavior - it will validate the fix when it passes after implementation
+  - **GOAL**: Surface counterexamples that demonstrate the bug exists
+  - **Scoped PBT Approach**: For deterministic bugs, scope the property to the concrete failing case(s) to ensure reproducibility
+  - Test implementation details from Bug Condition in design:
+    - Create test resumes containing known typos (e.g., "测式" instead of "测试", "沟通能里" instead of "沟通能力")
+    - Create test resumes containing known grammar issues (e.g., "通过使用Python和数据分析工具进行了数据的分析")
+    - Create test resumes containing known redundancy (e.g., "主要负责主要的项目开发")
+    - Create test resumes with multiple quality issues (10+ problems)
+  - The test assertions should match the Expected Behavior Properties from design:
+    - Assert that `resume_diagnosis.typos` array is NOT empty when typos exist
+    - Assert that `resume_diagnosis.grammar_issues` array is NOT empty when grammar issues exist
+    - Assert that `resume_diagnosis.redundancy` array is NOT empty when redundancy exists
+    - Assert that `resume_diagnosis.overall_score` is reasonable (< 70 for 10+ issues)
+    - Assert that each detected issue has valid `original` and `suggestion` fields
+  - Run test on UNFIXED code
+  - **EXPECTED OUTCOME**: Test FAILS (this is correct - it proves the bug exists)
+  - Document counterexamples found to understand root cause:
+    - Record which types of issues are not detected (typos, grammar, redundancy)
+    - Record the actual scores returned vs expected scores
+    - Record any empty arrays that should contain issues
+  - Mark task complete when test is written, run, and failure is documented
+  - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5_
+
+- [ ] 2. Write preservation property tests (BEFORE implementing fix)
+  - **Property 2: Preservation** - 保持其他解析功能不变
+  - **IMPORTANT**: Follow observation-first methodology
+  - Observe behavior on UNFIXED code for non-buggy inputs:
+    - Run the unfixed code with various test resumes
+    - Record the MBTI inference results (inferred_mbti, mbti_description)
+    - Record the candidate_summary outputs
+    - Record the job_recommendations outputs (should be 6 items)
+    - Record the JSON response structure
+    - Record the response times
+  - Write property-based tests capturing observed behavior patterns from Preservation Requirements:
+    - Test that MBTI inference logic remains unchanged (E/I/S/N/T/F/J/P rules)
+    - Test that candidate_summary generation remains unchanged
+    - Test that job_recommendations returns 6 items with correct structure
+    - Test that JSON response structure matches schema (all required fields present)
+    - Test that response time remains under 10 seconds
+    - Test that PDF and DOCX file parsing continues to work
+  - Property-based testing generates many test cases for stronger guarantees
+  - Run tests on UNFIXED code
+  - **EXPECTED OUTCOME**: Tests PASS (this confirms baseline behavior to preserve)
+  - Mark task complete when tests are written, run, and passing on unfixed code
+  - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5_
+
+- [ ] 3. Fix for 简历质量诊断功能失效
+
+  - [x] 3.1 Optimize the prompt in `_parse_resume_with_ai` function
+    - Add role definition: "你是一个资深 HR 分析师、职业人格专家和严格的简历审查专家"
+    - Add strictness emphasis: "请以高标准检查简历质量，仔细审查每一处表达，不要遗漏任何问题"
+    - Add detailed typo detection standards with examples:
+      - 同音字错误 (e.g., "测式" → "测试")
+      - 形近字错误 (e.g., "项日" → "项目")
+      - 多字/少字 (e.g., "的的项目" → "的项目")
+      - 标点错误
+    - Add detailed grammar issue detection standards with examples:
+      - 语序不当 (e.g., "使用了熟练Python" → "熟练使用Python")
+      - 成分残缺
+      - 搭配不当
+      - 表意不明
+      - 冗长啰嗦 (e.g., "通过使用Python和数据分析工具进行了数据的分析" → "使用Python进行数据分析")
+    - Add detailed redundancy detection standards with examples:
+      - 重复词语 (e.g., "主要负责主要的项目" → "负责主要的项目")
+      - 重复表达
+      - 无意义修饰 (e.g., "非常很重要" → "非常重要")
+      - 可合并句子
+    - Add strict scoring standards:
+      - 90-100分: 无明显问题，表达专业简洁
+      - 80-89分: 有1-2个小问题，整体良好
+      - 70-79分: 有3-5个问题，需要改进
+      - 60-69分: 有6-10个问题，质量一般
+      - 60分以下: 问题较多(>10个)，需要大幅修改
+    - Add output format constraints:
+      - original字段必须是简历中的原文片段(5-30字)
+      - suggestion必须是具体可行的修改建议
+      - 如果发现问题必须如实指出，不要遗漏
+    - Add important reminders:
+      - 如果简历质量确实很好，可以返回空数组和高分(85-100)
+      - 但如果发现问题，必须如实指出，不要因为礼貌而隐瞒
+      - original字段必须是简历中的原文片段，不要编造
+    - _Bug_Condition: isBugCondition(input) where (input.text CONTAINS typos OR grammar_errors OR redundancy) AND (AI_diagnosis arrays are empty OR overall_score > 85)_
+    - _Expected_Behavior: expectedBehavior(result) where result.resume_diagnosis accurately detects quality issues with non-empty arrays, reasonable scores, and specific suggestions_
+    - _Preservation: MBTI inference, candidate_summary, job_recommendations, JSON structure, file parsing, and response time must remain unchanged_
+    - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 3.1, 3.2, 3.3, 3.4, 3.5_
+
+  - [ ] 3.2 Verify bug condition exploration test now passes
+    - **Property 1: Expected Behavior** - 简历质量问题准确检测
+    - **IMPORTANT**: Re-run the SAME test from task 1 - do NOT write a new test
+    - The test from task 1 encodes the expected behavior
+    - When this test passes, it confirms the expected behavior is satisfied
+    - Run bug condition exploration test from step 1
+    - **EXPECTED OUTCOME**: Test PASSES (confirms bug is fixed)
+    - Verify that:
+      - Typos are now detected in typos array with correct original and suggestion
+      - Grammar issues are now detected in grammar_issues array
+      - Redundancy is now detected in redundancy array
+      - Overall scores are reasonable based on issue count
+      - Overall comments are specific and actionable
+    - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5, 2.6_
+
+  - [ ] 3.3 Verify preservation tests still pass
+    - **Property 2: Preservation** - 其他功能保持不变
+    - **IMPORTANT**: Re-run the SAME tests from task 2 - do NOT write new tests
+    - Run preservation property tests from step 2
+    - **EXPECTED OUTCOME**: Tests PASS (confirms no regressions)
+    - Confirm all tests still pass after fix (no regressions):
+      - MBTI inference results match baseline
+      - Candidate summary quality is maintained
+      - Job recommendations structure and count unchanged
+      - JSON schema compliance maintained
+      - Response time still under 10 seconds
+      - File parsing (PDF/DOCX) still works correctly
+    - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5_
+
+- [ ] 4. Checkpoint - Ensure all tests pass
+  - Run all tests (bug condition test + preservation tests)
+  - Verify bug condition test passes (quality issues are detected)
+  - Verify preservation tests pass (other features unchanged)
+  - Test with various resume samples (different quality levels, industries, formats)
+  - Ensure response times are acceptable
+  - Ask the user if questions arise or if manual testing is needed

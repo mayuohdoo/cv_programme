@@ -1,0 +1,83 @@
+    </div>
+  </div>
+
+  <!-- Agent 求职面板（通栏横跨第2列和第3列） -->
+  <div class="agent-section">
+    <div class="agent-panel">
+      <!-- Header -->
+      <div class="agent-header">
+        <div class="agent-header-left">
+          <span class="agent-icon">🤖</span>
+          <div class="agent-header-text">
+            <h3 id="agentTitle">求职 Agent</h3>
+            <p id="agentSubtitle">温暖陪伴你的求职旅程 🌸</p>
+          </div>
+        </div>
+        <button class="btn-clear-chat" onclick="clearAgentChat()" title="清除对话">
+          <span>🗑️</span>
+        </button>
+      </div>
+
+      <!-- Welcome message (always visible) -->
+      <div class="agent-welcome" id="agentWelcome">
+        <p>同学你好👋，我是你的求职小助手。不管是想跨行转赛道、精修简历，还是想提前演练面试，我都会陪你一起复盘规划，助你顺利拿下心仪的 Offer！</p>
+      </div>
+
+      <!-- Function cards (horizontal) -->
+      <div class="agent-cards" id="agentCards">
+        <div class="agent-card" data-mode="career_switch" onclick="handleCardClick(this)">
+          <span class="card-icon">🚀</span>
+          <div class="card-info">
+            <span class="card-title">换赛道</span>
+            <span class="card-desc">跨行业转型策略分析</span>
+          </div>
+        </div>
+        <div class="agent-card" data-mode="resume_tailor" onclick="handleCardClick(this)">
+          <span class="card-icon">📝</span>
+          <div class="card-info">
+            <span class="card-title">修改简历</span>
+            <span class="card-desc">针对目标岗位优化简历</span>
+          </div>
+        </div>
+        <div class="agent-card" data-mode="career_planning" onclick="handleCardClick(this)">
+          <span class="card-icon">🗺️</span>
+          <div class="card-info">
+            <span class="card-title">职业规划</span>
+            <span class="card-desc">短中长期发展路径建议</span>
+          </div>
+        </div>
+        <div class="agent-card" data-mode="interview_sim" onclick="handleCardClick(this)">
+          <span class="card-icon">🎤</span>
+          <div class="card-info">
+            <span class="card-title">面试模拟</span>
+            <span class="card-desc">模拟真实面试场景练习</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chat messages area -->
+      <div class="agent-messages" id="agentMessages">
+        <!-- Preset questions (shown initially) -->
+        <div class="preset-questions" id="presetQuestions">
+          <div class="preset-question" onclick="sendPresetQuestion(this)">
+            <span>有哪些技巧可以使简历更加吸引HR的注意？</span>
+          </div>
+          <div class="preset-question" onclick="sendPresetQuestion(this)">
+            <span>有什么秘诀可以使得简历在众多求职者中脱颖而出？</span>
+          </div>
+          <div class="preset-question" onclick="sendPresetQuestion(this)">
+            <span>有哪些常见的面试问题以及回答方式？</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Input area -->
+      <div class="agent-input-area">
+        <textarea id="agentInput" class="agent-input" placeholder="输入你的想法，我来帮你分析..." rows="1"></textarea>
+        <button id="agentSendBtn" class="agent-send-btn" onclick="sendAgentChat()">
+          <span>✈️</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>本地测试 - 小小求职拿下 ✦</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+        .upload-area {
+            border: 2px dashed #FFB7C5;
+            padding: 40px;
+            text-align: center;
+            border-radius: 10px;
+            margin: 20px 0;
+            background: #FFF5F7;
+        }
+        .upload-btn {
+            background: #FFB7C5;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+        .upload-btn:hover {
+            background: #FF9DB3;
+        }
+        .upload-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .progress {
+            width: 100%;
+            height: 20px;
+            background: #f0f0f0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #FFB7C5, #FF9DB3);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🌸 小小求职拿下 - 本地测试版</h1>
+        
+        <div id="apiStatus" class="status info">正在检测API连接...</div>
+        
+        <div class="upload-area">
+            <h3>📄 上传简历测试</h3>
+            <p>支持 PDF / DOCX 格式，最大 5MB</p>
+            <input type="file" id="fileInput" accept=".pdf,.docx" style="margin: 10px 0;">
+            <br>
+            <button id="uploadBtn" class="upload-btn" disabled>开始解析</button>
+            
+            <div id="progress" class="progress" style="display: none;">
+                <div id="progressBar" class="progress-bar"></div>
+            </div>
+            <div id="uploadStatus"></div>
+        </div>
+        
+        <div id="result" style="display: none;">
+            <h3>📊 解析结果</h3>
+            <div id="resultContent"></div>
+        </div>
+        
+        <div style="margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 5px;">
+            <h4>📝 说明</h4>
+            <p>这是一个本地测试版本，用于验证功能是否正常。</p>
+            <p><strong>后端API：</strong> https://cv-programme.onrender.com</p>
+            <p><strong>GitHub Pages：</strong> 需要手动启用（见deploy_instructions.md）</p>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = "https://cv-programme.onrender.com";
+        
+        // 检测API状态
+        async function checkAPI() {
+            const statusEl = document.getElementById('apiStatus');
+            try {
+                const response = await fetch(`${API_BASE_URL}/docs`);
+                if (response.ok) {
+                    statusEl.textContent = '✅ 后端API连接正常';
+                    statusEl.className = 'status success';
+                    return true;
+                } else {
+                    statusEl.textContent = '❌ 后端API响应异常';
+                    statusEl.className = 'status error';
+                    return false;
+                }
+            } catch (error) {
+                statusEl.textContent = '❌ 无法连接到后端API';
+                statusEl.className = 'status error';
+                return false;
+            }
+        }
+        
+        // 文件上传
+        const fileInput = document.getElementById('fileInput');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const progress = document.getElementById('progress');
+        const progressBar = document.getElementById('progressBar');
+        const uploadStatus = document.getElementById('uploadStatus');
+        const result = document.getElementById('result');
+        const resultContent = document.getElementById('resultContent');
+        
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const ext = file.name.split('.').pop().toLowerCase();
+                if (ext === 'pdf' || ext === 'docx') {
+                    uploadBtn.disabled = false;
+                    uploadStatus.textContent = `已选择: ${file.name}`;
+                    uploadStatus.className = 'status info';
+                } else {
+                    uploadBtn.disabled = true;
+                    uploadStatus.textContent = '请选择PDF或DOCX文件';
+                    uploadStatus.className = 'status error';
+                }
+            }
+        });
+        
+        uploadBtn.addEventListener('click', async () => {
+            const file = fileInput.files[0];
+            if (!file) return;
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            uploadBtn.disabled = true;
+            progress.style.display = 'block';
+            uploadStatus.textContent = '正在上传...';
+            uploadStatus.className = 'status info';
+            
+            try {
+                const xhr = new XMLHttpRequest();
+                
+                xhr.upload.onprogress = (e) => {
+                    if (e.lengthComputable) {
+                        const percent = (e.loaded / e.total) * 100;
+                        progressBar.style.width = percent + '%';
+                    }
+                };
+                
+                xhr.onload = () => {
+                    if (xhr.status === 200) {
+                        const data = JSON.parse(xhr.responseText);
+                        uploadStatus.textContent = '✅ 解析成功！';
+                        uploadStatus.className = 'status success';
+                        showResult(data);
+                    } else {
+                        const error = JSON.parse(xhr.responseText);
+                        uploadStatus.textContent = `❌ 解析失败: ${error.detail}`;
+                        uploadStatus.className = 'status error';
+                    }
+                    uploadBtn.disabled = false;
+                    progress.style.display = 'none';
+                };
+                
+                xhr.onerror = () => {
+                    uploadStatus.textContent = '❌ 网络错误';
+                    uploadStatus.className = 'status error';
+                    uploadBtn.disabled = false;
+                    progress.style.display = 'none';
+                };
+                
+                xhr.open('POST', `${API_BASE_URL}/upload`);
+                xhr.send(formData);
+                
+            } catch (error) {
+                uploadStatus.textContent = `❌ 上传失败: ${error.message}`;
+                uploadStatus.className = 'status error';
+                uploadBtn.disabled = false;
+                progress.style.display = 'none';
+            }
+        });
+        
+        function showResult(data) {
+            const parsed = data.parsed_data || {};
+            
+            let html = '<div style="background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 10px 0;">';
+            
+            // MBTI
+            if (parsed.inferred_mbti) {
+                html += `<h4>🧠 MBTI人格: ${parsed.inferred_mbti}</h4>`;
+                html += `<p>${parsed.mbti_description || ''}</p>`;
+            }
+            
+            // 候选人简介
+            if (parsed.candidate_summary) {
+                html += `<h4>👤 候选人简介</h4>`;
+                html += `<p>${parsed.candidate_summary}</p>`;
+            }
+            
+            // 岗位推荐
+            if (parsed.job_recommendations && parsed.job_recommendations.length > 0) {
+                html += `<h4>💼 岗位推荐</h4>`;
+                parsed.job_recommendations.forEach((job, index) => {
+                    const salary = job.salary_range ? 
+                        `${job.salary_range.min_salary}-${job.salary_range.max_salary}K (${job.salary_range.city})` : 
+                        '薪资待定';
+                    html += `
+                        <div style="border: 1px solid #ddd; padding: 10px; margin: 5px 0; border-radius: 5px;">
+                            <strong>${job.title}</strong> - ${job.industry} 
+                            <span style="background: #e7f3ff; padding: 2px 6px; border-radius: 3px; font-size: 12px;">${job.match_level}匹配</span>
+                            <br>
+                            <span style="color: #FF9DB3; font-weight: bold;">${salary}</span>
+                            <br>
+                            <small>${job.reason}</small>
+                        </div>
+                    `;
+                });
+            }
+            
+            // 简历诊断
+            if (parsed.resume_diagnosis) {
+                const diag = parsed.resume_diagnosis;
+                html += `<h4>📋 简历诊断 (评分: ${diag.overall_score || '未评分'})</h4>`;
+                html += `<p><em>${diag.overall_comment || '无评价'}</em></p>`;
+                
+                if (diag.typos && diag.typos.length > 0) {
+                    html += `<p><strong>错别字:</strong> ${diag.typos.length}个</p>`;
+                }
+                if (diag.grammar_issues && diag.grammar_issues.length > 0) {
+                    html += `<p><strong>语法问题:</strong> ${diag.grammar_issues.length}个</p>`;
+                }
+                if (diag.redundancy && diag.redundancy.length > 0) {
+                    html += `<p><strong>冗余表达:</strong> ${diag.redundancy.length}个</p>`;
+                }
+            }
+            
+            html += '</div>';
+            
+            resultContent.innerHTML = html;
+            result.style.display = 'block';
+        }
+        
+        // 页面加载时检测API
+        window.onload = checkAPI;
+    </script>
+</body>
+</html>
