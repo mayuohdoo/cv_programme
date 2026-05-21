@@ -1130,6 +1130,44 @@
     .start-bar-custom-input:focus {
       border-color: var(--accent);
     }
+
+    /* 二级岗位选择器 */
+    .position-picker { position: relative; flex: 1; }
+    .position-picker-btn {
+      width: 100%; padding: 10px 16px; border: 1.5px solid #e0d8f0;
+      border-radius: 10px; background: white; font-size: 14px; color: #555;
+      cursor: pointer; text-align: left; transition: border-color 0.2s;
+    }
+    .position-picker-btn:hover { border-color: #6C63FF; }
+    .position-picker-dropdown {
+      position: absolute; top: 100%; left: 0; margin-top: 6px;
+      width: 380px; max-height: 300px;
+      background: white; border-radius: 12px;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.12);
+      border: 1px solid #eee;
+      display: flex; z-index: 100; overflow: hidden;
+    }
+    .position-picker-left {
+      width: 130px; border-right: 1px solid #f0f0f0;
+      overflow-y: auto; padding: 8px 0;
+    }
+    .position-picker-left .cat-item {
+      padding: 10px 14px; font-size: 13px; color: #555;
+      cursor: pointer; transition: all 0.15s; font-weight: 500;
+    }
+    .position-picker-left .cat-item:hover { background: #f8f5ff; color: #6C63FF; }
+    .position-picker-left .cat-item.active { background: #ede9fe; color: #6C63FF; font-weight: 700; }
+    .position-picker-right {
+      flex: 1; overflow-y: auto; padding: 8px;
+      display: flex; flex-wrap: wrap; align-content: flex-start; gap: 6px;
+    }
+    .position-picker-right .job-item {
+      padding: 7px 12px; font-size: 13px; color: #444;
+      background: #f8f6ff; border-radius: 8px;
+      cursor: pointer; transition: all 0.15s; border: 1px solid transparent;
+    }
+    .position-picker-right .job-item:hover { background: #ede9fe; color: #6C63FF; border-color: #6C63FF; }
+
     .start-bar-btn {
       padding: 10px 32px;
       border: none;
@@ -2986,51 +3024,14 @@
     <div class="interview-start-bar" id="interviewStartBar">
       <div class="start-bar-content">
         <div class="start-bar-select-wrap">
-          <select id="positionSelect" class="start-bar-select">
-            <option value="">— 选择目标岗位 —</option>
-            <optgroup label="互联网/科技">
-              <option value="产品经理">产品经理</option>
-              <option value="前端开发工程师">前端开发工程师</option>
-              <option value="后端开发工程师">后端开发工程师</option>
-              <option value="算法工程师">算法工程师</option>
-              <option value="数据分析师">数据分析师</option>
-              <option value="测试工程师">测试工程师</option>
-              <option value="运维工程师">运维工程师</option>
-              <option value="UI/UX设计师">UI/UX设计师</option>
-            </optgroup>
-            <optgroup label="金融/财务">
-              <option value="金融分析师">金融分析师</option>
-              <option value="投资经理">投资经理</option>
-              <option value="风控专员">风控专员</option>
-              <option value="审计师">审计师</option>
-              <option value="量化研究员">量化研究员</option>
-            </optgroup>
-            <optgroup label="市场/运营">
-              <option value="市场营销经理">市场营销经理</option>
-              <option value="新媒体运营">新媒体运营</option>
-              <option value="品牌策划">品牌策划</option>
-              <option value="用户增长">用户增长</option>
-              <option value="内容运营">内容运营</option>
-            </optgroup>
-            <optgroup label="销售/商务">
-              <option value="销售经理">销售经理</option>
-              <option value="商务拓展">商务拓展</option>
-              <option value="客户成功">客户成功</option>
-              <option value="大客户经理">大客户经理</option>
-            </optgroup>
-            <optgroup label="人力/行政">
-              <option value="人力资源经理">人力资源经理</option>
-              <option value="招聘专员">招聘专员</option>
-              <option value="HRBP">HRBP</option>
-              <option value="行政主管">行政主管</option>
-            </optgroup>
-            <optgroup label="咨询/管理">
-              <option value="管理咨询顾问">管理咨询顾问</option>
-              <option value="项目经理">项目经理</option>
-              <option value="战略分析师">战略分析师</option>
-            </optgroup>
-            <option value="__other__">其他（请填写）</option>
-          </select>
+          <div class="position-picker" id="positionPicker">
+            <button class="position-picker-btn" id="positionPickerBtn" type="button">— 选择目标岗位 —</button>
+            <div class="position-picker-dropdown" id="positionDropdown" style="display:none;">
+              <div class="position-picker-left" id="positionCategories"></div>
+              <div class="position-picker-right" id="positionJobs"></div>
+            </div>
+          </div>
+          <input type="hidden" id="positionSelect" value="" />
           <input type="text" id="positionCustomText" class="start-bar-custom-input" placeholder="请输入目标岗位..." style="display:none;" />
         </div>
         <button class="start-bar-btn" id="startInterviewBtn">开始面试</button>
@@ -4029,21 +4030,77 @@
   const customText = document.getElementById('positionCustomText');
   const startBtn = document.getElementById('startInterviewBtn');
 
-  positionSelect.addEventListener('change', () => {
-    if (positionSelect.value === '__other__') {
-      customText.style.display = 'inline-block';
-      customText.focus();
-    } else {
-      customText.style.display = 'none';
-      customText.value = '';
-    }
+  // 二级岗位选择器数据
+  const POSITION_DATA = {
+    '互联网/科技': ['产品经理','前端开发工程师','后端开发工程师','算法工程师','数据分析师','测试工程师','运维工程师','UI/UX设计师'],
+    '金融/财务': ['金融分析师','投资经理','风控专员','审计师','量化研究员'],
+    '市场/运营': ['市场营销经理','新媒体运营','品牌策划','用户增长','内容运营'],
+    '销售/商务': ['销售经理','商务拓展','客户成功','大客户经理'],
+    '人力/行政': ['人力资源经理','招聘专员','HRBP','行政主管'],
+    '咨询/管理': ['管理咨询顾问','项目经理','战略分析师'],
+  };
+
+  const pickerBtn = document.getElementById('positionPickerBtn');
+  const pickerDropdown = document.getElementById('positionDropdown');
+  const catContainer = document.getElementById('positionCategories');
+  const jobContainer = document.getElementById('positionJobs');
+
+  // 渲染左侧行业列表
+  Object.keys(POSITION_DATA).forEach((cat, i) => {
+    const div = document.createElement('div');
+    div.className = 'cat-item' + (i === 0 ? ' active' : '');
+    div.textContent = cat;
+    div.addEventListener('click', () => {
+      catContainer.querySelectorAll('.cat-item').forEach(c => c.classList.remove('active'));
+      div.classList.add('active');
+      renderJobs(cat);
+    });
+    catContainer.appendChild(div);
+  });
+  // 添加"其他"
+  const otherCat = document.createElement('div');
+  otherCat.className = 'cat-item';
+  otherCat.textContent = '其他';
+  otherCat.addEventListener('click', () => {
+    catContainer.querySelectorAll('.cat-item').forEach(c => c.classList.remove('active'));
+    otherCat.classList.add('active');
+    jobContainer.innerHTML = '';
+    positionSelect.value = '__other__';
+    customText.style.display = 'inline-block';
+    customText.focus();
+    pickerDropdown.style.display = 'none';
+    pickerBtn.textContent = '其他（自定义）';
+  });
+  catContainer.appendChild(otherCat);
+
+  function renderJobs(cat) {
+    jobContainer.innerHTML = '';
+    (POSITION_DATA[cat] || []).forEach(job => {
+      const div = document.createElement('div');
+      div.className = 'job-item';
+      div.textContent = job;
+      div.addEventListener('click', () => {
+        positionSelect.value = job;
+        pickerBtn.textContent = job;
+        pickerDropdown.style.display = 'none';
+        customText.style.display = 'none';
+        customText.value = '';
+      });
+      jobContainer.appendChild(div);
+    });
+  }
+  renderJobs(Object.keys(POSITION_DATA)[0]);
+
+  // 打开/关闭下拉
+  pickerBtn.addEventListener('click', () => {
+    pickerDropdown.style.display = pickerDropdown.style.display === 'none' ? 'flex' : 'none';
+  });
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.position-picker')) pickerDropdown.style.display = 'none';
   });
 
   customText.addEventListener('input', () => {
-    // 当用户输入时自动选中"其他"
-    if (customText.value.trim()) {
-      positionSelect.value = '__other__';
-    }
+    if (customText.value.trim()) positionSelect.value = '__other__';
   });
 
   function getSelectedPosition() {
@@ -4156,6 +4213,7 @@
 
   function resetStartBar() {
     positionSelect.value = '';
+    pickerBtn.textContent = '— 选择目标岗位 —';
     customText.style.display = 'none';
     customText.value = '';
   }
