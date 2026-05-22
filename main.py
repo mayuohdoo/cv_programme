@@ -35,11 +35,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-deepseek_api_key = os.getenv("DEEPSEEK_API_KEY", "").strip()
-if not deepseek_api_key:
-    raise RuntimeError("Missing DEEPSEEK_API_KEY. Add it to your environment or .env file.")
-client = OpenAI(api_key=deepseek_api_key, base_url="https://api.deepseek.com/v1")
-DEEPSEEK_MODEL = os.getenv("DEEPSEEK_MODEL", "deepseek-chat")
+zhipu_api_key = os.getenv("ZHIPU_API_KEY", "").strip()
+if not zhipu_api_key:
+    raise RuntimeError("Missing ZHIPU_API_KEY. Add it to your environment or .env file.")
+client = OpenAI(api_key=zhipu_api_key, base_url="https://open.bigmodel.cn/api/paas/v4/")
+ZHIPU_MODEL = os.getenv("ZHIPU_MODEL", "glm-4-flash")
 
 
 def _file_extension(filename: str) -> str:
@@ -198,18 +198,10 @@ J vs P：
 {raw_text}
 """
     response = client.chat.completions.create(
-        model=DEEPSEEK_MODEL,
+        model=ZHIPU_MODEL,
         messages=[{"role": "user", "content": prompt}],
     )
-    
-    # 1. 先拿到大模型吐出来的原始文本
-    result_text = response.choices[0].message.content
-    
-    # 2. 核心：把大模型返回里的“非法控制换行符”全部强行洗干净！
-    result_text = result_text.replace('\n', '\\n').replace('\r', '\\r')
-    
-    # 3. 把洗干净后的文本送进去解析返回
-    return _to_json_with_fallback(result_text)
+    return _to_json_with_fallback(response.choices[0].message.content)
 
 
 def _add_default_values_for_new_fields(parsed_data: dict[str, Any]) -> dict[str, Any]:
@@ -351,7 +343,7 @@ async def chat(request: ChatRequest) -> dict[str, Any]:
             messages.append({"role": msg.role, "content": msg.content})
 
         response = client.chat.completions.create(
-            model=DEEPSEEK_MODEL,
+            model=ZHIPU_MODEL,
             messages=messages,
         )
         reply = response.choices[0].message.content

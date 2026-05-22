@@ -14,9 +14,9 @@ import fitz  # PyMuPDF
 from openai import OpenAI
 from docx import Document
 from dotenv import load_dotenv
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi import FastAPI, File, HTTPException, UploadFile, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel
 
 load_dotenv()
@@ -59,31 +59,32 @@ def _extract_text_from_images(file_bytes: bytes) -> str:
     texts = []
     with fitz.open(stream=file_bytes, filetype="pdf") as doc:
         for page_num, page in enumerate(doc):
-            mat = fitz.Matrix(2, 2)  # 2x 缩放保证清晰度
+            mat = fitz.Matrix(2, 2)  # 2x 缩放，提高清晰度
             pix = page.get_pixmap(matrix=mat)
             img_bytes = pix.tobytes("png")
-            img_b64 = base64.b64encode(img_bytes).decode("utf-8")
-
-            response = client.chat.completions.create(
-                model="deepseek-vl2",
-                messages=[{
-                    "role": "user",
-                    "content": [
+            b64 = base64.b64encode(img_bytes).decode()
+            try:
+                resp = client.chat.completions.create(
+                    model=DEEPSEEK_MODEL,
+                    messages=[
                         {
-                            "type": "image_url",
-                            "image_url": {"url": f"data:image/png;base64,{img_b64}"}
-                        },
-                        {
-                            "type": "text",
-                            "text": "请完整提取这张简历图片中的所有文字内容，保持原有结构和顺序，不要添加任何解释或总结。"
+                            "role": "user",
+                            "content": [
+                                {
+                                    "type": "image_url",
+                                    "image_url": {"url": f"data:image/png;base64,{b64}"},
+                                },
+                                {
+                                    "type": "text",
+                                    "text": "请完整提取这张简历图片中的所有文字内容，保持原有格式和结构，不要遗漏任何信息。",
+                                },
+                            ],
                         }
-                    ]
-                }],
-                temperature=0,
-            )
-            texts.append(response.choices[0].message.content)
-            print(f"📷 OCR 第 {page_num + 1} 页完成")
-
+                    ],
+                )
+                texts.append(resp.choices[0].message.content)
+            except Exception as e:
+                print(f"⚠️ 第{page_num+1}页图片OCR失败: {e}")
     return "\n\n".join(texts)
 
 
@@ -96,12 +97,10 @@ def _extract_text(content_type: str, file_bytes: bytes) -> str:
 
         # 检测乱码：统计中文字符占比
         if raw_text.strip():
-            chinese_chars = sum(1 for c in raw_text if '\u4e00' <= c <= '\u9fff')
-            total_chars = len([c for c in raw_text if c.strip()])
-            chinese_ratio = chinese_chars / total_chars if total_chars > 0 else 0
-
-            # 文字够多但中文占比低于5%，判定为乱码，改用图片OCR
-            if total_chars > 100 and chinese_ratio < 0.05:
+            chinese_chars = len(re.findall(r'[\u4e00-\u9fff]', raw_text))
+            total_chars = len(raw_text.replace('\n', '').replace(' ', ''))
+            # 如果文本很短但文件不小，或中文占比异常低，判断为乱码
+            if total_chars > 0 and chinese_chars / total_chars < 0.1 and len(raw_text.strip()) < 200:
                 print("⚠️ 检测到PDF字体编码异常，切换为图片OCR模式...")
                 raw_text = _extract_text_from_images(file_bytes)
 
@@ -115,98 +114,35 @@ def _to_json_with_fallback(response_text: str) -> dict[str, Any]:
     cleaned = response_text.strip()
 
     def _sanitize(s: str) -> str:
-        """
-        单遍状态机，只在 JSON 字符串值内部做修复：
-        - 裸控制字符（真实换行、制表符等）-> 转义文本，保留内容
-        - 非法反斜杠转义（如 单引号、冒号、连字符等）-> 丢弃反斜杠，保留字符
-        - 合法转义（双引号、双反斜杠、/、n、t、r、b、f、u+4位十六进制）-> 原样保留
-        JSON 结构字符（字符串外的部分）完全不动。
-        """
-        _ctrl_map = {'\n': '\\n', '\r': '\\r', '\t': '\\t', '\b': '\\b', '\f': '\\f'}
-        _valid_single = set('"\\ntrfb/')
-        out = []
-        in_string = False
-        i = 0
-        while i < len(s):
-            ch = s[i]
-            if not in_string:
-                if ch == '"':
-                    in_string = True
-                out.append(ch)
-                i += 1
-            else:
-                if ch == '\\':
-                    if i + 1 >= len(s):
-                        # 末尾孤立反斜杠，丢弃
-                        i += 1
-                        continue
-                    nxt = s[i + 1]
-                    if nxt in _valid_single:
-                        # 合法单字符转义，原样保留
-                        out.append(ch)
-                        out.append(nxt)
-                        i += 2
-                    elif nxt == 'u':
-                        # \uXXXX：检查后4位是否都是十六进制
-                        hex_part = s[i + 2: i + 6]
-                        if len(hex_part) == 4 and all(c in '0123456789abcdefABCDEF' for c in hex_part):
-                            out.append(ch)
-                            out.append(nxt)
-                            out.extend(hex_part)
-                            i += 6
-                        else:
-                            # 非法 \u，丢弃反斜杠
-                            out.append(nxt)
-                            i += 2
-                    else:
-                        # 其他非法转义，丢弃反斜杠，保留字符
-                        out.append(nxt)
-                        i += 2
-                elif ch == '"':
-                    in_string = False
-                    out.append(ch)
-                    i += 1
-                elif ch in _ctrl_map:
-                    # 裸控制字符 → 转义文本
-                    out.extend(_ctrl_map[ch])
-                    i += 1
-                else:
-                    out.append(ch)
-                    i += 1
-        return ''.join(out)
+        """移除会破坏 JSON 解析的控制字符，但保留换行/制表符。"""
+        return re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]', '', s)
 
-    def _extract_json_fragment(s: str) -> str | None:
-        """从可能含有前缀文字或 markdown 代码块的字符串中提取 JSON 对象。"""
-        # 去掉 markdown 代码块
-        m = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", s, re.DOTALL)
-        if m:
-            return m.group(1)
-        # 提取最外层 {}
-        m = re.search(r"(\{.*\})", s, re.DOTALL)
-        if m:
-            return m.group(1)
-        return None
-
-    def _try_parse(text: str) -> dict[str, Any] | None:
-        # 第一步：直接解析
+    def _try_parse(text: str):
         try:
             return json.loads(text)
         except json.JSONDecodeError:
-            pass
-        # 第二步：清洗后解析
-        try:
-            return json.loads(_sanitize(text))
-        except json.JSONDecodeError:
-            return None
+            sanitized = _sanitize(text)
+            if sanitized != text:
+                try:
+                    return json.loads(sanitized)
+                except json.JSONDecodeError:
+                    pass
+        return None
 
-    # 尝试完整文本
     result = _try_parse(cleaned)
     if result is not None:
         return result
 
-    # 尝试提取 JSON 片段后再解析
-    fragment = _extract_json_fragment(cleaned)
-    if fragment:
+    code_block_match = re.search(r"```json\s*(\{.*\})\s*```", cleaned, re.DOTALL)
+    if code_block_match:
+        fragment = code_block_match.group(1)
+        result = _try_parse(fragment)
+        if result is not None:
+            return result
+
+    object_match = re.search(r"(\{.*\})", cleaned, re.DOTALL)
+    if object_match:
+        fragment = object_match.group(1)
         result = _try_parse(fragment)
         if result is not None:
             return result
@@ -214,74 +150,135 @@ def _to_json_with_fallback(response_text: str) -> dict[str, Any]:
     raise ValueError("AI response is not valid JSON")
 
 
+def _serialize_model(model) -> dict:
+    """兼容 Pydantic v1 (dict) 和 v2 (model_dump) 的序列化"""
+    if hasattr(model, 'model_dump'):
+        return model.model_dump()
+    return model.dict()
+
+
 def _parse_resume_with_ai(raw_text: str) -> dict[str, Any]:
     # 清洗简历原文，防止其中的特殊字符污染 JSON 输出
     # 替换会破坏 JSON 的字符，但保留内容可读性
-    safe_text = raw_text.replace('\\', '、').replace('"', '"').replace('"', '"').replace('\x00', '')
-    # 把连续多个空行压缩为单个空行，减少 token 浪费
-    safe_text = re.sub(r'\n{3,}', '\n\n', safe_text)
+    safe_text = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]', '', raw_text)
+    safe_text = safe_text.replace('\\', '\\\\').replace('"', '\\"') if False else safe_text  # 不转义，只清洗控制字符
+    prompt = f"""
+你是一个资深 HR 分析师、职业人格专家和严格的简历审查专家。请将简历解析为严格 JSON（不要使用 markdown 代码块）。
 
-    prompt = f"""你是一个资深 HR 分析师和严格的简历审查专家。请将简历解析为严格合法的 JSON。
+【重要】你必须以高标准检查简历质量，仔细审查每一处表达，不要遗漏任何问题。诚实的反馈比礼貌的赞美更有价值。
 
-重要输出规则：
-1. 只输出 JSON 对象本身，不要有任何其他文字、不要用 markdown 代码块包裹
-2. 所有字符串值中不得出现未转义的双引号或反斜杠
-3. 字符串值中的换行用空格代替
+输出字段要求：
+1) candidate_summary: 字符串，基于简历内容的候选人简介（80字以内）
+2) city: 字符串，从简历中提取的城市信息（如："北京"、"上海"、"深圳"、"杭州"等）
+   - 如果简历中明确提及城市（如："北京市朝阳区"、"工作地点：上海"），提取城市名称
+   - 如果简历中未明确提及城市，返回空字符串 ""
+   - 只返回城市名称，不要包含"市"、"省"等后缀（如：返回"北京"而不是"北京市"）
 
-输出字段：
-{{
-  "candidate_summary": "候选人简介，80字以内",
-  "city": "城市名，无则空字符串",
-  "inferred_mbti": "",
-  "mbti_description": "",
-  "extracted_skills": ["技能1", "技能2"],
-  "job_recommendations": [
-    {{
-      "title": "岗位名称",
-      "industry": "行业",
-      "reason": "推荐理由30字以内",
-      "match_level": "高或中",
-      "match_score": 85,
-      "missing_skills": ["缺失技能"],
-      "career_path": "成长路径",
-      "salary_range": {{"min_salary": 15, "max_salary": 25, "city": "城市或全国"}}
-    }}
-  ],
-  "resume_diagnosis": {{
-    "typos": [{{"original": "原文片段", "suggestion": "正确写法"}}],
-    "grammar_issues": [{{"original": "原句", "suggestion": "改进表达"}}],
-    "redundancy": [{{"original": "冗余片段", "suggestion": "简化表达"}}],
-    "overall_score": 80,
-    "overall_comment": "一句话评价"
-  }}
-}}
+3) inferred_mbti: 字符串，返回空字符串 ""（不再推断MBTI）
+4) mbti_description: 字符串，返回空字符串 ""
 
-字段说明：
-- extracted_skills：从简历提取关键技能，不超过15个，按重要性排序
-- job_recommendations：推荐6个岗位，必须100%基于候选人实际背景，非IT背景禁止推荐开发/算法等技术岗
-- match_score：技能匹配45% + 经验匹配30% + 教育匹配25%，高匹配85-95分，中匹配65-79分
-- resume_diagnosis：严格检查错别字、病句、冗余，original必须是简历原文片段（不含引号），如无问题则对应数组为空
-- overall_score：按问题数量严格评分，90+无问题，80-89有1-2个小问题，70-79有3-5个问题
+5) job_recommendations: 数组，推荐6个适合该候选人的岗位，覆盖不同行业，每项包含：
+   - title: 岗位名称
+   - industry: 所属行业（如：科技、金融、咨询、教育、创业、政府等）
+   - reason: 推荐理由（30字以内，结合简历技能和经验）
+   - match_level: 匹配度，"高" 或 "中"
+   
+   - match_score: 整数 0-100，精确匹配度分数（新增字段，与match_level配合使用）
+     【计算规则】：技能匹配45% + 经验匹配30% + 教育匹配25%
+     【示例】：高匹配岗位85-95分，中匹配岗位65-79分
+   
+   - missing_skills: 数组，候选人缺失的关键技能，0-5个（新增字段）
+     【规则】：只列出岗位重要但简历未体现的技能，完全匹配时返回空数组[]
+     【示例】：["Docker", "Kubernetes"]
+   
+   - career_path: 字符串，该岗位的职业成长路径，60-100字（新增字段）
+     【格式】：2-4个阶段，用箭头连接
+     【示例】："初级算法工程师 → 算法工程师 → 高级算法工程师 → 算法专家"
+   
+   - salary_range: 对象，该岗位的薪资范围，包含：
+     * min_salary: 整数，最低月薪（单位：千元，如 15 表示 15K）
+     * max_salary: 整数，最高月薪（单位：千元，如 25 表示 25K）
+     * city: 字符串，薪资对应的城市（使用上面提取的城市信息；如果城市为空，使用"全国"）
+   
+   【薪资推断规则】：
+   - 根据岗位名称、行业、城市和候选人背景推断2024-2025年的合理薪资范围
+   - 一线城市（北京、上海、深圳、杭州）薪资通常比二三线城市高 20-40%
+   - 技术岗位（算法工程师、后端开发、前端开发）通常高于运营、市场岗位
+   - 金融、互联网、AI行业通常高于传统行业
+   - 考虑候选人的教育背景和工作经验（应届生、1-3年、3-5年、5年以上）
+   - 薪资范围应该合理且符合市场行情，不要过高或过低
+   - 示例：
+     * 北京的算法工程师（3年经验）：25-40K
+     * 成都的算法工程师（3年经验）：18-30K
+     * 上海的产品经理（应届生）：12-18K
+     * 全国的市场专员（1年经验）：8-12K
 
-薪资推断：根据岗位、城市、经验推断2024-2025年市场行情，一线城市比二三线高20-40%
+6) extracted_skills: 数组，从简历中提取的关键技能标签（如：["Python", "机器学习", "项目管理", "团队管理"]），不超过15个
+    【要求】：
+    - 从简历全文提取，包括硬技能（编程语言、工具、框架）和软技能（沟通、管理、领导力）
+    - 优先提取简历中明确写出的技能关键词
+    - 如果简历中没有明确技能，可以从工作描述中推断合理的关键技能
+    - 按重要性排序，最重要的在前
 
-简历原文：
+7) resume_diagnosis: 对象，对简历文本进行严格的质量诊断，包含：
+
+   - typos: 数组，发现的错别字。【检测标准】：
+     * 同音字错误（如："测式"应为"测试"，"沟通能里"应为"沟通能力"）
+     * 形近字错误（如："项日"应为"项目"）
+     * 多字/少字（如："的的项目"应为"的项目"）
+     * 标点错误（如：中文语境中使用英文逗号）
+     【要求】：仔细检查整个简历，每个错别字必须返回 {{"original": "原文片段(5-30字)", "suggestion": "正确写法"}}
+     【示例】：{{"original": "负责产品的测式工作", "suggestion": "负责产品的测试工作"}}
+
+   - grammar_issues: 数组，病句或语法问题。【检测标准】：
+     * 语序不当（如："使用了熟练Python"应为"熟练使用Python"）
+     * 成分残缺（如："负责开发"缺少宾语，应为"负责XX系统的开发"）
+     * 搭配不当（如："提高效率的增长"应为"提高效率"或"促进增长"）
+     * 表意不明（如："通过使用工具进行了工作"过于模糊）
+     * 冗长啰嗦（如："通过使用Python和数据分析工具进行了数据的分析"应为"使用Python进行数据分析"）
+     【要求】：关注动词搭配、介词使用、句子简洁性，每个问题必须返回 {{"original": "原句(10-40字)", "suggestion": "改进后的表达"}}
+     【示例】：{{"original": "通过使用Python进行了数据的分析", "suggestion": "使用Python进行数据分析"}}
+
+   - redundancy: 数组，语意冗杂或表达重复。【检测标准】：
+     * 重复词语（如："主要负责主要的项目"应为"负责主要的项目"）
+     * 重复表达（如："进行了优化和改进"可简化为"进行了优化"）
+     * 无意义修饰（如："非常很重要"应为"非常重要"）
+     * 可合并句子（如："负责开发。负责测试。"应为"负责开发和测试"）
+     【要求】：追求简洁有力的表达，每个冗余必须返回 {{"original": "冗余片段(10-40字)", "suggestion": "简化后的表达"}}
+     【示例】：{{"original": "主要负责主要的项目开发", "suggestion": "负责主要的项目开发"}}
+
+   - overall_score: 整数 1-100，简历整体质量评分。【评分标准】：
+     * 90-100分：无明显问题，表达专业简洁，用词准确
+     * 80-89分：有1-2个小问题，整体良好
+     * 70-79分：有3-5个问题，需要改进
+     * 60-69分：有6-10个问题，质量一般
+     * 60分以下：问题较多（>10个），需要大幅修改
+     【要求】：根据发现的问题数量严格评分，不要因为礼貌而虚高评分
+
+   - overall_comment: 字符串，一句话总体评价（30字以内）。
+     【要求】：如果有问题，必须明确指出（如："发现3处错别字和2处病句，建议仔细校对"）；如果质量优秀，可以正面评价（如："表达专业简洁，未发现明显问题"）
+
+【重要提示】：
+- 如果简历质量确实很好，typos/grammar_issues/redundancy 可以为空数组，overall_score 可以给 85-100 分
+- 但如果发现了问题，必须如实指出，不要遗漏，不要因为礼貌而隐瞒
+- original 字段必须是简历中的原文片段，不要编造
+- suggestion 必须是具体可行的修改建议，不要模糊表达
+
+如果信息缺失，请使用空字符串或空数组，不要省略字段。
+
+简历文本如下：
 {safe_text}
 """
     response = client.chat.completions.create(
         model=DEEPSEEK_MODEL,
         messages=[{"role": "user", "content": prompt}],
-        temperature=0,
-        response_format={"type": "json_object"},
     )
     raw = response.choices[0].message.content
-    print("=== RAW MODEL OUTPUT (first 300 chars) ===")
-    print(repr(raw[:300]))
-    print("==========================================")
     try:
         return _to_json_with_fallback(raw)
-    except Exception as e:
-        print("=== PARSE FAILED, FULL RAW OUTPUT ===")
+    except ValueError:
+        print("=====================================")
+        print("⚠️ AI 返回内容无法解析为 JSON，原始内容：")
         print(repr(raw))
         print("=====================================")
         raise
@@ -470,6 +467,13 @@ INTERVIEW_SIM_PROMPT = """你是一个专业的面试官，正在为用户进行
 5. 如果用户回答不完整，可以适当追问
 6. 用户可随时说"结束"退出面试模拟模式
 
+【特别重要 - 首次回复规则】
+当用户说"开始面试"或"我想面试XX岗位"时，这只是启动面试的请求。
+这是整个面试模拟的第一条回复，你应该只做两件事：
+1. 用一句话确认面试开始
+2. 提出第一个问题（一个问题，不要多个）
+绝对不要在这一次回复中包含评分、分数、打分或反馈建议。评分和反馈只能在用户真正回答了问题之后才给出。
+
 现在，请开始面试模拟。如果上下文中已有用户简历和推荐岗位，直接选择匹配度最高的岗位作为面试目标，不要问用户"你的目标岗位是什么"。"""
 
 
@@ -537,72 +541,66 @@ class ChatRequest(BaseModel):
     interview_state: InterviewState = InterviewState()
 
 
-@app.post("/chat")
-async def chat(request: ChatRequest) -> dict[str, Any]:
-    try:
-        # 选择系统提示词
-        mode_prompts = {
-            "default": DEFAULT_SYSTEM_PROMPT,
-            "career_switch": CAREER_SWITCH_PROMPT,
-            "resume_tailor": RESUME_TAILOR_PROMPT,
-            "career_planning": CAREER_PLANNING_PROMPT,
-            "interview_sim": INTERVIEW_SIM_PROMPT,
-        }
-        system = mode_prompts.get(request.mode, DEFAULT_SYSTEM_PROMPT)
+def _build_chat_messages(request: ChatRequest, rag_context: str = "") -> tuple[list[dict], dict]:
+    """
+    构建发送给 AI 的消息列表，返回 (messages, metadata)。
+    rag_context 是可选的 RAG 检索结果上下文。
+    """
+    # 选择系统提示词
+    mode_prompts = {
+        "default": DEFAULT_SYSTEM_PROMPT,
+        "career_switch": CAREER_SWITCH_PROMPT,
+        "resume_tailor": RESUME_TAILOR_PROMPT,
+        "career_planning": CAREER_PLANNING_PROMPT,
+        "interview_sim": INTERVIEW_SIM_PROMPT,
+    }
+    system = mode_prompts.get(request.mode, DEFAULT_SYSTEM_PROMPT)
 
-        # 如果有简历上下文，在 system prompt 最前面注入简历数据
-        ctx = request.resume_context
-        print(f"🔍 [DEBUG] has_resume={ctx.has_resume}, has_text={bool(ctx.resume_text)}, has_skills={bool(ctx.extracted_skills)}, has_diag={ctx.resume_diagnosis is not None}")
-        if ctx and ctx.has_resume:
-            # 构建简历数据块
-            resume_block = "\n【用户简历数据】\n"
-            city_str = f"（{ctx.city}）" if ctx.city else ""
-            resume_block += f"候选人简介: {ctx.candidate_summary or '暂无'} {city_str}\n"
+    # 如果有简历上下文，在 system prompt 最前面注入简历数据
+    ctx = request.resume_context
+    print(f"🔍 [DEBUG] has_resume={ctx.has_resume}, has_text={bool(ctx.resume_text)}, has_skills={bool(ctx.extracted_skills)}, has_diag={ctx.resume_diagnosis is not None}")
+    if ctx and ctx.has_resume:
+        resume_block = "\n【用户简历数据】\n"
+        city_str = f"（{ctx.city}）" if ctx.city else ""
+        resume_block += f"候选人简介: {ctx.candidate_summary or '暂无'} {city_str}\n"
 
-            mbti_line = f"MBTI: {ctx.inferred_mbti or '未知'}"
-            if ctx.mbti_description:
-                mbti_line += f" — {ctx.mbti_description}"
-            resume_block += mbti_line + "\n"
+        mbti_line = f"MBTI: {ctx.inferred_mbti or '未知'}"
+        if ctx.mbti_description:
+            mbti_line += f" — {ctx.mbti_description}"
+        resume_block += mbti_line + "\n"
 
-            if ctx.extracted_skills:
-                resume_block += f"技能标签: {'、'.join(ctx.extracted_skills[:15])}\n"
+        if ctx.extracted_skills:
+            resume_block += f"技能标签: {'、'.join(ctx.extracted_skills[:15])}\n"
 
-            diag = ctx.resume_diagnosis
-            if diag and isinstance(diag, dict):
-                score = diag.get("overall_score")
-                comment = diag.get("overall_comment", "")
-                if score is not None:
-                    resume_block += f"简历评分: {score}/100" + (f" — {comment}" if comment else "") + "\n"
+        diag = ctx.resume_diagnosis
+        if diag and isinstance(diag, dict):
+            score = diag.get("overall_score")
+            comment = diag.get("overall_comment", "")
+            if score is not None:
+                resume_block += f"简历评分: {score}/100" + (f" — {comment}" if comment else "") + "\n"
 
-            # 岗位推荐
-            if ctx.job_recommendations:
-                resume_block += f"\n推荐岗位（共{len(ctx.job_recommendations)}个）:\n"
-                for i, j in enumerate(ctx.job_recommendations, 1):
-                    title = j.get('title', '未知')
-                    industry = j.get('industry', '未知')
-                    score = j.get('match_score', '')
-                    score_str = f"（{score}分）" if score else ""
-                    reason = j.get('reason', '')
-                    reason_str = f" — {reason}" if reason else ""
-                    sr = j.get('salary_range', {})
-                    salary_str = ""
-                    if sr and sr.get('min_salary') and sr.get('max_salary'):
-                        sc = sr.get('city', '')
-                        salary_str = f" {sr['min_salary']}-{sr['max_salary']}K" + (f"（{sc}）" if sc else "")
-                    ms = j.get('missing_skills', [])
-                    ms_str = f" 需补:{','.join(ms[:3])}" if ms else ""
-                    cp = j.get('career_path', '')
-                    cp_str = f" 成长:{cp}" if cp else ""
-                    resume_block += f"  {i}. {title}（{industry}）{score_str}{salary_str}{ms_str}\n"
-                    if reason:
-                        resume_block += f"     理由: {reason}\n"
+        if ctx.job_recommendations:
+            resume_block += f"\n推荐岗位（共{len(ctx.job_recommendations)}个）:\n"
+            for i, j in enumerate(ctx.job_recommendations, 1):
+                title = j.get('title', '未知')
+                industry = j.get('industry', '未知')
+                score = j.get('match_score', '')
+                score_str = f"（{score}分）" if score else ""
+                sr = j.get('salary_range', {})
+                salary_str = ""
+                if sr and sr.get('min_salary') and sr.get('max_salary'):
+                    sc = sr.get('city', '')
+                    salary_str = f" {sr['min_salary']}-{sr['max_salary']}K" + (f"（{sc}）" if sc else "")
+                ms = j.get('missing_skills', [])
+                ms_str = f" 需补:{','.join(ms[:3])}" if ms else ""
+                cp = j.get('career_path', '')
+                cp_str = f" 成长:{cp}" if cp else ""
+                resume_block += f"  {i}. {title}（{industry}）{score_str}{salary_str}{ms_str}\n"
 
-            # 简历原文
-            if ctx.resume_text:
-                resume_block += f"\n【简历原文】\n{ctx.resume_text[:2000]}\n"
+        if ctx.resume_text:
+            resume_block += f"\n【简历原文】\n{ctx.resume_text[:2000]}\n"
 
-            # 强制规则（放在 resume 数据之后、角色 prompt 之前）
-            force_rules = """
+        force_rules = """
 ⚠️ 强制规则（必须100%遵守）：
 用户已经上传了完整的简历，上面就是全部简历数据。
 1. 禁止询问任何简历中已有的信息，包括：姓名、学历、专业、学校、技能、工作经验、项目经历、城市等
@@ -612,63 +610,99 @@ async def chat(request: ChatRequest) -> dict[str, Any]:
 5. 绝对不要以"请先告诉我以下信息"开头
 
 """
-            system = resume_block + force_rules + system
+        system = resume_block + force_rules + system
 
+    # 如果是面试模拟模式，添加面试状态信息
+    metadata = {"rag_status": "disabled", "rag_sources": []}
 
-        # 如果是面试模拟模式，添加面试状态信息
-        if request.mode == "interview_sim":
-            interview_state = request.interview_state
-            if interview_state.is_active:
-                # 面试进行中，添加进度信息
-                progress_info = f"""
-                
+    if request.mode == "interview_sim":
+        interview_state = request.interview_state
+        if interview_state.is_active:
+            progress_info = f"""
+
 【面试模拟状态】
 目标岗位: {interview_state.target_position or "未指定"}
 面试类型: {interview_state.interview_type or "未指定"}
 当前问题: {interview_state.current_question_index + 1}/{interview_state.total_questions}
 已完成的题目: {len(interview_state.scores)}/{interview_state.total_questions}
 """
-                system += progress_info
-                
-                # 如果已经有分数，添加历史分数信息
-                if interview_state.scores:
-                    avg_score = sum(interview_state.scores) / len(interview_state.scores)
-                    system += f"平均得分: {avg_score:.1f}/10\n"
-                    
-                    # 添加最近一次反馈
-                    if interview_state.feedbacks and len(interview_state.feedbacks) > 0:
-                        latest_feedback = interview_state.feedbacks[-1]
-                        system += f"上次反馈: {latest_feedback[:100]}...\n"
+            system += progress_info
+            if interview_state.scores:
+                avg_score = sum(interview_state.scores) / len(interview_state.scores)
+                system += f"平均得分: {avg_score:.1f}/10\n"
+                if interview_state.feedbacks and len(interview_state.feedbacks) > 0:
+                    latest_feedback = interview_state.feedbacks[-1]
+                    system += f"上次反馈: {latest_feedback[:100]}...\n"
 
-        # ===== RAG 知识库检索（仅 interview_sim 模式）=====
-        rag_status = "disabled"
-        rag_sources = []
-        
-        if request.mode == "interview_sim":
-            try:
-                from rag.pipeline import execute_rag_with_fallback
-                # 获取用户最新消息作为查询
-                user_query = ""
-                for msg in reversed(request.messages):
-                    if msg.role == "user":
-                        user_query = msg.content
-                        break
-                
-                if user_query:
-                    rag_result = await execute_rag_with_fallback(user_query)
-                    rag_status = rag_result.status.value if hasattr(rag_result.status, 'value') else str(rag_result.status)
-                    rag_sources = rag_result.sources
-                    
-                    # 如果检索到相关内容，注入系统提示词
-                    if rag_result.context_text:
-                        system = rag_result.context_text + "\n\n" + system
-            except Exception as e:
-                print(f"⚠️ RAG 检索失败（降级为纯AI）: {e}")
-                rag_status = "fallback"
+        # 注入 RAG 上下文（如果有）
+        if rag_context:
+            system = rag_context + "\n\n" + system
 
-        messages = [{"role": "system", "content": system}]
-        for msg in request.messages:
-            messages.append({"role": msg.role, "content": msg.content})
+    messages = [{"role": "system", "content": system}]
+    for msg in request.messages:
+        messages.append({"role": msg.role, "content": msg.content})
+
+    return messages, metadata
+
+
+def _update_interview_state(interview_state: InterviewState, clean_reply: str) -> InterviewState | None:
+    """处理面试状态更新，返回更新后的状态（如果没有变化返回 None）"""
+    new_state = copy.deepcopy(interview_state)
+
+    if new_state.is_active:
+        parsed = _parse_interview_feedback(clean_reply)
+        has_score = parsed["score"] is not None
+        has_feedback = parsed["feedback"] is not None
+
+        if has_score:
+            new_state.scores.append(parsed["score"])
+        if has_feedback:
+            new_state.feedbacks.append(parsed["feedback"])
+        if has_score:
+            new_state.current_question_index = min(new_state.current_question_index + 1, new_state.total_questions)
+    else:
+        new_state.is_active = True
+        new_state.current_question_index = 1
+
+        pos_match = re.search(r'目标岗位[：:]\s*([^\n。]+)', clean_reply)
+        if pos_match:
+            new_state.target_position = pos_match.group(1).strip()
+
+        type_match = re.search(r'(技术面|行为面|综合面)', clean_reply)
+        if type_match:
+            new_state.interview_type = type_match.group(1)
+
+    return new_state
+
+
+async def _do_rag(request: ChatRequest) -> tuple[str, str, list]:
+    """执行 RAG 检索，返回 (rag_context_text, rag_status, rag_sources)"""
+    if request.mode != "interview_sim":
+        return "", "disabled", []
+    try:
+        from rag.pipeline import execute_rag_with_fallback
+        user_query = ""
+        for msg in reversed(request.messages):
+            if msg.role == "user":
+                user_query = msg.content
+                break
+        if not user_query:
+            return "", "disabled", []
+        rag_result = await execute_rag_with_fallback(user_query)
+        status = rag_result.status.value if hasattr(rag_result.status, 'value') else str(rag_result.status)
+        context = rag_result.context_text or ""
+        sources = rag_result.sources or []
+        return context, status, sources
+    except Exception as e:
+        print(f"⚠️ RAG 检索失败（降级为纯AI）: {e}")
+        return "", "fallback", []
+
+
+@app.post("/chat")
+async def chat(request: ChatRequest) -> dict[str, Any]:
+    try:
+        rag_context, rag_status, rag_sources = await _do_rag(request)
+        messages, metadata = _build_chat_messages(request, rag_context=rag_context)
 
         response = client.chat.completions.create(
             model=DEEPSEEK_MODEL,
@@ -676,47 +710,12 @@ async def chat(request: ChatRequest) -> dict[str, Any]:
         )
         reply = response.choices[0].message.content
 
-        # 检测是否包含简历模板
         has_resume_template = "[RESUME_TEMPLATE]" in reply
         clean_reply = reply.replace("[RESUME_TEMPLATE]", "").strip()
 
-        # 处理面试状态更新
-        interview_state = request.interview_state
         updated_interview_state = None
-
         if request.mode == "interview_sim":
-            # 深拷贝当前状态用于更新
-            new_state = copy.deepcopy(interview_state)
-
-            if new_state.is_active:
-                # ── 面试进行中：解析 AI 回复中的评分和反馈 ──
-                parsed = _parse_interview_feedback(clean_reply)
-                has_score = parsed["score"] is not None
-                has_feedback = parsed["feedback"] is not None
-
-                if has_score:
-                    new_state.scores.append(parsed["score"])
-                if has_feedback:
-                    new_state.feedbacks.append(parsed["feedback"])
-
-                # 只有当本回合确认为"回答了上一题"（AI 给出评分）后，才推进题号
-                if has_score:
-                    new_state.current_question_index = len(new_state.scores)
-            else:
-                # ── 首次进入面试模式：激活状态 ──
-                new_state.is_active = True
-
-                # 尝试从 AI 回复中提取目标岗位
-                pos_match = re.search(r'目标岗位[：:]\s*([^\n。]+)', clean_reply)
-                if pos_match:
-                    new_state.target_position = pos_match.group(1).strip()
-
-                # 尝试提取面试类型
-                type_match = re.search(r'(技术面|行为面|综合面)', clean_reply)
-                if type_match:
-                    new_state.interview_type = type_match.group(1)
-
-            updated_interview_state = new_state
+            updated_interview_state = _update_interview_state(request.interview_state, clean_reply)
 
         return {
             "reply": clean_reply,
@@ -728,6 +727,50 @@ async def chat(request: ChatRequest) -> dict[str, Any]:
         }
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"Chat failed: {exc}") from exc
+
+
+@app.post("/chat/stream")
+async def chat_stream(request: ChatRequest):
+    try:
+        rag_context, rag_status, rag_sources = await _do_rag(request)
+        messages, metadata = _build_chat_messages(request, rag_context=rag_context)
+
+        def generate():
+            full_reply = ""
+            stream = client.chat.completions.create(
+                model=DEEPSEEK_MODEL,
+                messages=messages,
+                stream=True,
+            )
+            for chunk in stream:
+                if chunk.choices and chunk.choices[0].delta and chunk.choices[0].delta.content:
+                    content = chunk.choices[0].delta.content
+                    full_reply += content
+                    yield f"data: {json.dumps({'type': 'chunk', 'content': content}, ensure_ascii=False)}\n\n"
+
+            # 所有 token 发送完毕，发送 done 事件
+            has_resume_template = "[RESUME_TEMPLATE]" in full_reply
+            clean_reply = full_reply.replace("[RESUME_TEMPLATE]", "").strip()
+
+            updated_interview_state = None
+            if request.mode == "interview_sim":
+                updated_interview_state = _update_interview_state(request.interview_state, clean_reply)
+
+            done_data = {
+                "type": "done",
+                "reply": clean_reply,
+                "has_resume_template": has_resume_template,
+                "interview_state": (
+                    _serialize_model(updated_interview_state) if updated_interview_state else None
+                ),
+                "rag_status": rag_status,
+                "rag_sources": rag_sources,
+            }
+            yield f"data: {json.dumps(done_data, ensure_ascii=False)}\n\n"
+
+        return StreamingResponse(generate(), media_type="text/event-stream")
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Chat stream failed: {exc}") from exc
 
 
 @app.get("/demo")

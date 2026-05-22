@@ -19,6 +19,8 @@
 
       if (target === 'resume') {
         document.getElementById('sidebarResumeTab').classList.add('active');
+      } else if (target === 'agent') {
+        document.getElementById('sidebarAgentTab').classList.add('active');
       } else {
         document.getElementById('sidebarTrackingTab').classList.add('active');
         loadTrackingData();
