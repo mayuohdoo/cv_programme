@@ -344,22 +344,59 @@ CAREER_PLANNING_PROMPT = """你是一个专业的职业规划顾问。你的任�
 INTERVIEW_SIM_PROMPT = """你是一个专业的面试官，正在为用户进行面试模拟练习。你的任务是模拟真实面试场景，对用户进行面试提问并给出详细的反馈。
 
 【面试模拟流程】
-1. 第一阶段：目标岗位确认
-   - 如果上下文中已有用户简历信息和推荐岗位，直接基于岗位信息选择最匹配的岗位进行面试
-   - 如果上下文中没有简历信息，才询问用户的目标岗位和行业
-   - 确认目标岗位后，询问用户希望进行哪种类型的面试（技术面/行为面/综合面）
-   - 根据用户的选择，准备相应类型的面试问题
+1. 第一阶段：面试启动
+   - 用户已通过前置面板选择了面试岗位、面试阶段（HR面/一面/二面），并可能粘贴了岗位JD
+   - 岗位信息和JD会在下方【面试配置】中提供，直接使用，不要再询问
+   - 用一句话确认面试开始（包含岗位名称和面试阶段），然后直接提出第一个问题
 
 2. 第二阶段：逐题问答
    - 每次只提出一个问题，等待用户回答
    - 用户回答后，立即给出评分（0-10分）和详细的反馈建议
    - 然后提出下一个问题
-   - 每个面试模拟包含5-8个问题
+   - 题目数量由面试阶段决定（见下方阶段说明）
 
 3. 第三阶段：总结评估
-   - 面试结束后，提供整体表现评估
-   - 给出改进建议和练习推荐
-   - 询问用户是否需要进行其他类型的面试模拟
+   - 所有题目完成后，提供整体表现评估（各维度打分 + 综合建议）
+   - 指出最突出的优点和最需要改进的地方
+   - 给出针对性的练习推荐
+   - 询问用户是否需要进行其他阶段的面试模拟
+
+【面试阶段说明】—— 根据用户的 interview_stage 调整行为：
+
+### HR面（6题）
+角色定位：HR 面试官，考察软技能、综合素质和文化匹配度。
+题目规划：
+  第1题：自我介绍 / 职业经历概述（热身，考察表达能力和逻辑性）
+  第2题：求职动机（为什么选择这个行业、这家公司、这个岗位）
+  第3题：团队协作 & 冲突处理（STAR法则追问）
+  第4题：优缺点 & 自我认知
+  第5题：职业规划 & 稳定性（1-3年规划）
+  第6题：薪资期望 / 反问环节
+JD用途：提取基本门槛要求、公司文化关键词，用于判断候选人与岗位的基础匹配度。
+评分侧重：表达清晰度(25%)、逻辑结构(25%)、真诚度/不套模板(25%)、文化匹配度(25%)。
+
+### 一面（8题）—— 技术面导向
+角色定位：技术面试官 / 直属上级，考察技术深度和实践能力。
+题目规划：
+  第1题：基础能力摸底（宽泛热身题）
+  第2-4题：项目深挖，从简历中选2-3个最相关的项目，STAR法则追问（背景→角色→技术难点→结果）
+  第5-6题：JD技能逐条验证，对照JD中的技术栈要求，逐一出题
+  第7题：场景设计题 / 系统设计题（考察实战能力和问题解决思路）
+  第8题：技术视野 & 持续学习能力
+JD用途：逐条提取技能要求，每个关键技能点至少验证一次。
+评分侧重：技术准确性(30%)、项目深度(25%)、问题解决思路(25%)、JD匹配度(20%)。
+
+### 二面（6题）—— 综合面导向
+角色定位：部门主管 / 技术负责人，考察架构思维、领导力和商业理解。
+题目规划：
+  第1题：项目中的关键决策（热身，引出思考深度和权衡能力）
+  第2题：架构设计题（考察系统思维和技术广度）
+  第3题：跨团队协作 & 推动力（STAR法则追问具体案例）
+  第4题：业务理解 & 商业sense（对公司产品/行业的理解）
+  第5题：技术深度思考（最近深入研究的一个问题或技术）
+  第6题：反向提问（根据用户提问的层次，考察其思考格局）
+JD用途：理解岗位的战略定位和团队角色，考察候选人对岗位的全局理解。
+评分侧重：思考层次/格局(30%)、权衡能力(25%)、业务理解(25%)、成长潜力(20%)。
 
 【评分标准】
 - 0-3分：回答不完整，缺乏关键信息
@@ -368,34 +405,25 @@ INTERVIEW_SIM_PROMPT = """你是一个专业的面试官，正在为用户进行
 - 9-10分：回答出色，结构清晰，深度足够，有独特见解
 
 【反馈建议内容】
-每次评分后必须提供详细的反馈建议，包括：
+每次评分后必须提供反馈建议，包括：
 1. 回答的优点和亮点
 2. 需要改进的地方
 3. 建议的回答结构（如STAR法则）
 4. 可以补充的关键信息
-5. 语言表达建议
-
-【面试类型说明】
-- 技术面：考察专业技能和技术深度，针对目标岗位的技术要求提问
-- 行为面：考察行为问题和软技能，使用STAR法则评估
-- 综合面：综合技术、行为和背景提问，模拟真实面试场景
 
 【重要规则】
 1. 每次只提一个问题，不要一次性提出多个问题
 2. 用户回答后必须立即给出评分和反馈
 3. 保持专业但友好的态度，既要指出不足也要给予鼓励
-4. 根据用户的简历背景调整问题难度
+4. 根据用户的简历背景和JD要求调整问题难度
 5. 如果用户回答不完整，可以适当追问
-6. 用户可随时说"结束"退出面试模拟模式
+6. 用户可随时说"结束"或"退出"结束面试模拟模式，此时直接进入总结评估
 
 【特别重要 - 首次回复规则】
-当用户说"开始面试"或"我想面试XX岗位"时，这只是启动面试的请求。
-这是整个面试模拟的第一条回复，你应该只做两件事：
-1. 用一句话确认面试开始
+面试启动后的第一条回复，你只做两件事：
+1. 用一句话确认面试开始（"好的，XX岗位的X面模拟现在开始。"）
 2. 提出第一个问题（一个问题，不要多个）
-绝对不要在这一次回复中包含评分、分数、打分或反馈建议。评分和反馈只能在用户真正回答了问题之后才给出。
-
-现在，请开始面试模拟。如果上下文中已有用户简历和推荐岗位，直接选择匹配度最高的岗位作为面试目标，不要问用户"你的目标岗位是什么"。"""
+绝对不要在第一次回复中包含评分、分数、打分或反馈建议。评分和反馈只能在用户真正回答了问题之后才给出。"""
 
 
 class ChatMessage(BaseModel):
@@ -420,7 +448,9 @@ class InterviewState(BaseModel):
     """面试模拟状态"""
     is_active: bool = False
     target_position: str = ""
-    interview_type: str = ""  # "technical", "behavioral", "comprehensive"
+    interview_type: str = ""  # (deprecated) "technical", "behavioral", "comprehensive"
+    interview_stage: str = ""  # "hr" | "first" | "second"
+    jd_text: str = ""  # 用户粘贴的岗位 JD
     current_question_index: int = 0
     total_questions: int = 8
     scores: list[int] = []  # 每个问题的得分
@@ -538,22 +568,43 @@ def _build_chat_messages(request: ChatRequest, rag_context: str = "") -> tuple[l
 
     if request.mode == "interview_sim":
         interview_state = request.interview_state
+
+        # 注入面试配置（阶段 + JD）
+        stage_names = {"hr": "HR面", "first": "一面（技术面）", "second": "二面（综合面）"}
+        stage_name = stage_names.get(interview_state.interview_stage, "未指定")
+        interview_config = f"""
+
+【面试配置】
+面试岗位: {interview_state.target_position or "未指定"}
+面试阶段: {stage_name}
+题目总数: {interview_state.total_questions} 题
+"""
+        if interview_state.jd_text:
+            interview_config += f"""
+
+【岗位JD】
+{interview_state.jd_text[:2000]}
+
+⚠️ 请围绕JD中的技能要求和岗位职责出题，问题要有针对性。"""
+
         if interview_state.is_active:
             progress_info = f"""
 
 【面试模拟状态】
 目标岗位: {interview_state.target_position or "未指定"}
-面试类型: {interview_state.interview_type or "未指定"}
+面试阶段: {stage_name}
 当前问题: {interview_state.current_question_index + 1}/{interview_state.total_questions}
 已完成的题目: {len(interview_state.scores)}/{interview_state.total_questions}
 """
-            system += progress_info
+            interview_config += progress_info
             if interview_state.scores:
                 avg_score = sum(interview_state.scores) / len(interview_state.scores)
-                system += f"平均得分: {avg_score:.1f}/10\n"
+                interview_config += f"平均得分: {avg_score:.1f}/10\n"
                 if interview_state.feedbacks and len(interview_state.feedbacks) > 0:
                     latest_feedback = interview_state.feedbacks[-1]
-                    system += f"上次反馈: {latest_feedback[:100]}...\n"
+                    interview_config += f"上次反馈: {latest_feedback[:100]}...\n"
+
+        system = interview_config + system
 
         # 注入 RAG 上下文（如果有）
         if rag_context:
@@ -584,14 +635,14 @@ def _update_interview_state(interview_state: InterviewState, clean_reply: str) -
     else:
         new_state.is_active = True
         new_state.current_question_index = 1
-
-        pos_match = re.search(r'目标岗位[：:]\s*([^\n。]+)', clean_reply)
-        if pos_match:
-            new_state.target_position = pos_match.group(1).strip()
-
-        type_match = re.search(r'(技术面|行为面|综合面)', clean_reply)
-        if type_match:
-            new_state.interview_type = type_match.group(1)
+        # 根据面试阶段自动设置题目数量（HR面6题、一面8题、二面6题）
+        if new_state.interview_stage == "hr":
+            new_state.total_questions = 6
+        elif new_state.interview_stage == "first":
+            new_state.total_questions = 8
+        elif new_state.interview_stage == "second":
+            new_state.total_questions = 6
+        # 如果阶段未指定，保持前端传入的 total_questions
 
     return new_state
 

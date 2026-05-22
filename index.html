@@ -848,6 +848,30 @@
       margin-top: 2px;
     }
 
+    .agent-header-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-exit-interview {
+      background: var(--white);
+      border: 1.5px solid var(--gray-200);
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--gray-600);
+      cursor: pointer;
+      padding: 6px 14px;
+      border-radius: 8px;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    .btn-exit-interview:hover {
+      border-color: var(--error);
+      color: var(--error);
+      background: #FFF0F0;
+    }
+
     .btn-clear-chat {
       background: var(--sakura-dark);
       border: none;
@@ -1077,63 +1101,73 @@
       box-shadow: 0 0 0 3px var(--accent), 0 4px 16px rgba(108, 99, 255, 0.2);
     }
 
-    /* 面试启动栏 - 顶部下拉选择 */
+    /* 面试启动栏 - 卡片式布局 */
     .interview-start-bar {
-      padding: 16px 24px;
-      background: var(--white);
-      border-bottom: 1px solid var(--gray-200);
+      padding: 20px 24px;
+      background: linear-gradient(180deg, #FFF9FB 0%, #FFFFFF 100%);
     }
-    .start-bar-content {
+    .start-bar-card {
+      max-width: 640px;
+      margin: 0 auto;
       display: flex;
-      align-items: center;
-      gap: 14px;
-      flex-wrap: wrap;
-    }
-    .start-bar-select-wrap {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      flex: 1;
-      min-width: 240px;
-    }
-    .start-bar-select {
-      padding: 10px 16px;
-      border: 1.5px solid var(--gray-200);
-      border-radius: 8px;
-      font-size: 14px;
-      font-weight: 500;
-      color: var(--gray-700);
-      background: var(--white);
-      outline: none;
-      cursor: pointer;
-      transition: border-color 0.2s;
-      min-width: 200px;
-    }
-    .start-bar-select:focus {
-      border-color: var(--accent);
-    }
-    .start-bar-custom-input {
-      flex: 1;
-      padding: 10px 16px;
-      border: 1.5px solid var(--gray-200);
-      border-radius: 8px;
-      font-size: 14px;
-      outline: none;
-      transition: border-color 0.2s;
-      min-width: 160px;
-    }
-    .start-bar-custom-input:focus {
-      border-color: var(--accent);
+      flex-direction: column;
+      gap: 20px;
     }
 
-    /* 二级岗位选择器 */
-    .position-picker { position: relative; flex: 1; }
-    .position-picker-btn {
-      width: 100%; padding: 10px 16px; border: 1.5px solid #e0d8f0;
-      border-radius: 10px; background: white; font-size: 14px; color: #555;
-      cursor: pointer; text-align: left; transition: border-color 0.2s;
+    /* 步骤区块 */
+    .start-step {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
     }
-    .position-picker-btn:hover { border-color: #6C63FF; }
+    .start-step-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .step-num {
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #FFB7C5, #FF9DB3);
+      color: #fff;
+      font-size: 12px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .step-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--gray-800);
+    }
+    .step-required {
+      font-size: 11px;
+      font-weight: 600;
+      color: #FF6B6B;
+      background: #FFF0F0;
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+    .step-optional {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--gray-400);
+      background: var(--gray-100);
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+
+    /* 岗位选择器 */
+    .position-picker { position: relative; }
+    .position-picker-btn {
+      width: 100%; padding: 12px 16px;
+      border: 2px solid var(--gray-200);
+      border-radius: 10px;
+      background: var(--white);
+      font-size: 14px; color: #555;
+      cursor: pointer; text-align: left;
+      transition: all 0.2s;
+    }
+    .position-picker-btn:hover { border-color: #6C63FF; background: #fdfbff; }
     .position-picker-dropdown {
       position: absolute; top: 100%; left: 0; margin-top: 6px;
       width: 380px; max-height: 300px;
@@ -1164,42 +1198,71 @@
     }
     .position-picker-right .job-item:hover { background: #ede9fe; color: #6C63FF; border-color: #6C63FF; }
 
-    /* JD 粘贴区域 */
-    .jd-paste-wrap { width: 100%; }
-    .jd-toggle-btn {
-      background: none; border: 1.5px dashed rgba(108,99,255,0.3);
-      border-radius: 8px; padding: 8px 14px; font-size: 13px;
-      color: #6C63FF; cursor: pointer; transition: all 0.2s; font-weight: 500;
+    .start-bar-custom-input {
+      width: 100%; padding: 12px 16px;
+      border: 2px solid var(--gray-200);
+      border-radius: 10px;
+      font-size: 14px; outline: none;
+      transition: border-color 0.2s;
+      margin-top: 4px;
     }
-    .jd-toggle-btn:hover { background: rgba(108,99,255,0.05); border-color: #6C63FF; }
+    .start-bar-custom-input:focus { border-color: var(--accent); }
+
+    /* JD 文本域 */
     .jd-textarea {
-      width: 100%; margin-top: 8px; padding: 12px 14px;
-      border: 1.5px solid rgba(108,99,255,0.2); border-radius: 10px;
-      font-size: 13px; line-height: 1.6; resize: vertical;
-      outline: none; transition: border-color 0.2s; font-family: inherit;
-      min-height: 80px; max-height: 200px;
+      width: 100%; padding: 12px 16px;
+      border: 2px solid var(--gray-200);
+      border-radius: 10px;
+      font-size: 13px; line-height: 1.6;
+      resize: vertical; outline: none;
+      transition: border-color 0.2s; font-family: inherit;
+      min-height: 72px; max-height: 200px;
     }
-    .jd-textarea:focus { border-color: #6C63FF; }
+    .jd-textarea:focus { border-color: #6C63FF; background: #fdfbff; }
     .jd-textarea::placeholder { color: #bbb; }
 
+    /* 开始面试按钮 */
     .start-bar-btn {
-      padding: 10px 32px;
+      display: block;
+      width: 100%;
+      max-width: 320px;
+      margin: 0 auto;
+      padding: 14px 32px;
       border: none;
-      border-radius: 8px;
+      border-radius: 12px;
       background: linear-gradient(135deg, #FFB7C5 0%, #FF9DB3 100%);
       color: #fff;
-      font-size: 14px;
-      font-weight: 600;
+      font-size: 16px;
+      font-weight: 700;
       cursor: pointer;
-      transition: opacity 0.2s;
-      white-space: nowrap;
+      transition: all 0.25s ease;
+      letter-spacing: 1px;
+      box-shadow: 0 4px 16px rgba(255, 157, 179, 0.3);
     }
-    .start-bar-btn:hover {
-      opacity: 0.9;
+    .start-bar-btn:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 24px rgba(255, 157, 179, 0.45);
     }
     .start-bar-btn:disabled {
-      opacity: 0.5;
+      background: var(--gray-200);
+      color: var(--gray-400);
+      box-shadow: none;
       cursor: not-allowed;
+    }
+
+    /* 移动端适配 */
+    @media (max-width: 480px) {
+      .start-bar-card {
+        gap: 16px;
+      }
+      .interview-start-bar {
+        padding: 14px 16px;
+      }
+      .position-picker-dropdown {
+        width: 100%;
+        left: 0;
+        right: 0;
+      }
     }
 
     /* 面试操作引导按钮（评分后出现） */
@@ -1236,16 +1299,70 @@
       color: #fff;
     }
 
-    /* 面试区欢迎语 */
-    .agent-messages .interview-greeting {
-      padding: 40px 24px 20px;
-      font-size: 15px;
-      font-weight: 500;
-      color: var(--gray-800);
+    /* 面试阶段选择卡片 */
+    .stage-intro-cards {
+      display: flex;
+      gap: 14px;
+      max-width: 600px;
+      width: 100%;
+    }
+    .stage-intro-card {
+      flex: 1;
       background: var(--white);
+      border: 2px solid var(--gray-200);
+      border-radius: 14px;
+      padding: 20px 16px;
       text-align: center;
-      line-height: 1.8;
-      flex-shrink: 0;
+      transition: all 0.2s;
+      cursor: pointer;
+      user-select: none;
+    }
+    .stage-intro-card:hover {
+      border-color: #6C63FF;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(108,99,255,0.1);
+    }
+    .stage-intro-card.selected {
+      border-color: #6C63FF;
+      background: linear-gradient(135deg, #f8f5ff 0%, #ffffff 100%);
+      box-shadow: 0 0 0 3px rgba(108,99,255,0.12), 0 4px 16px rgba(108,99,255,0.1);
+      transform: translateY(-2px);
+    }
+    .stage-intro-emoji {
+      font-size: 32px;
+      margin-bottom: 8px;
+      display: block;
+    }
+    .stage-intro-name {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--gray-800);
+      margin-bottom: 6px;
+    }
+    .stage-intro-meta {
+      font-size: 12px;
+      color: var(--accent);
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+    .stage-intro-tags {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 4px;
+    }
+    .stage-intro-tag {
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: var(--sakura-lighter);
+      color: var(--gray-600);
+      font-weight: 500;
+    }
+    @media (max-width: 520px) {
+      .stage-intro-cards {
+        flex-direction: column;
+      }
     }
 
     /* Chat messages inside agent */
@@ -3065,27 +3182,88 @@
           <h3 id="agentTitle" style="font-size:15px;">沉浸式模拟面试<span id="interviewPositionName"></span></h3>
         </div>
       </div>
+      <div class="agent-header-right" id="agentHeaderRight" style="display:none;">
+        <button class="btn-exit-interview" onclick="exitInterview()" title="退出面试，重新选择岗位">退出面试</button>
+      </div>
     </div>
 
-    <!-- 面试启动栏 - 下拉选择岗位 + 开始按钮（面试辅导专属） -->
+    <!-- 面试启动栏 - 配置卡片 -->
     <div class="interview-start-bar" id="interviewStartBar">
-      <div class="start-bar-content">
-        <div class="start-bar-select-wrap">
+      <div class="start-bar-card">
+        <!-- 步骤①：面试岗位 -->
+        <div class="start-step">
+          <div class="start-step-header">
+            <span class="step-num">①</span>
+            <span class="step-title">面试岗位</span>
+            <span class="step-required">必选</span>
+          </div>
           <div class="position-picker" id="positionPicker">
-            <button class="position-picker-btn" id="positionPickerBtn" type="button">— 选择目标岗位 —</button>
+            <button class="position-picker-btn" id="positionPickerBtn" type="button">选择目标岗位 ▾</button>
             <div class="position-picker-dropdown" id="positionDropdown" style="display:none;">
               <div class="position-picker-left" id="positionCategories"></div>
               <div class="position-picker-right" id="positionJobs"></div>
             </div>
           </div>
           <input type="hidden" id="positionSelect" value="" />
-          <input type="text" id="positionCustomText" class="start-bar-custom-input" placeholder="请输入目标岗位..." style="display:none;" />
+          <input type="text" id="positionCustomText" class="start-bar-custom-input" placeholder="或手动输入目标岗位..." style="display:none;" />
         </div>
-        <div class="jd-paste-wrap">
-          <button class="jd-toggle-btn" id="jdToggleBtn" type="button">📋 粘贴 JD（选填）</button>
-          <textarea id="jdTextarea" class="jd-textarea" placeholder="粘贴岗位 JD 描述，AI 将基于 JD 内容出题..." style="display:none;" rows="4"></textarea>
+
+        <!-- 步骤②：面试阶段 -->
+        <div class="start-step">
+          <div class="start-step-header">
+            <span class="step-num">②</span>
+            <span class="step-title">面试阶段</span>
+            <span class="step-required">必选</span>
+          </div>
+          <div class="stage-intro-cards" id="stageCards">
+            <div class="stage-intro-card" data-stage="hr" onclick="selectStageCard(this)">
+              <span class="stage-intro-emoji">👩‍💼</span>
+              <div class="stage-intro-name">HR 面</div>
+              <div class="stage-intro-meta">行为面 · 6 题</div>
+              <div class="stage-intro-tags">
+                <span class="stage-intro-tag">自我介绍</span>
+                <span class="stage-intro-tag">求职动机</span>
+                <span class="stage-intro-tag">团队协作</span>
+                <span class="stage-intro-tag">文化匹配</span>
+              </div>
+            </div>
+            <div class="stage-intro-card" data-stage="first" onclick="selectStageCard(this)">
+              <span class="stage-intro-emoji">💻</span>
+              <div class="stage-intro-name">一面（技术）</div>
+              <div class="stage-intro-meta">技术面 · 8 题</div>
+              <div class="stage-intro-tags">
+                <span class="stage-intro-tag">项目深挖</span>
+                <span class="stage-intro-tag">技能验证</span>
+                <span class="stage-intro-tag">场景设计</span>
+                <span class="stage-intro-tag">技术视野</span>
+              </div>
+            </div>
+            <div class="stage-intro-card" data-stage="second" onclick="selectStageCard(this)">
+              <span class="stage-intro-emoji">🏢</span>
+              <div class="stage-intro-name">二面（综合）</div>
+              <div class="stage-intro-meta">综合面 · 6 题</div>
+              <div class="stage-intro-tags">
+                <span class="stage-intro-tag">架构思维</span>
+                <span class="stage-intro-tag">领导力</span>
+                <span class="stage-intro-tag">业务理解</span>
+                <span class="stage-intro-tag">成长潜力</span>
+              </div>
+            </div>
+          </div>
         </div>
-        <button class="start-bar-btn" id="startInterviewBtn">开始面试</button>
+
+        <!-- 步骤③：岗位JD（选填） -->
+        <div class="start-step">
+          <div class="start-step-header">
+            <span class="step-num">③</span>
+            <span class="step-title">岗位 JD</span>
+            <span class="step-optional">选填</span>
+          </div>
+          <textarea id="jdTextarea" class="jd-textarea" placeholder="粘贴岗位描述，AI 会围绕 JD 中的技能要求出题，面试更有针对性..." rows="3"></textarea>
+        </div>
+
+        <!-- 开始按钮 -->
+        <button class="start-bar-btn" id="startInterviewBtn" disabled>选择岗位和阶段后开始</button>
       </div>
     </div>
 
@@ -3852,6 +4030,59 @@
   }
 
   /**
+   * 退出面试，返回岗位选择
+   */
+  function exitInterview() {
+    const overlay = document.createElement("div");
+    overlay.className = "modal-overlay";
+    overlay.innerHTML = `
+      <div class="modal-box">
+        <h3>退出面试</h3>
+        <p>确定要退出当前面试吗？<br>你可以重新选择岗位和面试阶段。</p>
+        <div class="modal-actions">
+          <button class="modal-btn modal-btn-cancel" id="modalCancel">继续面试</button>
+          <button class="modal-btn modal-btn-confirm" id="modalConfirm">确定退出</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+
+    document.getElementById("modalCancel").addEventListener("click", () => {
+      overlay.remove();
+    });
+
+    document.getElementById("modalConfirm").addEventListener("click", () => {
+      // 清空面试状态
+      interviewChatHistory = [];
+      interviewMessages.innerHTML = '';
+
+      // 重置面试状态
+      interviewState = {
+        is_active: false,
+        target_position: "",
+        interview_type: "",
+        interview_stage: "",
+        jd_text: "",
+        current_question_index: 0,
+        total_questions: 8,
+        scores: [],
+        feedbacks: []
+      };
+      updateInterviewTitle();
+      setSpeaking(null);
+      showInterviewGreeting();
+      if (typeof resetStartBar === 'function') resetStartBar();
+      // 隐藏退出按钮
+      document.getElementById('agentHeaderRight').style.display = 'none';
+      overlay.remove();
+    });
+
+    overlay.addEventListener("click", (e) => {
+      if (e.target === overlay) overlay.remove();
+    });
+  }
+
+  /**
    * 清除面试对话
    */
   function clearAgentChat() {
@@ -3883,6 +4114,8 @@
         is_active: false,
         target_position: "",
         interview_type: "",
+        interview_stage: "",
+        jd_text: "",
         current_question_index: 0,
         total_questions: 8,
         scores: [],
@@ -3892,6 +4125,7 @@
       setSpeaking(null);
       showInterviewGreeting();
       if (typeof resetStartBar === 'function') resetStartBar();
+      document.getElementById('agentHeaderRight').style.display = 'none';
       overlay.remove();
     });
 
@@ -4013,15 +4247,7 @@
    * 显示面试区欢迎语
    */
   function showInterviewGreeting() {
-    if (interviewMessages.querySelector('.interview-greeting')) return;
-    const el = document.createElement("div");
-    el.className = "interview-greeting";
-    el.innerHTML = "准备好了吗👋<br>输入目标岗位，AI 面试官将为你进行模拟面试";
-    if (interviewMessages.firstChild) {
-      interviewMessages.insertBefore(el, interviewMessages.firstChild);
-    } else {
-      interviewMessages.appendChild(el);
-    }
+    // 阶段卡片已整合到启动栏，无需在对话区额外展示
   }
 
   /**
@@ -4030,6 +4256,8 @@
   function removeInterviewGreeting() {
     const g = interviewMessages.querySelector('.interview-greeting');
     if (g) g.remove();
+    const s = document.getElementById('stageIntroCards');
+    if (s) s.remove();
   }
 
   /**
@@ -4161,11 +4389,12 @@
     }
   } catch(e) {};
 
-  // ── 面试启动栏（下拉选择岗位） ──
+  // ── 面试启动栏（下拉选择岗位 + 阶段选择 + JD粘贴） ──
   const startBar = document.getElementById('interviewStartBar');
   const positionSelect = document.getElementById('positionSelect');
   const customText = document.getElementById('positionCustomText');
   const startBtn = document.getElementById('startInterviewBtn');
+  let selectedStage = '';  // "hr" | "first" | "second"
 
   // 二级岗位选择器数据
   const POSITION_DATA = {
@@ -4247,39 +4476,77 @@
     return positionSelect.value;
   }
 
-  // JD 粘贴区域展开/收起
-  const jdToggleBtn = document.getElementById('jdToggleBtn');
-  const jdTextarea = document.getElementById('jdTextarea');
-  jdToggleBtn.addEventListener('click', () => {
-    if (jdTextarea.style.display === 'none') {
-      jdTextarea.style.display = 'block';
-      jdToggleBtn.textContent = '📋 收起 JD';
-      jdTextarea.focus();
+  // 面试阶段选择（点击介绍卡片）
+  function selectStageCard(card) {
+    document.querySelectorAll('.stage-intro-card').forEach(c => c.classList.remove('selected'));
+    card.classList.add('selected');
+    selectedStage = card.dataset.stage;
+    updateStartBtnState();
+  }
+
+  function updateStartBtnState() {
+    const hasPosition = !!getSelectedPosition();
+    const hasStage = !!selectedStage;
+    if (hasPosition && hasStage) {
+      startBtn.disabled = false;
+      startBtn.textContent = '开始面试';
     } else {
-      jdTextarea.style.display = 'none';
-      jdToggleBtn.textContent = '📋 粘贴 JD（选填）';
+      startBtn.disabled = true;
+      if (!hasPosition) {
+        startBtn.textContent = '选择岗位和阶段后开始';
+      } else {
+        startBtn.textContent = '选择面试阶段后开始';
+      }
+    }
+  }
+
+  // 岗位选择后也更新按钮状态
+  const positionObserver = new MutationObserver(() => updateStartBtnState());
+  positionObserver.observe(pickerBtn, { characterData: true, subtree: true });
+  // 岗位下拉选择时更新按钮
+  document.addEventListener('click', (e) => {
+    if (e.target.closest('.job-item') || e.target.closest('.cat-item')) {
+      // 延迟检查，等 DOM 更新
+      setTimeout(updateStartBtnState, 50);
     }
   });
+  customText.addEventListener('input', () => {
+    setTimeout(updateStartBtnState, 50);
+  });
+
+  const jdTextarea = document.getElementById('jdTextarea');
 
   startBtn.addEventListener('click', async () => {
     const pos = getSelectedPosition();
-    if (!pos) return;
+    if (!pos || !selectedStage) return;
     startBtn.disabled = true;
     startBtn.textContent = '面试准备中...';
+
+    // 根据阶段设置题目数量
+    const stageQuestions = { hr: 6, first: 8, second: 6 };
+    const stageNames = { hr: "HR面", first: "一面（技术面）", second: "二面（综合面）" };
 
     // 重置面试状态
     interviewChatHistory = [];
     interviewMessages.innerHTML = '';
+    const jdContent = jdTextarea.value.trim();
     interviewState = {
       is_active: true,
       target_position: pos,
       interview_type: "",
+      interview_stage: selectedStage,
+      jd_text: jdContent,
       current_question_index: 0,
-      total_questions: 8,
+      total_questions: stageQuestions[selectedStage] || 8,
       scores: [],
       feedbacks: []
     };
     updateInterviewTitle();
+
+    // 收起启动栏，显示对话区，显示退出按钮，移除介绍卡片
+    startBar.style.display = 'none';
+    document.getElementById('agentHeaderRight').style.display = 'flex';
+    removeInterviewGreeting();
 
     // 发送第一条消息启动面试
     const resumeCtx = getResumeContext();
@@ -4304,14 +4571,11 @@
     let fullReply = "";
 
     try {
-      const jdContent = jdTextarea.value.trim();
-      const jdPrompt = jdContent ? `\n\n以下是该岗位的 JD 描述，请基于 JD 内容出面试题：\n${jdContent}` : '';
-      
       const res = await fetch(`${API_BASE_URL}/chat/stream`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          messages: [{ role: "user", content: `我想面试${pos}岗位，请开始模拟面试${jdPrompt}` }],
+          messages: [{ role: "user", content: `我想面试${pos}岗位，请开始${stageNames[selectedStage]}模拟面试。` }],
           mode: 'interview_sim',
           resume_context: resumeCtx,
           interview_state: interviewState
@@ -4367,9 +4631,18 @@
 
   function resetStartBar() {
     positionSelect.value = '';
-    pickerBtn.textContent = '— 选择目标岗位 —';
+    pickerBtn.textContent = '选择目标岗位 ▾';
     customText.style.display = 'none';
     customText.value = '';
+    // 重置阶段选择
+    selectedStage = '';
+    document.querySelectorAll('.stage-intro-card').forEach(c => c.classList.remove('selected'));
+    startBtn.disabled = true;
+    startBtn.textContent = '选择岗位和阶段后开始';
+    // 清空 JD
+    jdTextarea.value = '';
+    // 重新显示启动栏
+    startBar.style.display = '';
   }
 
   // ── 侧边栏 Agent（求职助手：默认问答 / 换赛道 / 修改简历 / 职业规划）──
