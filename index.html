@@ -779,12 +779,12 @@
     /* ========== Agent 求职面板 ========== */
     .agent-section {
       grid-column: 1 / -1;
-      margin: 8px 0 40px;
+      margin: calc(8px - 0.5cm) 0 40px;
       padding: 0;
       display: flex;
       flex-direction: column;
       min-height: 0;
-      height: calc(100vh - 240px);
+      height: clamp(450px, calc(100vh - 200px + 2cm), 85vh);
     }
 
     .agent-panel {
