@@ -1,0 +1,20 @@
+{
+  "name": "Application",
+  "type": "object",
+  "properties": {
+    "company": { "type": "string" },
+    "position": { "type": "string" },
+    "industry": { "type": "string" },
+    "city": { "type": "string" },
+    "salary_range": { "type": "string" },
+    "match_score": { "type": "number" },
+    "status": {
+      "type": "string",
+      "enum": ["投递中", "已查看", "约面试", "已拒绝", "已offer"],
+      "default": "投递中"
+    },
+    "applied_date": { "type": "string", "format": "date" },
+    "notes": { "type": "string" }
+  },
+  "required": ["company", "position", "status"]
+}
