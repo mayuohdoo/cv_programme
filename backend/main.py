@@ -53,12 +53,58 @@ def _file_extension(filename: str) -> str:
     return "." + filename.rsplit(".", 1)[-1].lower()
 
 
+def _extract_text_from_images(file_bytes: bytes) -> str:
+    """把 PDF 每页渲染成图片，用 DeepSeek Vision 识别文字内容。"""
+    import base64
+    texts = []
+    with fitz.open(stream=file_bytes, filetype="pdf") as doc:
+        for page_num, page in enumerate(doc):
+            mat = fitz.Matrix(2, 2)  # 2x 缩放保证清晰度
+            pix = page.get_pixmap(matrix=mat)
+            img_bytes = pix.tobytes("png")
+            img_b64 = base64.b64encode(img_bytes).decode("utf-8")
+
+            response = client.chat.completions.create(
+                model="deepseek-vl2",
+                messages=[{
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "image_url",
+                            "image_url": {"url": f"data:image/png;base64,{img_b64}"}
+                        },
+                        {
+                            "type": "text",
+                            "text": "请完整提取这张简历图片中的所有文字内容，保持原有结构和顺序，不要添加任何解释或总结。"
+                        }
+                    ]
+                }],
+                temperature=0,
+            )
+            texts.append(response.choices[0].message.content)
+            print(f"📷 OCR 第 {page_num + 1} 页完成")
+
+    return "\n\n".join(texts)
+
+
 def _extract_text(content_type: str, file_bytes: bytes) -> str:
     raw_text = ""
     if content_type == "application/pdf":
         with fitz.open(stream=file_bytes, filetype="pdf") as doc:
             for page in doc:
                 raw_text += page.get_text()
+
+        # 检测乱码：统计中文字符占比
+        if raw_text.strip():
+            chinese_chars = sum(1 for c in raw_text if '\u4e00' <= c <= '\u9fff')
+            total_chars = len([c for c in raw_text if c.strip()])
+            chinese_ratio = chinese_chars / total_chars if total_chars > 0 else 0
+
+            # 文字够多但中文占比低于5%，判定为乱码，改用图片OCR
+            if total_chars > 100 and chinese_ratio < 0.05:
+                print("⚠️ 检测到PDF字体编码异常，切换为图片OCR模式...")
+                raw_text = _extract_text_from_images(file_bytes)
+
     elif content_type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
         doc = Document(io.BytesIO(file_bytes))
         raw_text = "\n".join(para.text for para in doc.paragraphs)
@@ -68,109 +114,100 @@ def _extract_text(content_type: str, file_bytes: bytes) -> str:
 def _to_json_with_fallback(response_text: str) -> dict[str, Any]:
     cleaned = response_text.strip()
 
-    def _sanitize_json_string(s: str) -> str:
+    def _sanitize(s: str) -> str:
         """
-        两步修复：
-        1. 把 JSON 字符串值内部的裸控制字符（真实的换行、制表符等）
-           替换为合法的 JSON 转义序列，保留内容不丢失。
-        2. 修复非法的反斜杠转义（如 \\' \\: \\- \\p 等），
-           保留合法的 \\" \\\\ \\n \\t \\r \\/ \\b \\f \\uNNNN。
+        单遍状态机，只在 JSON 字符串值内部做修复：
+        - 裸控制字符（真实换行、制表符等）-> 转义文本，保留内容
+        - 非法反斜杠转义（如 单引号、冒号、连字符等）-> 丢弃反斜杠，保留字符
+        - 合法转义（双引号、双反斜杠、/、n、t、r、b、f、u+4位十六进制）-> 原样保留
+        JSON 结构字符（字符串外的部分）完全不动。
         """
-        # Step 1: 在字符串值内部，将裸控制字符转为合法转义
-        # 用状态机遍历，只在处于 JSON 字符串内部时做替换
-        _ctrl_map = {
-            '\n': '\\n',
-            '\r': '\\r',
-            '\t': '\\t',
-            '\b': '\\b',
-            '\f': '\\f',
-        }
-        result = []
+        _ctrl_map = {'\n': '\\n', '\r': '\\r', '\t': '\\t', '\b': '\\b', '\f': '\\f'}
+        _valid_single = set('"\\ntrfb/')
+        out = []
         in_string = False
         i = 0
         while i < len(s):
             ch = s[i]
-            if in_string:
-                if ch == '\\':
-                    # 跳过转义对，原样保留
-                    result.append(ch)
-                    if i + 1 < len(s):
-                        result.append(s[i + 1])
-                        i += 2
-                    else:
-                        i += 1
-                elif ch == '"':
-                    in_string = False
-                    result.append(ch)
-                    i += 1
-                elif ch in _ctrl_map:
-                    # 裸控制字符 → 转义文本，内容保留
-                    result.append(_ctrl_map[ch])
-                    i += 1
-                else:
-                    result.append(ch)
-                    i += 1
-            else:
+            if not in_string:
                 if ch == '"':
                     in_string = True
-                result.append(ch)
+                out.append(ch)
                 i += 1
-        s = ''.join(result)
-
-        # Step 2: 修复非法反斜杠转义（\' \: \- 等）
-        # 合法转义字符集（JSON spec + \u）
-        valid_escapes = set('"\\ntrfb/u')
-        result2 = []
-        i = 0
-        while i < len(s):
-            if s[i] == '\\' and i + 1 < len(s):
-                next_char = s[i + 1]
-                if next_char in valid_escapes:
-                    result2.append(s[i])
-                    result2.append(next_char)
-                    i += 2
-                else:
-                    # 非法转义：丢弃反斜杠，保留后面的字符
-                    result2.append(next_char)
-                    i += 2
             else:
-                result2.append(s[i])
-                i += 1
-        return ''.join(result2)
+                if ch == '\\':
+                    if i + 1 >= len(s):
+                        # 末尾孤立反斜杠，丢弃
+                        i += 1
+                        continue
+                    nxt = s[i + 1]
+                    if nxt in _valid_single:
+                        # 合法单字符转义，原样保留
+                        out.append(ch)
+                        out.append(nxt)
+                        i += 2
+                    elif nxt == 'u':
+                        # \uXXXX：检查后4位是否都是十六进制
+                        hex_part = s[i + 2: i + 6]
+                        if len(hex_part) == 4 and all(c in '0123456789abcdefABCDEF' for c in hex_part):
+                            out.append(ch)
+                            out.append(nxt)
+                            out.extend(hex_part)
+                            i += 6
+                        else:
+                            # 非法 \u，丢弃反斜杠
+                            out.append(nxt)
+                            i += 2
+                    else:
+                        # 其他非法转义，丢弃反斜杠，保留字符
+                        out.append(nxt)
+                        i += 2
+                elif ch == '"':
+                    in_string = False
+                    out.append(ch)
+                    i += 1
+                elif ch in _ctrl_map:
+                    # 裸控制字符 → 转义文本
+                    out.extend(_ctrl_map[ch])
+                    i += 1
+                else:
+                    out.append(ch)
+                    i += 1
+        return ''.join(out)
+
+    def _extract_json_fragment(s: str) -> str | None:
+        """从可能含有前缀文字或 markdown 代码块的字符串中提取 JSON 对象。"""
+        # 去掉 markdown 代码块
+        m = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", s, re.DOTALL)
+        if m:
+            return m.group(1)
+        # 提取最外层 {}
+        m = re.search(r"(\{.*\})", s, re.DOTALL)
+        if m:
+            return m.group(1)
+        return None
 
     def _try_parse(text: str) -> dict[str, Any] | None:
-        # 先直接解析
+        # 第一步：直接解析
         try:
             return json.loads(text)
         except json.JSONDecodeError:
             pass
-        # 再用 strict=False（允许控制字符）尝试
+        # 第二步：清洗后解析
         try:
-            return json.loads(text, strict=False)
-        except json.JSONDecodeError:
-            pass
-        # 最后用清洗后的文本解析
-        try:
-            return json.loads(_sanitize_json_string(text))
+            return json.loads(_sanitize(text))
         except json.JSONDecodeError:
             return None
 
-    # 直接尝试
+    # 尝试完整文本
     result = _try_parse(cleaned)
     if result is not None:
         return result
 
-    # 去掉 markdown 代码块后尝试
-    code_block_match = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", cleaned, re.DOTALL)
-    if code_block_match:
-        result = _try_parse(code_block_match.group(1))
-        if result is not None:
-            return result
-
-    # 提取最外层 {} 后尝试
-    object_match = re.search(r"(\{.*\})", cleaned, re.DOTALL)
-    if object_match:
-        result = _try_parse(object_match.group(1))
+    # 尝试提取 JSON 片段后再解析
+    fragment = _extract_json_fragment(cleaned)
+    if fragment:
+        result = _try_parse(fragment)
         if result is not None:
             return result
 
@@ -178,122 +215,76 @@ def _to_json_with_fallback(response_text: str) -> dict[str, Any]:
 
 
 def _parse_resume_with_ai(raw_text: str) -> dict[str, Any]:
-    prompt = f"""
-你是一个资深 HR 分析师和严格的简历审查专家。请将简历解析为严格合法的 JSON（不要使用 markdown 代码块，不要在 JSON 外输出任何文字）。
+    # 清洗简历原文，防止其中的特殊字符污染 JSON 输出
+    # 替换会破坏 JSON 的字符，但保留内容可读性
+    safe_text = raw_text.replace('\\', '、').replace('"', '"').replace('"', '"').replace('\x00', '')
+    # 把连续多个空行压缩为单个空行，减少 token 浪费
+    safe_text = re.sub(r'\n{3,}', '\n\n', safe_text)
 
-【重要】你必须以高标准检查简历质量，仔细审查每一处表达，不要遗漏任何问题。诚实的反馈比礼貌的赞美更有价值。
+    prompt = f"""你是一个资深 HR 分析师和严格的简历审查专家。请将简历解析为严格合法的 JSON。
 
-【JSON 安全输出规则——必须严格遵守，优先于所有其他指令】
-- 所有字符串值中，如果包含双引号，必须转义为 \"
-- 所有字符串值中，如果包含反斜杠，必须转义为 \\
-- original 和 suggestion 字段的值必须是纯文本片段，不得包含任何未转义的 JSON 控制字符
-- 如果某段原文包含双引号或反斜杠，提取时将其替换为对应的中文符号（" " 替代双引号，、替代反斜杠），确保 JSON 不破损
-- 输出前在脑内验证整个 JSON 是否可被 json.loads() 解析，如有问题立即修正
+重要输出规则：
+1. 只输出 JSON 对象本身，不要有任何其他文字、不要用 markdown 代码块包裹
+2. 所有字符串值中不得出现未转义的双引号或反斜杠
+3. 字符串值中的换行用空格代替
 
-输出字段要求：
-1) candidate_summary: 字符串，基于简历内容的候选人简介（80字以内）
-2) city: 字符串，从简历中提取的城市信息（如："北京"、"上海"、"深圳"、"杭州"等）
-   - 如果简历中明确提及城市（如："北京市朝阳区"、"工作地点：上海"），提取城市名称
-   - 如果简历中未明确提及城市，返回空字符串 ""
-   - 只返回城市名称，不要包含"市"、"省"等后缀（如：返回"北京"而不是"北京市"）
+输出字段：
+{{
+  "candidate_summary": "候选人简介，80字以内",
+  "city": "城市名，无则空字符串",
+  "inferred_mbti": "",
+  "mbti_description": "",
+  "extracted_skills": ["技能1", "技能2"],
+  "job_recommendations": [
+    {{
+      "title": "岗位名称",
+      "industry": "行业",
+      "reason": "推荐理由30字以内",
+      "match_level": "高或中",
+      "match_score": 85,
+      "missing_skills": ["缺失技能"],
+      "career_path": "成长路径",
+      "salary_range": {{"min_salary": 15, "max_salary": 25, "city": "城市或全国"}}
+    }}
+  ],
+  "resume_diagnosis": {{
+    "typos": [{{"original": "原文片段", "suggestion": "正确写法"}}],
+    "grammar_issues": [{{"original": "原句", "suggestion": "改进表达"}}],
+    "redundancy": [{{"original": "冗余片段", "suggestion": "简化表达"}}],
+    "overall_score": 80,
+    "overall_comment": "一句话评价"
+  }}
+}}
 
-3) inferred_mbti: 字符串，返回空字符串 ""（不再推断MBTI）
-4) mbti_description: 字符串，返回空字符串 ""
+字段说明：
+- extracted_skills：从简历提取关键技能，不超过15个，按重要性排序
+- job_recommendations：推荐6个岗位，必须100%基于候选人实际背景，非IT背景禁止推荐开发/算法等技术岗
+- match_score：技能匹配45% + 经验匹配30% + 教育匹配25%，高匹配85-95分，中匹配65-79分
+- resume_diagnosis：严格检查错别字、病句、冗余，original必须是简历原文片段（不含引号），如无问题则对应数组为空
+- overall_score：按问题数量严格评分，90+无问题，80-89有1-2个小问题，70-79有3-5个问题
 
-5) job_recommendations: 数组，推荐6个适合该候选人的岗位，每项包含：
-   - title: 岗位名称
-   - industry: 所属行业（如：科技、金融、咨询、教育、创业、政府等）
-   - reason: 推荐理由（30字以内，结合简历技能和经验）
-   - match_level: 匹配度，"高" 或 "中"
+薪资推断：根据岗位、城市、经验推断2024-2025年市场行情，一线城市比二三线高20-40%
 
-   【岗位推荐铁律——违反则输出无效】
-   - 推荐岗位必须 100% 基于候选人简历中实际体现的专业背景、工作经验和技能
-   - 严禁因为"薪资高"或"行业热门"而推荐与候选人背景无关的岗位
-   - 如果候选人没有任何编程、开发、算法相关经验，严禁推荐软件工程师、算法工程师、后端开发、前端开发、数据工程师等 IT 技术岗位
-   - 如果候选人是非理工科背景（如：人文、艺术、传媒、教育、金融、管理等），推荐岗位必须对应其实际专业领域
-   - 6个岗位应覆盖候选人背景下合理的不同方向，而非强行跨领域
-
-   - match_score: 整数 0-100，精确匹配度分数
-     【计算规则】：技能匹配45% + 经验匹配30% + 教育匹配25%
-     【示例】：高匹配岗位85-95分，中匹配岗位65-79分
-
-   - missing_skills: 数组，候选人缺失的关键技能，0-5个
-     【规则】：只列出岗位重要但简历未体现的技能，完全匹配时返回空数组[]
-
-   - career_path: 字符串，该岗位的职业成长路径，60-100字
-     【格式】：2-4个阶段，用箭头连接，内容必须与候选人实际背景对应
-     【示例（仅格式参考，内容按实际背景填写）】："初级XX → XX专员 → 高级XX → XX总监"
-
-   - salary_range: 对象，该岗位的薪资范围，包含：
-     * min_salary: 整数，最低月薪（单位：千元，如 15 表示 15K）
-     * max_salary: 整数，最高月薪（单位：千元，如 25 表示 25K）
-     * city: 字符串，薪资对应的城市（使用上面提取的城市信息；如果城市为空，使用"全国"）
-
-   【薪资推断规则】：
-   - 根据候选人实际推荐岗位、所在城市和经验年限推断2024-2025年合理薪资
-   - 一线城市（北京、上海、深圳、杭州）薪资通常比二三线城市高 20-40%
-   - 考虑候选人的教育背景和工作经验（应届生、1-3年、3-5年、5年以上）
-   - 薪资范围应符合该岗位的真实市场行情，不要过高或过低
-   - 示例（仅为格式说明，数字按实际岗位填写）：
-     * 一线城市某管理岗（3年经验）：20-35K
-     * 二线城市某专业岗（应届生）：6-10K
-     * 全国某销售岗（1年经验）：8-15K
-
-6) extracted_skills: 数组，从简历中提取的关键技能标签，不超过15个
-    【要求】：
-    - 从简历全文提取，包括硬技能（工具、语言、专业技能）和软技能（沟通、管理、领导力）
-    - 优先提取简历中明确写出的技能关键词
-    - 按重要性排序，最重要的在前
-
-7) resume_diagnosis: 对象，对简历文本进行严格的质量诊断，包含：
-
-   - typos: 数组，发现的错别字。【检测标准】：
-     * 同音字错误（如："测式"应为"测试"，"沟通能里"应为"沟通能力"）
-     * 形近字错误（如："项日"应为"项目"）
-     * 多字/少字（如："的的项目"应为"的项目"）
-     * 标点错误（如：中文语境中使用英文逗号）
-     【要求】：每个错别字返回 {{"original": "原文片段(5-30字，纯文本，不含引号和反斜杠)", "suggestion": "正确写法"}}
-
-   - grammar_issues: 数组，病句或语法问题。【检测标准】：
-     * 语序不当、成分残缺、搭配不当、表意不明、冗长啰嗦
-     【要求】：每个问题返回 {{"original": "原句(10-40字，纯文本，不含引号和反斜杠)", "suggestion": "改进后的表达"}}
-
-   - redundancy: 数组，语意冗杂或表达重复。【检测标准】：
-     * 重复词语、重复表达、无意义修饰、可合并句子
-     【要求】：每个冗余返回 {{"original": "冗余片段(10-40字，纯文本，不含引号和反斜杠)", "suggestion": "简化后的表达"}}
-
-   【original 字段特别说明】：
-   - original 必须是简历中的真实原文片段，禁止编造
-   - 如果原文片段中含有双引号，提取时替换为中文引号（" "）
-   - 如果原文片段中含有反斜杠，提取时删除或替换为顿号（、）
-   - original 字段长度控制在5-40字，超出则截取最能说明问题的核心部分
-
-   - overall_score: 整数 1-100，简历整体质量评分。【评分标准】：
-     * 90-100分：无明显问题，表达专业简洁，用词准确
-     * 80-89分：有1-2个小问题，整体良好
-     * 70-79分：有3-5个问题，需要改进
-     * 60-69分：有6-10个问题，质量一般
-     * 60分以下：问题较多（>10个），需要大幅修改
-     【要求】：根据发现的问题数量严格评分，不要因为礼貌而虚高评分
-
-   - overall_comment: 字符串，一句话总体评价（30字以内，纯文本，不含引号）
-
-【重要提示】：
-- 如果简历质量确实很好，typos/grammar_issues/redundancy 可以为空数组，overall_score 可以给 85-100 分
-- 但如果发现了问题，必须如实指出，不要遗漏
-- suggestion 必须是具体可行的修改建议
-
-如果信息缺失，请使用空字符串或空数组，不要省略字段。
-
-简历文本如下：
-{raw_text}
+简历原文：
+{safe_text}
 """
     response = client.chat.completions.create(
         model=DEEPSEEK_MODEL,
         messages=[{"role": "user", "content": prompt}],
         temperature=0,
+        response_format={"type": "json_object"},
     )
-    return _to_json_with_fallback(response.choices[0].message.content)
+    raw = response.choices[0].message.content
+    print("=== RAW MODEL OUTPUT (first 300 chars) ===")
+    print(repr(raw[:300]))
+    print("==========================================")
+    try:
+        return _to_json_with_fallback(raw)
+    except Exception as e:
+        print("=== PARSE FAILED, FULL RAW OUTPUT ===")
+        print(repr(raw))
+        print("=====================================")
+        raise
 
 
 def _add_default_values_for_new_fields(parsed_data: dict[str, Any]) -> dict[str, Any]:

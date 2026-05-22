@@ -201,7 +201,15 @@ J vs P：
         model=DEEPSEEK_MODEL,
         messages=[{"role": "user", "content": prompt}],
     )
-    return _to_json_with_fallback(response.choices[0].message.content)
+    
+    # 1. 先拿到大模型吐出来的原始文本
+    result_text = response.choices[0].message.content
+    
+    # 2. 核心：把大模型返回里的“非法控制换行符”全部强行洗干净！
+    result_text = result_text.replace('\n', '\\n').replace('\r', '\\r')
+    
+    # 3. 把洗干净后的文本送进去解析返回
+    return _to_json_with_fallback(result_text)
 
 
 def _add_default_values_for_new_fields(parsed_data: dict[str, Any]) -> dict[str, Any]:
