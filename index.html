@@ -70,7 +70,10 @@
       display: flex; align-items: center; justify-content: center;
       color: white; font-size: 13px; font-weight: 700;
       box-shadow: 0 2px 8px rgba(192,132,252,0.3);
+      cursor: pointer; transition: all 0.2s;
+      border: none;
     }
+    .nav-avatar:hover { transform: scale(1.1); box-shadow: 0 4px 14px rgba(192,132,252,0.45); }
 
     /* Main Content */
     .main-content {
@@ -340,6 +343,112 @@
       color: var(--purple-mid); font-weight: 500;
     }
     /* ========== 结束：弹窗 Modal 样式 ========== */
+
+    /* ========== 个人中心样式 ========== */
+    .profile-header {
+      display: flex; align-items: center; gap: 16px;
+      padding: 20px;
+      background: linear-gradient(135deg, rgba(192,132,252,0.12), rgba(244,114,182,0.12));
+      border-radius: 16px; margin-bottom: 24px;
+    }
+    .profile-avatar-big {
+      width: 64px; height: 64px; border-radius: 50%;
+      background: var(--gradient-btn);
+      display: flex; align-items: center; justify-content: center;
+      color: white; font-size: 28px; font-weight: 700;
+      box-shadow: 0 6px 20px rgba(192,132,252,0.35);
+      flex-shrink: 0;
+    }
+    .profile-info { flex: 1; min-width: 0; }
+    .profile-name {
+      font-size: 18px; font-weight: 800; color: var(--purple-deep);
+      margin-bottom: 4px;
+    }
+    .profile-meta {
+      font-size: 12px; color: var(--purple-light);
+    }
+    .profile-edit-btn {
+      padding: 6px 14px; border-radius: 999px; border: none;
+      background: rgba(255,255,255,0.7);
+      color: var(--purple-mid); font-size: 12px; font-weight: 600;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .profile-edit-btn:hover { background: white; transform: scale(1.05); }
+
+    /* 简历管理列表 */
+    .pm-section-head {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 12px;
+    }
+    .pm-section-title {
+      font-size: 14px; font-weight: 700; color: var(--purple-mid);
+    }
+    .pm-upload-btn {
+      padding: 6px 14px; border-radius: 999px; border: none;
+      background: var(--gradient-btn); color: white;
+      font-size: 12px; font-weight: 600; cursor: pointer;
+      box-shadow: 0 2px 8px rgba(192,132,252,0.3);
+      transition: all 0.2s;
+    }
+    .pm-upload-btn:hover { transform: scale(1.05); }
+    .pm-resume-list {
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .pm-resume-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 14px 16px; border-radius: 14px;
+      background: rgba(255,255,255,0.7);
+      border: 1.5px solid rgba(192,132,252,0.15);
+      transition: all 0.2s; cursor: pointer;
+    }
+    .pm-resume-item:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 16px rgba(192,132,252,0.15);
+    }
+    .pm-resume-item.active {
+      background: linear-gradient(135deg, rgba(192,132,252,0.12), rgba(244,114,182,0.1));
+      border-color: rgba(192,132,252,0.45);
+    }
+    .pm-resume-icon {
+      width: 40px; height: 40px; border-radius: 12px;
+      background: linear-gradient(135deg, rgba(192,132,252,0.18), rgba(244,114,182,0.18));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; flex-shrink: 0;
+    }
+    .pm-resume-meta { flex: 1; min-width: 0; }
+    .pm-resume-name {
+      font-size: 14px; font-weight: 700; color: var(--purple-deep);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      margin-bottom: 2px;
+    }
+    .pm-resume-info {
+      font-size: 11px; color: var(--purple-light);
+      display: flex; gap: 8px; align-items: center;
+    }
+    .pm-resume-badge {
+      font-size: 10px; font-weight: 700; padding: 2px 8px;
+      border-radius: 10px; flex-shrink: 0;
+    }
+    .pm-badge-active { background: var(--gradient-btn); color: white; }
+    .pm-badge-parsed { background: rgba(34,197,94,0.15); color: #16a34a; }
+    .pm-badge-pending { background: rgba(245,158,11,0.15); color: #d97706; }
+    .pm-resume-actions { display: flex; gap: 6px; flex-shrink: 0; }
+    .pm-icon-btn {
+      width: 32px; height: 32px; border: none; border-radius: 50%;
+      background: transparent; color: var(--purple-light);
+      cursor: pointer; transition: all 0.2s;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px;
+    }
+    .pm-icon-btn:hover { background: rgba(192,132,252,0.12); color: var(--purple-mid); }
+    .pm-icon-btn.danger:hover { background: rgba(239,68,68,0.12); color: #dc2626; }
+    .pm-empty-resume {
+      text-align: center; padding: 30px 20px;
+      background: rgba(255,255,255,0.5);
+      border: 2px dashed rgba(192,132,252,0.3);
+      border-radius: 14px; color: var(--purple-light); font-size: 13px;
+    }
+    /* ========== 结束：个人中心样式 ========== */
   </style>
 </head>
 <body>
@@ -355,7 +464,7 @@
       <a href="#" class="nav-tab" onclick="navigateTo('applications')">追踪</a>
       <a href="#" class="nav-tab" onclick="navigateTo('chat')">助手</a>
     </div>
-    <div class="nav-avatar" id="navAvatar">?</div>
+    <button type="button" class="nav-avatar" id="navAvatar" onclick="showProfileModal()" title="个人中心">?</button>
   </div>
 </nav>
 
@@ -419,23 +528,7 @@
     </div>
   </div>
 
-  <!-- Resume Bar -->
-  <div class="resume-bar">
-    <div class="resume-bar-label">
-      <span class="icon">📁</span>
-      <div class="text">
-        <strong>我的简历（<span id="resumeCount">0</span> 份）</strong>
-        <span>支持 PDF / DOCX / TXT，最多保存 5 份</span>
-      </div>
-    </div>
-    <div class="resume-chips" id="resumeChips">
-      <span class="empty-text">还没有简历</span>
-    </div>
-    <label>
-      <input type="file" accept=".pdf,.docx,.txt,.doc" style="display:none" id="uploadInput2" />
-      <span class="upload-btn">📄 上传新简历</span>
-    </label>
-  </div>
+  <!-- Resume Bar moved to Profile Center (click avatar to access) -->
 
 </main>
 
@@ -461,30 +554,17 @@
     document.getElementById('navAvatar').textContent = profile.nickname[0].toUpperCase();
   }
 
-  // Load resumes from localStorage
+  // Load resumes - now updates Profile Modal if open, plus tools unlock state
   function loadResumes() {
     const resumes = JSON.parse(localStorage.getItem('resumes') || '[]');
-    const count = resumes.length;
-    document.getElementById('resumeCount').textContent = count;
 
-    const chipsEl = document.getElementById('resumeChips');
-    if (count === 0) {
-      chipsEl.innerHTML = '<span class="empty-text">还没有简历</span>';
-      return;
+    // Refresh profile modal content if it's open
+    if (document.getElementById('modalOverlay')?.classList.contains('active')) {
+      const title = document.getElementById('modalTitle')?.textContent || '';
+      if (title.includes('个人中心')) showProfileModal();
     }
 
-    const activeId = localStorage.getItem('activeResumeId');
-    chipsEl.innerHTML = resumes.map(r => {
-      const isActive = r.id === activeId;
-      const statusIcon = r.parsed ? '✓' : '📄';
-      return `<div class="resume-chip ${isActive ? 'active' : ''}">
-        <span>${statusIcon}</span>
-        <span>${r.name || '简历'}</span>
-        ${isActive ? '<span class="dot">●</span>' : ''}
-      </div>`;
-    }).join('');
-
-    // Unlock tools if parsed
+    // Unlock tools if any resume is parsed
     const hasParsed = resumes.some(r => r.parsed);
     if (hasParsed) unlockTools();
   }
@@ -704,6 +784,122 @@
     openModal('🤖 小小·求职助手', '有任何求职问题都可以问', html);
   }
 
+  // ========== 个人中心 ==========
+  function showProfileModal() {
+    const profile = JSON.parse(localStorage.getItem('userProfile') || '{}');
+    const resumes = JSON.parse(localStorage.getItem('resumes') || '[]');
+    const activeId = localStorage.getItem('activeResumeId');
+    const nickname = profile.nickname || '用户';
+    const avatar = profile.avatar || nickname[0].toUpperCase();
+
+    // 简历列表 HTML
+    const resumesHtml = resumes.length === 0
+      ? `<div class="pm-empty-resume">
+           还没有上传简历<br>
+           <span style="font-size:11px">点击右上角「上传新简历」开始</span>
+         </div>`
+      : resumes.map(r => {
+          const isActive = r.id === activeId;
+          const time = r.uploadTime ? new Date(r.uploadTime).toLocaleDateString() : '';
+          const size = r.fileSize ? (r.fileSize / 1024 / 1024).toFixed(1) + ' MB' : '';
+          let badgeHtml = '';
+          if (isActive) badgeHtml = '<span class="pm-resume-badge pm-badge-active">使用中</span>';
+          else if (r.parsed) badgeHtml = '<span class="pm-resume-badge pm-badge-parsed">✓ 已解析</span>';
+          else badgeHtml = '<span class="pm-resume-badge pm-badge-pending">待解析</span>';
+
+          return `
+            <div class="pm-resume-item ${isActive ? 'active' : ''}" onclick="setActiveResume('${r.id}')">
+              <div class="pm-resume-icon">📄</div>
+              <div class="pm-resume-meta">
+                <div class="pm-resume-name">${r.fileName || r.name || '简历'}</div>
+                <div class="pm-resume-info">
+                  ${badgeHtml}
+                  ${time ? `<span>${time}</span>` : ''}
+                  ${size ? `<span>· ${size}</span>` : ''}
+                </div>
+              </div>
+              <div class="pm-resume-actions">
+                ${r.parsed ? `<button class="pm-icon-btn" onclick="event.stopPropagation();viewResumeDetail('${r.id}')" title="查看解析">👁</button>` : ''}
+                <button class="pm-icon-btn danger" onclick="event.stopPropagation();deleteResume('${r.id}')" title="删除">🗑</button>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+    const html = `
+      <div class="profile-header">
+        <div class="profile-avatar-big">${avatar}</div>
+        <div class="profile-info">
+          <div class="profile-name">${nickname}</div>
+          <div class="profile-meta">${profile.identity || '求职者'} · ${resumes.length} 份简历</div>
+        </div>
+        <button class="profile-edit-btn" onclick="resetProfile()">编辑资料</button>
+      </div>
+
+      <div class="pm-section-head">
+        <div class="pm-section-title">📁 我的简历（最多 5 份）</div>
+        <input type="file" id="pmUploadInput" accept=".pdf,.docx,.txt,.doc" style="display:none" />
+        <button class="pm-upload-btn" onclick="document.getElementById('pmUploadInput').click()" ${resumes.length >= 5 ? 'disabled style="opacity:0.5;cursor:not-allowed"' : ''}>
+          📄 上传新简历
+        </button>
+      </div>
+
+      <div class="pm-resume-list">
+        ${resumesHtml}
+      </div>
+    `;
+    openModal('👤 个人中心', '管理你的简历版本和个人资料', html);
+
+    // 绑定弹窗内的上传输入
+    bindUploadInput('pmUploadInput');
+  }
+
+  // 切换活跃简历
+  window.setActiveResume = function(id) {
+    localStorage.setItem('activeResumeId', id);
+    showProfileModal(); // 刷新弹窗
+    updateStatusCard();
+  };
+
+  // 删除简历
+  window.deleteResume = function(id) {
+    if (!confirm('确定删除这份简历吗？')) return;
+    let resumes = JSON.parse(localStorage.getItem('resumes') || '[]');
+    resumes = resumes.filter(r => r.id !== id);
+    localStorage.setItem('resumes', JSON.stringify(resumes));
+    const activeId = localStorage.getItem('activeResumeId');
+    if (activeId === id) {
+      // 如果删的是活跃简历，切换到第一份
+      if (resumes.length > 0) localStorage.setItem('activeResumeId', resumes[0].id);
+      else localStorage.removeItem('activeResumeId');
+    }
+    showProfileModal();
+    updateStatusCard();
+    // 如果没有已解析的简历，重新锁定工具
+    const hasParsed = resumes.some(r => r.parsed);
+    if (!hasParsed) location.reload(); // 简单粗暴：刷新页面恢复锁定状态
+  };
+
+  // 查看某份简历的解析详情
+  window.viewResumeDetail = function(id) {
+    const resumes = JSON.parse(localStorage.getItem('resumes') || '[]');
+    const r = resumes.find(x => x.id === id);
+    if (!r || !r.parsed) {
+      alert('该简历尚未解析');
+      return;
+    }
+    // 临时切换为活跃，然后打开诊断
+    localStorage.setItem('activeResumeId', id);
+    showDiagnosisModal(r.parseResult?.parsed_data || {});
+  };
+
+  // 重置资料（重新走冷启动）
+  window.resetProfile = function() {
+    if (!confirm('编辑资料会重新进入欢迎页设置，确定继续？')) return;
+    localStorage.removeItem('userProfile');
+    location.reload();
+  };
+
   async function parseResume() {
     // Trigger parse via API
     const resumes = JSON.parse(localStorage.getItem('resumes') || '[]');
@@ -713,16 +909,18 @@
     navigateTo('diagnosis');
   }
 
-  // File upload handler
-  ['uploadInput', 'uploadInput2'].forEach(id => {
+  // File upload handler (主页"上传简历"按钮 + 个人中心里的"上传新简历"按钮共用)
+  function bindUploadInput(id) {
     document.getElementById(id)?.addEventListener('change', async (e) => {
       const file = e.target.files?.[0];
       if (!file) return;
+      // 关闭弹窗以便看到主卡片的上传进度
+      closeModal();
       await uploadAndParse(file);
-      // reset so user can re-upload same file
       e.target.value = '';
     });
-  });
+  }
+  bindUploadInput('uploadInput');
 
   // Upload + Parse via backend API
   async function uploadAndParse(file) {
