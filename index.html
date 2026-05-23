@@ -235,6 +235,111 @@
     .ob-finish-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(192,132,252,0.4); }
     .ob-btn-disabled { background: #ddd !important; color: #999 !important; cursor: not-allowed !important; box-shadow: none !important; transform: none !important; }
     /* ========== 结束：冷启动引导样式 ========== */
+
+    /* ========== 弹窗 Modal 样式 ========== */
+    .modal-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(60, 30, 90, 0.45);
+      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+      z-index: 9999;
+      justify-content: center; align-items: center;
+      padding: 20px;
+    }
+    .modal-overlay.active { display: flex; animation: fadeIn 0.2s ease; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .modal-box {
+      background: rgba(255,255,255,0.95);
+      border-radius: 24px; padding: 32px;
+      max-width: 720px; width: 100%;
+      max-height: 85vh; overflow-y: auto;
+      box-shadow: 0 20px 60px rgba(180,120,255,0.3);
+      border: 1px solid rgba(255,255,255,0.9);
+      position: relative;
+      animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    .modal-close {
+      position: absolute; top: 16px; right: 16px;
+      width: 36px; height: 36px; border: none; cursor: pointer;
+      border-radius: 50%; background: rgba(192,132,252,0.1);
+      color: var(--purple-mid); font-size: 20px;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s;
+    }
+    .modal-close:hover { background: rgba(192,132,252,0.2); transform: rotate(90deg); }
+    .modal-title {
+      font-size: 22px; font-weight: 800; color: var(--purple-deep);
+      margin-bottom: 6px;
+    }
+    .modal-subtitle {
+      font-size: 13px; color: var(--purple-light);
+      margin-bottom: 24px;
+    }
+    .modal-empty {
+      text-align: center; padding: 40px 20px;
+      color: var(--purple-faint); font-size: 14px;
+    }
+
+    /* 诊断报告弹窗 */
+    .diag-score-card {
+      display: flex; align-items: center; gap: 20px;
+      padding: 20px;
+      background: linear-gradient(135deg, rgba(192,132,252,0.1), rgba(244,114,182,0.1));
+      border-radius: 16px; margin-bottom: 20px;
+    }
+    .diag-score-num {
+      font-size: 48px; font-weight: 900;
+      background: var(--gradient-btn);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      line-height: 1;
+    }
+    .diag-score-info { flex: 1; }
+    .diag-score-info strong { font-size: 14px; color: var(--purple-mid); display: block; }
+    .diag-score-info span { font-size: 13px; color: var(--purple-light); }
+    .diag-section h4 {
+      font-size: 14px; font-weight: 700; color: var(--purple-mid);
+      margin: 16px 0 10px;
+    }
+    .diag-item-card {
+      padding: 12px 16px; margin-bottom: 8px;
+      background: rgba(255,255,255,0.7);
+      border: 1px solid rgba(192,132,252,0.15);
+      border-radius: 12px; font-size: 13px; line-height: 1.6;
+    }
+    .diag-item-orig { color: #c44569; text-decoration: line-through; margin-bottom: 4px; }
+    .diag-item-sugg { color: #16a34a; font-weight: 600; }
+
+    /* 岗位推荐弹窗 */
+    .job-modal-card {
+      padding: 16px; margin-bottom: 12px;
+      background: rgba(255,255,255,0.7);
+      border: 1px solid rgba(192,132,252,0.15);
+      border-radius: 16px; transition: all 0.2s;
+    }
+    .job-modal-card:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(192,132,252,0.15); }
+    .job-modal-head { display: flex; justify-content: space-between; align-items: start; margin-bottom: 6px; }
+    .job-modal-title { font-size: 15px; font-weight: 700; color: var(--purple-deep); }
+    .job-modal-industry { font-size: 12px; color: var(--purple-light); margin-top: 2px; }
+    .job-modal-match {
+      font-size: 11px; font-weight: 700; padding: 4px 10px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, rgba(192,132,252,0.2), rgba(244,114,182,0.2));
+      color: var(--purple-mid);
+    }
+    .job-modal-reason { font-size: 12px; color: var(--purple-mid); margin-top: 8px; line-height: 1.6; }
+    .job-modal-meta { display: flex; gap: 12px; margin-top: 8px; font-size: 11px; color: var(--purple-light); }
+    .job-modal-salary { font-weight: 700; color: var(--pink-primary); font-size: 13px; }
+
+    /* 技能标签 */
+    .skill-tag {
+      display: inline-block; padding: 4px 12px; margin: 3px;
+      background: rgba(192,132,252,0.12);
+      border: 1px solid rgba(192,132,252,0.25);
+      border-radius: 999px; font-size: 12px;
+      color: var(--purple-mid); font-weight: 500;
+    }
+    /* ========== 结束：弹窗 Modal 样式 ========== */
   </style>
 </head>
 <body>
@@ -334,6 +439,16 @@
 
 </main>
 
+<!-- 弹窗 Modal -->
+<div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal()">×</button>
+    <div class="modal-title" id="modalTitle">标题</div>
+    <div class="modal-subtitle" id="modalSubtitle">副标题</div>
+    <div id="modalContent"></div>
+  </div>
+</div>
+
 <script src="./config.js"></script>
 <script>
   const DEFAULT_API_BASE_URL = "http://127.0.0.1:8000";
@@ -422,9 +537,171 @@
   }
 
   function navigateTo(page) {
-    // 跳转到原版页面（功能完整：岗位推荐、诊断、面试、追踪等）
-    // 用 hash 让原版页面知道用户想看哪个区域（可选）
-    window.location.href = 'index-original-backup.html#' + page;
+    const resumes = JSON.parse(localStorage.getItem('resumes') || '[]');
+    const activeId = localStorage.getItem('activeResumeId');
+    const active = resumes.find(r => r.id === activeId) || resumes.find(r => r.parsed) || resumes[0];
+
+    if (!active || !active.parsed) {
+      alert('请先上传并解析一份简历');
+      return;
+    }
+
+    const data = active.parseResult?.parsed_data || {};
+
+    if (page === 'diagnosis') showDiagnosisModal(data);
+    else if (page === 'jobs') showJobsModal(data);
+    else if (page === 'interview') showInterviewModal(data);
+    else if (page === 'tracking' || page === 'applications') showTrackingModal(data);
+    else if (page === 'chat') showChatModal();
+    else openModal('功能开发中', '敬请期待 ✨', '<div class="modal-empty">该功能即将上线</div>');
+  }
+
+  function openModal(title, subtitle, html) {
+    document.getElementById('modalTitle').textContent = title;
+    document.getElementById('modalSubtitle').textContent = subtitle;
+    document.getElementById('modalContent').innerHTML = html;
+    document.getElementById('modalOverlay').classList.add('active');
+  }
+  function closeModal() {
+    document.getElementById('modalOverlay').classList.remove('active');
+  }
+  // ESC 关闭
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeModal();
+  });
+
+  // 简历诊断弹窗
+  function showDiagnosisModal(data) {
+    const diag = data.resume_diagnosis || {};
+    const score = diag.overall_score || 0;
+    const comment = diag.overall_comment || '暂无评语';
+    const typos = diag.typos || [];
+    const grammar = diag.grammar_issues || [];
+    const redundancy = diag.redundancy || [];
+
+    const renderItems = (items, emptyMsg) => {
+      if (!items || items.length === 0) return `<div class="modal-empty" style="padding:16px">${emptyMsg}</div>`;
+      return items.map(it => `
+        <div class="diag-item-card">
+          <div class="diag-item-orig">${it.original || ''}</div>
+          <div class="diag-item-sugg">→ ${it.suggestion || ''}</div>
+        </div>
+      `).join('');
+    };
+
+    const html = `
+      <div class="diag-score-card">
+        <div class="diag-score-num">${score}</div>
+        <div class="diag-score-info">
+          <strong>综合评分</strong>
+          <span>${comment}</span>
+        </div>
+      </div>
+      <div class="diag-section">
+        <h4>🔤 错别字（${typos.length}）</h4>
+        ${renderItems(typos, '✓ 没有发现错别字')}
+      </div>
+      <div class="diag-section">
+        <h4>✏️ 病句 / 语法（${grammar.length}）</h4>
+        ${renderItems(grammar, '✓ 没有发现语法问题')}
+      </div>
+      <div class="diag-section">
+        <h4>♻️ 语意冗杂（${redundancy.length}）</h4>
+        ${renderItems(redundancy, '✓ 表达简洁')}
+      </div>
+    `;
+    openModal('📋 简历诊断', 'AI 帮你找出问题，优化简历表达', html);
+  }
+
+  // 岗位推荐弹窗
+  function showJobsModal(data) {
+    const jobs = data.job_recommendations || [];
+    const skills = data.extracted_skills || [];
+
+    const skillsHtml = skills.length
+      ? `<div style="margin-bottom:20px">
+           <div style="font-size:13px;font-weight:700;color:var(--purple-mid);margin-bottom:8px">💼 你的技能标签</div>
+           ${skills.map(s => `<span class="skill-tag">${s}</span>`).join('')}
+         </div>`
+      : '';
+
+    if (jobs.length === 0) {
+      openModal('🎯 岗位推荐', '基于你的简历精准匹配', skillsHtml + '<div class="modal-empty">暂无推荐岗位</div>');
+      return;
+    }
+
+    const jobsHtml = jobs.map(j => {
+      const s = j.salary_range || {};
+      const salaryText = (s.min_salary && s.max_salary) ? `${s.min_salary}-${s.max_salary}K` : '面议';
+      const city = s.city || '全国';
+      const matchScore = j.match_score || (j.match_level === '高' ? 85 : 70);
+      return `
+        <div class="job-modal-card">
+          <div class="job-modal-head">
+            <div>
+              <div class="job-modal-title">${j.title || '岗位'}</div>
+              <div class="job-modal-industry">${j.industry || ''}</div>
+            </div>
+            <span class="job-modal-match">↑ ${matchScore}%</span>
+          </div>
+          <div class="job-modal-reason">${j.reason || ''}</div>
+          <div class="job-modal-meta">
+            <span class="job-modal-salary">💰 ${salaryText}</span>
+            <span>📍 ${city}</span>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    openModal('🎯 为你推荐的岗位', `共 ${jobs.length} 个匹配岗位`, skillsHtml + jobsHtml);
+  }
+
+  // 模拟面试弹窗
+  function showInterviewModal(data) {
+    const html = `
+      <div style="text-align:center;padding:30px 20px">
+        <div style="font-size:64px;margin-bottom:16px">🎤</div>
+        <p style="font-size:14px;color:var(--purple-light);margin-bottom:24px">
+          完整的 AI 模拟面试体验<br>包括岗位选择、JD 解析、智能提问、实时反馈
+        </p>
+        <button class="btn-primary" onclick="window.location.href='index-original-backup.html#interview'">
+          进入面试模拟 →
+        </button>
+      </div>
+    `;
+    openModal('🎤 AI 模拟面试', '沉浸式面试练习，告别紧张', html);
+  }
+
+  // 投递追踪弹窗
+  function showTrackingModal(data) {
+    const html = `
+      <div style="text-align:center;padding:30px 20px">
+        <div style="font-size:64px;margin-bottom:16px">📊</div>
+        <p style="font-size:14px;color:var(--purple-light);margin-bottom:24px">
+          可视化追踪所有投递进展<br>安装 Chrome 插件可以自动同步投递记录
+        </p>
+        <button class="btn-primary" onclick="window.location.href='index-original-backup.html#tracking'">
+          查看追踪面板 →
+        </button>
+      </div>
+    `;
+    openModal('📊 投递追踪', '不漏掉任何一个机会', html);
+  }
+
+  // 求职助手弹窗
+  function showChatModal() {
+    const html = `
+      <div style="text-align:center;padding:30px 20px">
+        <div style="font-size:64px;margin-bottom:16px">🤖</div>
+        <p style="font-size:14px;color:var(--purple-light);margin-bottom:24px">
+          小小求职助手<br>简历优化、面试技巧、岗位选择，都可以问我
+        </p>
+        <button class="btn-primary" onclick="window.location.href='index-original-backup.html#chat'">
+          打开聊天 →
+        </button>
+      </div>
+    `;
+    openModal('🤖 小小·求职助手', '有任何求职问题都可以问', html);
   }
 
   async function parseResume() {
@@ -551,6 +828,7 @@
         <button class="btn-secondary" onclick="navigateTo('diagnosis')">查看诊断报告</button>
       `;
     } catch (err) {
+      clearInterval(autoTimer);
       alert('解析失败：' + err.message);
       // Remove the failed resume
       const all = JSON.parse(localStorage.getItem('resumes') || '[]')
