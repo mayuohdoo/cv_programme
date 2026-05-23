@@ -850,6 +850,26 @@ async def api_delete_resume(resume_id: str) -> dict:
     return {"deleted": ok}
 
 
+@app.get("/_debug/supabase")
+async def api_debug_supabase() -> dict:
+    """调试用：返回 Supabase 配置情况（脱敏）"""
+    url = os.getenv("SUPABASE_URL", "")
+    key = os.getenv("SUPABASE_SERVICE_KEY", "")
+    return {
+        "url_set": bool(url),
+        "url_length": len(url),
+        "url_prefix": url[:30] if url else "",
+        "url_suffix": url[-15:] if url else "",
+        "url_has_trailing_slash": url.endswith("/") if url else False,
+        "url_has_rest_path": "/rest/" in url if url else False,
+        "key_set": bool(key),
+        "key_length": len(key),
+        "key_prefix": key[:10] if key else "",
+        "key_format": "JWT (eyJ...)" if key.startswith("eyJ") else ("new (sb_...)" if key.startswith("sb_") else "unknown"),
+        "user_service_initialized": user_service is not None,
+    }
+
+
 if __name__ == "__main__":
     import uvicorn
 
