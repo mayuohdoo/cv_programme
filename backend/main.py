@@ -681,8 +681,8 @@ async def chat(request: ChatRequest) -> dict[str, Any]:
         messages, metadata = _build_chat_messages(request, rag_context=rag_context)
 
         is_interview = request.mode == "interview_sim"
-        api_client = deepseek_client if is_interview and deepseek_client else client
-        model = DEEPSEEK_MODEL if is_interview and deepseek_client else ZHIPU_MODEL
+        api_client = deepseek_client or client
+        model = DEEPSEEK_MODEL if deepseek_client else ZHIPU_MODEL
 
         response = api_client.chat.completions.create(
             model=model,
@@ -716,8 +716,8 @@ async def chat_stream(request: ChatRequest):
         messages, metadata = _build_chat_messages(request, rag_context=rag_context)
 
         is_interview = request.mode == "interview_sim"
-        api_client = deepseek_client if is_interview and deepseek_client else client
-        model = DEEPSEEK_MODEL if is_interview and deepseek_client else ZHIPU_MODEL
+        api_client = deepseek_client or client
+        model = DEEPSEEK_MODEL if deepseek_client else ZHIPU_MODEL
 
         def generate():
             full_reply = ""

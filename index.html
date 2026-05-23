@@ -4706,12 +4706,27 @@
     hideSidebarPresets();
     appendSidebarMsg("user", text);
     sidebarChatHistory.push({ role: "user", content: text });
-    appendSidebarTyping();
+
+    // 创建空的 AI 气泡用于流式填充
+    removeSidebarTyping();
+    const msgEl = document.createElement("div");
+    msgEl.className = "msg ai";
+    const avatar = document.createElement("div");
+    avatar.className = "msg-avatar";
+    avatar.textContent = "🤖";
+    const bubble = document.createElement("div");
+    bubble.className = "msg-bubble";
+    bubble.textContent = "";
+    msgEl.appendChild(avatar);
+    msgEl.appendChild(bubble);
+    sidebarMessages.appendChild(msgEl);
+    sidebarMessages.scrollTop = sidebarMessages.scrollHeight;
 
     const resumeCtx = getResumeContext();
+    let fullReply = "";
 
     try {
-      const res = await fetch(`${API_BASE_URL}/chat`, {
+      const res = await fetch(`${API_BASE_URL}/chat/stream`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -4721,19 +4736,47 @@
           interview_state: {}
         }),
       });
-      const data = await res.json();
-      removeSidebarTyping();
 
-      if (!res.ok) throw new Error(data.detail || "请求失败");
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.detail || "请求失败");
+      }
 
-      const reply = data.reply || "";
-      sidebarChatHistory.push({ role: "assistant", content: reply });
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
 
-      appendSidebarMsg("ai", reply, data.has_resume_template || false);
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+
+        const parts = buffer.split("\n\n");
+        buffer = parts.pop() || "";
+
+        for (const part of parts) {
+          if (!part.startsWith("data: ")) continue;
+          try {
+            const data = JSON.parse(part.slice(6));
+            if (data.type === "chunk") {
+              fullReply += data.content;
+              bubble.textContent = fullReply
+                .replace(/\*\*(.+?)\*\*/g, '$1')
+                .replace(/\*(.+?)\*/g, '$1')
+                .replace(/__(.+?)__/g, '$1')
+                .replace(/#{1,6}\s/g, '')
+                .replace(/`{1,3}/g, '')
+                .replace(/>\s/g, '');
+              sidebarMessages.scrollTop = sidebarMessages.scrollHeight;
+            } else if (data.type === "done") {
+              sidebarChatHistory.push({ role: "assistant", content: data.reply || fullReply });
+            }
+          } catch(e) {}
+        }
+      }
 
     } catch (err) {
-      removeSidebarTyping();
-      appendSidebarMsg("ai", "抱歉，出了点问题：" + err.message);
+      bubble.textContent = "抱歉，出了点问题：" + err.message;
     } finally {
       sidebarIsLoading = false;
       sidebarSendBtn.disabled = false;
