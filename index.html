@@ -424,8 +424,9 @@
   }
 
   function navigateTo(page) {
-    // For now, redirect to the original index.html with hash
-    window.location.href = 'index.html#' + page;
+    // 跳转到原版页面（功能完整：岗位推荐、诊断、面试、追踪等）
+    // 用 hash 让原版页面知道用户想看哪个区域（可选）
+    window.location.href = 'index-original-backup.html#' + page;
   }
 
   async function parseResume() {
