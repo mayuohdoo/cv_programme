@@ -19,6 +19,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel
 
+# 用户/简历数据库服务
+try:
+    from rag.user_service import UserService
+    user_service: UserService | None = UserService()
+except Exception as _e:
+    user_service = None
+    print(f"[warn] UserService unavailable: {_e}")
+
 load_dotenv()
 
 MAX_FILE_SIZE_MB = int(os.getenv("MAX_FILE_SIZE_MB", "5"))
@@ -738,6 +746,108 @@ async def upload_resume(file: UploadFile = File(...)) -> dict[str, Any]:
         raise
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"Parsing failed: {exc}") from exc
+
+
+def _ensure_user_service() -> UserService:
+    if user_service is None:
+        raise HTTPException(status_code=503, detail="UserService 未初始化（检查 SUPABASE 配置）")
+    return user_service
+
+
+# ========== 用户 API ==========
+class UserCreate(BaseModel):
+    nickname: str = ""
+    avatar: str = ""
+    gender: str = ""
+    identity: str = ""
+    mbti: str = ""
+
+
+@app.post("/users")
+async def api_create_user(payload: UserCreate) -> dict:
+    svc = _ensure_user_service()
+    return await svc.create_user(payload.dict())
+
+
+@app.get("/users/{user_id}")
+async def api_get_user(user_id: str) -> dict:
+    svc = _ensure_user_service()
+    user = await svc.get_user(user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="用户不存在")
+    return user
+
+
+@app.put("/users/{user_id}")
+async def api_update_user(user_id: str, payload: UserCreate) -> dict:
+    svc = _ensure_user_service()
+    return await svc.update_user(user_id, payload.dict())
+
+
+# ========== 简历 API ==========
+class ResumeCreate(BaseModel):
+    user_id: str
+    file_name: str
+    file_size: int = 0
+    raw_text: str = ""
+    parsed_data: dict = {}
+    parse_status: str = "parsed"
+    is_active: bool = False
+
+
+@app.post("/resumes")
+async def api_create_resume(payload: ResumeCreate) -> dict:
+    """保存一份解析后的简历"""
+    svc = _ensure_user_service()
+    data = payload.dict()
+    # 如果用户当前没有 active 简历，新建的这份默认设为 active
+    existing = await svc.list_resumes(payload.user_id)
+    has_active = any(r.get("is_active") for r in existing)
+    if not has_active:
+        data["is_active"] = True
+    created = await svc.create_resume(data)
+    if data.get("is_active"):
+        await svc.set_active_resume(payload.user_id, created["id"])
+    return created
+
+
+@app.get("/resumes")
+async def api_list_resumes(user_id: str) -> list:
+    """列出用户的所有简历"""
+    svc = _ensure_user_service()
+    return await svc.list_resumes(user_id)
+
+
+@app.get("/resumes/{resume_id}")
+async def api_get_resume(resume_id: str) -> dict:
+    """获取单份简历完整数据"""
+    svc = _ensure_user_service()
+    resume = await svc.get_resume(resume_id)
+    if not resume:
+        raise HTTPException(status_code=404, detail="简历不存在")
+    return resume
+
+
+class ResumeActivate(BaseModel):
+    user_id: str
+
+
+@app.put("/resumes/{resume_id}/active")
+async def api_set_active_resume(resume_id: str, payload: ResumeActivate) -> dict:
+    """切换为活跃简历"""
+    svc = _ensure_user_service()
+    result = await svc.set_active_resume(payload.user_id, resume_id)
+    if not result:
+        raise HTTPException(status_code=404, detail="简历不存在或不属于该用户")
+    return result
+
+
+@app.delete("/resumes/{resume_id}")
+async def api_delete_resume(resume_id: str) -> dict:
+    """删除简历"""
+    svc = _ensure_user_service()
+    ok = await svc.delete_resume(resume_id)
+    return {"deleted": ok}
 
 
 if __name__ == "__main__":

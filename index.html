@@ -547,6 +547,86 @@
   const DEFAULT_API_BASE_URL = "http://127.0.0.1:8000";
   const API_BASE_URL = (window.APP_CONFIG?.API_BASE_URL || DEFAULT_API_BASE_URL).replace(/\/+$/, "");
 
+  // ========== API 客户端（数据库同步） ==========
+  const Api = {
+    async json(url, opts = {}) {
+      const res = await fetch(`${API_BASE_URL}${url}`, {
+        headers: { 'Content-Type': 'application/json' },
+        ...opts,
+      });
+      if (!res.ok) throw new Error(`API ${url} 失败：${res.status}`);
+      return res.status === 204 ? null : res.json();
+    },
+    createUser(profile) {
+      return this.json('/users', { method: 'POST', body: JSON.stringify(profile) });
+    },
+    updateUser(id, profile) {
+      return this.json(`/users/${id}`, { method: 'PUT', body: JSON.stringify(profile) });
+    },
+    listResumes(userId) {
+      return this.json(`/resumes?user_id=${encodeURIComponent(userId)}`);
+    },
+    createResume(data) {
+      return this.json('/resumes', { method: 'POST', body: JSON.stringify(data) });
+    },
+    getResume(id) {
+      return this.json(`/resumes/${id}`);
+    },
+    setActiveResume(id, userId) {
+      return this.json(`/resumes/${id}/active`, { method: 'PUT', body: JSON.stringify({ user_id: userId }) });
+    },
+    deleteResume(id) {
+      return this.json(`/resumes/${id}`, { method: 'DELETE' });
+    },
+  };
+
+  // 保证用户在数据库中存在，返回 user_id
+  async function ensureUser() {
+    const profile = JSON.parse(localStorage.getItem('userProfile') || '{}');
+    if (profile.user_id) return profile.user_id;
+    if (!profile.nickname) return null; // 还没完成冷启动
+    try {
+      const created = await Api.createUser({
+        nickname: profile.nickname || '',
+        avatar: profile.avatar || '',
+        gender: profile.gender || '',
+        identity: profile.identity || '',
+        mbti: profile.mbti || '',
+      });
+      profile.user_id = created.id;
+      localStorage.setItem('userProfile', JSON.stringify(profile));
+      return created.id;
+    } catch (e) {
+      console.warn('[ensureUser] 数据库不可用，仅用本地存储', e);
+      return null;
+    }
+  }
+
+  // 从数据库加载简历列表（替换 localStorage 中的列表）
+  async function syncResumesFromDb() {
+    const userId = await ensureUser();
+    if (!userId) return; // 数据库不可用
+    try {
+      const list = await Api.listResumes(userId);
+      // 转换成前端格式
+      const local = list.map(r => ({
+        id: r.id,
+        fileName: r.file_name,
+        name: r.file_name?.replace(/\.[^.]+$/, ''),
+        fileSize: r.file_size || 0,
+        uploadTime: new Date(r.created_at).getTime(),
+        parsed: r.parse_status === 'parsed',
+        parseResult: { parsed_data: r.parsed_data || {} },
+        is_active: r.is_active,
+      }));
+      localStorage.setItem('resumes', JSON.stringify(local));
+      const active = local.find(r => r.is_active);
+      if (active) localStorage.setItem('activeResumeId', active.id);
+    } catch (e) {
+      console.warn('[syncResumesFromDb] 失败，使用本地缓存', e);
+    }
+  }
+
   // Load user profile
   const profile = JSON.parse(localStorage.getItem('userProfile') || '{}');
   if (profile.nickname) {
@@ -594,17 +674,30 @@
 
   function updateStatusCard() {
     const resumes = JSON.parse(localStorage.getItem('resumes') || '[]');
-    const hasParsed = resumes.some(r => r.parsed);
+    const activeId = localStorage.getItem('activeResumeId');
+    const active = resumes.find(r => r.id === activeId);
+    const hasParsed = active ? active.parsed : resumes.some(r => r.parsed);
     const hasUploaded = resumes.length > 0;
     const card = document.getElementById('statusCard');
+    if (!card) return;
 
-    if (hasParsed) {
+    if (hasParsed && active) {
+      // 显示当前活跃简历的解析摘要
+      const data = active.parseResult?.parsed_data || {};
+      const score = data.resume_diagnosis?.overall_score;
+      const summary = data.candidate_summary || '';
+      const skills = data.extracted_skills || [];
+
       card.querySelector('.status-icon').textContent = '🎯';
-      card.querySelector('.status-title').textContent = '解析完成！去看看匹配岗位';
-      card.querySelector('.status-sub').textContent = '根据你的技能和专业，已为你精准匹配推荐岗位';
+      card.querySelector('.status-title').textContent = `当前简历：${active.fileName || active.name || '简历'}`;
+      let subText = '';
+      if (score) subText += `综合评分 ${score} 分`;
+      if (summary) subText += (subText ? ' · ' : '') + summary;
+      else if (skills.length) subText += (subText ? ' · ' : '') + `技能：${skills.slice(0, 5).join('、')}`;
+      card.querySelector('.status-sub').textContent = subText || '解析完成，去查看详情';
       card.querySelector('.status-actions').innerHTML = `
         <button class="btn-primary" onclick="navigateTo('jobs')">查看岗位推荐 →</button>
-        <button class="btn-secondary" onclick="navigateTo('interview')">继续练习面试</button>
+        <button class="btn-secondary" onclick="navigateTo('diagnosis')">查看诊断报告</button>
       `;
     } else if (hasUploaded) {
       card.querySelector('.status-icon').textContent = '✨';
@@ -613,6 +706,16 @@
       card.querySelector('.status-actions').innerHTML = `
         <button class="btn-primary" onclick="parseResume()">开始 AI 解析 ✨</button>
       `;
+    } else {
+      // 初始状态
+      card.querySelector('.status-icon').textContent = '🚀';
+      card.querySelector('.status-title').textContent = '你好！先上传你的简历';
+      card.querySelector('.status-sub').textContent = '上传简历后，AI 会帮你解析并推荐匹配岗位';
+      card.querySelector('.status-actions').innerHTML = `
+        <input type="file" accept=".pdf,.docx,.txt,.doc" style="display:none" id="uploadInput" />
+        <button type="button" class="btn-primary" onclick="document.getElementById('uploadInput').click()">📄 上传简历</button>
+      `;
+      bindUploadInput('uploadInput');
     }
   }
 
@@ -855,29 +958,34 @@
   }
 
   // 切换活跃简历
-  window.setActiveResume = function(id) {
+  window.setActiveResume = async function(id) {
     localStorage.setItem('activeResumeId', id);
-    showProfileModal(); // 刷新弹窗
+    showProfileModal(); // 立即刷新弹窗
     updateStatusCard();
+    // 同步到数据库
+    try {
+      const userId = await ensureUser();
+      if (userId) await Api.setActiveResume(id, userId);
+    } catch (e) { console.warn('[setActiveResume] DB 同步失败', e); }
   };
 
   // 删除简历
-  window.deleteResume = function(id) {
+  window.deleteResume = async function(id) {
     if (!confirm('确定删除这份简历吗？')) return;
     let resumes = JSON.parse(localStorage.getItem('resumes') || '[]');
     resumes = resumes.filter(r => r.id !== id);
     localStorage.setItem('resumes', JSON.stringify(resumes));
     const activeId = localStorage.getItem('activeResumeId');
     if (activeId === id) {
-      // 如果删的是活跃简历，切换到第一份
       if (resumes.length > 0) localStorage.setItem('activeResumeId', resumes[0].id);
       else localStorage.removeItem('activeResumeId');
     }
+    // 同步到数据库
+    try { await Api.deleteResume(id); } catch (e) { console.warn('[deleteResume] DB 同步失败', e); }
     showProfileModal();
     updateStatusCard();
-    // 如果没有已解析的简历，重新锁定工具
     const hasParsed = resumes.some(r => r.parsed);
-    if (!hasParsed) location.reload(); // 简单粗暴：刷新页面恢复锁定状态
+    if (!hasParsed) location.reload();
   };
 
   // 查看某份简历的解析详情
@@ -1014,17 +1122,37 @@
         localStorage.setItem('resumes', JSON.stringify(all));
       }
 
+      // 同步到数据库（如果用户已注册）
+      try {
+        const userId = await ensureUser();
+        if (userId) {
+          const created = await Api.createResume({
+            user_id: userId,
+            file_name: file.name,
+            file_size: file.size,
+            raw_text: data.raw_text || '',
+            parsed_data: data.parsed_data || {},
+            parse_status: 'parsed',
+            is_active: false, // 后端会自动判断是否设为 active
+          });
+          // 用数据库的 UUID 替换前端的临时 id
+          const all2 = JSON.parse(localStorage.getItem('resumes') || '[]');
+          const i2 = all2.findIndex(r => r.id === resumeId);
+          if (i2 >= 0 && created.id) {
+            all2[i2].id = created.id;
+            localStorage.setItem('resumes', JSON.stringify(all2));
+            if (localStorage.getItem('activeResumeId') === resumeId) {
+              localStorage.setItem('activeResumeId', created.id);
+            }
+          }
+          await syncResumesFromDb();
+        }
+      } catch (e) {
+        console.warn('[uploadAndParse] 数据库同步失败，仅保存到本地', e);
+      }
+
       loadResumes();
-      // Refresh status card to show success
-      const card2 = document.getElementById('statusCard');
-      card2.querySelector('.status-icon').textContent = '🎉';
-      card2.querySelector('.status-title').textContent = '解析完成！';
-      const score = data?.parsed_data?.resume_diagnosis?.overall_score;
-      card2.querySelector('.status-sub').textContent = score ? `综合评分 ${score} 分，去看看匹配岗位吧` : '去看看为你匹配的岗位';
-      card2.querySelector('.status-actions').innerHTML = `
-        <button class="btn-primary" onclick="navigateTo('jobs')">查看岗位推荐 →</button>
-        <button class="btn-secondary" onclick="navigateTo('diagnosis')">查看诊断报告</button>
-      `;
+      updateStatusCard();
     } catch (err) {
       clearInterval(autoTimer);
       alert('解析失败：' + err.message);
@@ -1039,6 +1167,12 @@
 
   // Init
   loadResumes();
+  updateStatusCard();
+  // 从数据库同步简历列表（异步，不阻塞首屏）
+  syncResumesFromDb().then(() => {
+    loadResumes();
+    updateStatusCard();
+  });
 </script>
 
 <!-- 冷启动引导脚本（首次访问显示欢迎页 + Profile 设置） -->
