@@ -202,6 +202,39 @@
       .tool-grid { grid-template-columns: 1fr; }
       .nav-tabs { display: none; }
     }
+
+    /* ========== 冷启动引导样式 ========== */
+    .ob-overlay { position: fixed; inset: 0; z-index: 99999; opacity: 0; transition: opacity 0.5s ease; overflow: hidden; }
+    .ob-overlay.ob-visible { opacity: 1; }
+    .ob-overlay.ob-hiding { opacity: 0; pointer-events: none; }
+    .ob-iframe { width: 100%; height: 100%; border: none; }
+
+    /* Profile setup */
+    .ob-profile { max-width: 520px; width: 92%; background: white; border-radius: 28px; padding: 48px 40px; box-shadow: 0 20px 60px rgba(0,0,0,0.08); display: flex; flex-direction: column; align-items: center; gap: 20px; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); max-height: 90vh; overflow-y: auto; }
+    .ob-avatar-preview { width: 90px; height: 90px; border-radius: 50%; background: #f5f0fa; border: 3px solid #e8dff0; display: flex; align-items: center; justify-content: center; font-size: 42px; }
+    .ob-profile-title { font-size: 22px; font-weight: 800; color: #1a1a1a; }
+    .ob-profile-subtitle { font-size: 14px; color: #888; margin-top: -12px; }
+    .ob-section-label { font-size: 13px; font-weight: 700; color: #555; align-self: flex-start; margin-top: 4px; }
+    .ob-gender-row { display: flex; gap: 12px; width: 100%; }
+    .ob-gender-option { flex: 1; padding: 14px; border: 2px solid #eee; border-radius: 14px; text-align: center; cursor: pointer; font-size: 15px; font-weight: 600; color: #555; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .ob-gender-option span { font-size: 22px; }
+    .ob-gender-option:hover { border-color: #c084fc; background: #faf5ff; }
+    .ob-gender-active { border-color: #c084fc !important; background: #f3e8ff !important; color: #7c3aed !important; }
+    .ob-avatar-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; width: 100%; }
+    .ob-avatar-option { width: 52px; height: 52px; border-radius: 14px; border: 2px solid #eee; background: white; font-size: 28px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; margin: 0 auto; }
+    .ob-avatar-option:hover { border-color: #c084fc; background: #faf5ff; transform: scale(1.1); }
+    .ob-avatar-active { border-color: #c084fc !important; background: #f3e8ff !important; transform: scale(1.1); }
+    .ob-nickname-input { width: 100%; padding: 16px 20px; border: 2px solid #eee; border-radius: 14px; font-size: 17px; text-align: center; outline: none; transition: border-color 0.3s; }
+    .ob-nickname-input:focus { border-color: #c084fc; }
+    .ob-nickname-input::placeholder { color: #ccc; }
+    .ob-identity-grid { display: flex; flex-direction: column; gap: 10px; width: 100%; }
+    .ob-identity-option { padding: 14px 18px; border: 2px solid #eee; border-radius: 14px; cursor: pointer; font-size: 15px; font-weight: 600; color: #555; transition: all 0.2s; text-align: center; }
+    .ob-identity-option:hover { border-color: #c084fc; background: #faf5ff; }
+    .ob-identity-active { border-color: #c084fc !important; background: #f3e8ff !important; color: #7c3aed !important; }
+    .ob-finish-btn { width: 100%; padding: 16px; border: none; border-radius: 14px; background: linear-gradient(135deg, #c084fc, #f472b6); color: white; font-size: 17px; font-weight: 700; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 16px rgba(192,132,252,0.3); margin-top: 8px; }
+    .ob-finish-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(192,132,252,0.4); }
+    .ob-btn-disabled { background: #ddd !important; color: #999 !important; cursor: not-allowed !important; box-shadow: none !important; transform: none !important; }
+    /* ========== 结束：冷启动引导样式 ========== */
   </style>
 </head>
 <body>
@@ -222,7 +255,7 @@
 </nav>
 
 <!-- Main Content -->
-<main class="main-content">
+<main class="main-content main-area">
 
   <!-- Greeting -->
   <div class="greeting">
@@ -428,5 +461,8 @@
   // Init
   loadResumes();
 </script>
+
+<!-- 冷启动引导脚本（首次访问显示欢迎页 + Profile 设置） -->
+<script src="./onboarding.js"></script>
 </body>
 </html>
