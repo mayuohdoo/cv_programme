@@ -271,10 +271,8 @@
       <div class="status-title">你好！先上传你的简历</div>
       <div class="status-sub">上传简历后，AI 会帮你解析并推荐匹配岗位</div>
       <div class="status-actions">
-        <label>
-          <input type="file" accept=".pdf,.docx,.txt,.doc" style="display:none" id="uploadInput" />
-          <span class="btn-primary" onclick="document.getElementById('uploadInput').click()">📄 上传简历</span>
-        </label>
+        <input type="file" accept=".pdf,.docx,.txt,.doc" style="display:none" id="uploadInput" />
+        <button type="button" class="btn-primary" onclick="document.getElementById('uploadInput').click()">📄 上传简历</button>
       </div>
     </div>
   </div>
@@ -330,7 +328,7 @@
     </div>
     <label>
       <input type="file" accept=".pdf,.docx,.txt,.doc" style="display:none" id="uploadInput2" />
-      <span class="upload-btn" onclick="document.getElementById('uploadInput2').click()">📄 上传新简历</span>
+      <span class="upload-btn">📄 上传新简历</span>
     </label>
   </div>
 
