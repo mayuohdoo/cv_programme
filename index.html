@@ -442,21 +442,125 @@
     document.getElementById(id)?.addEventListener('change', async (e) => {
       const file = e.target.files?.[0];
       if (!file) return;
-      // Save to localStorage
-      const resumes = JSON.parse(localStorage.getItem('resumes') || '[]');
-      const newResume = {
-        id: Date.now().toString(),
-        name: file.name.replace(/\.[^.]+$/, ''),
-        parsed: false,
-        uploadedAt: new Date().toISOString()
-      };
-      resumes.push(newResume);
-      localStorage.setItem('resumes', JSON.stringify(resumes));
-      if (resumes.length === 1) localStorage.setItem('activeResumeId', newResume.id);
-      loadResumes();
-      updateStatusCard();
+      await uploadAndParse(file);
+      // reset so user can re-upload same file
+      e.target.value = '';
     });
   });
+
+  // Upload + Parse via backend API
+  async function uploadAndParse(file) {
+    // Validate file type
+    const ext = file.name.split('.').pop().toLowerCase();
+    if (!['pdf', 'docx', 'doc', 'txt'].includes(ext)) {
+      alert('只支持 PDF / DOCX / TXT 格式');
+      return;
+    }
+
+    // Save placeholder to localStorage
+    const resumes = JSON.parse(localStorage.getItem('resumes') || '[]');
+    const resumeId = Date.now().toString();
+    const newResume = {
+      id: resumeId,
+      name: file.name.replace(/\.[^.]+$/, ''),
+      fileName: file.name,
+      fileSize: file.size,
+      uploadTime: Date.now(),
+      parsed: false,
+    };
+    resumes.unshift(newResume);
+    localStorage.setItem('resumes', JSON.stringify(resumes));
+    localStorage.setItem('activeResumeId', resumeId);
+    loadResumes();
+    updateStatusCard();
+
+    // Show parsing state
+    const card = document.getElementById('statusCard');
+    card.querySelector('.status-icon').textContent = '⏳';
+    card.querySelector('.status-title').textContent = '正在上传并解析简历...';
+    card.querySelector('.status-sub').textContent = 'AI 正在分析你的简历，约需 30 秒';
+    card.querySelector('.status-actions').innerHTML = '<div style="height:8px;background:rgba(192,132,252,0.15);border-radius:4px;overflow:hidden;width:100%;max-width:300px"><div id="progressBar" style="height:100%;background:var(--gradient-btn);width:0%;transition:width 0.3s"></div></div>';
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const data = await new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        let parsePct = 75, parseTimer;
+        xhr.upload.onprogress = e => {
+          if (e.lengthComputable) {
+            const pct = (e.loaded / e.total) * 70;
+            const bar = document.getElementById('progressBar');
+            if (bar) bar.style.width = pct + '%';
+          }
+        };
+        xhr.upload.onload = () => {
+          parseTimer = setInterval(() => {
+            parsePct = Math.min(95, parsePct + 1);
+            const bar = document.getElementById('progressBar');
+            if (bar) bar.style.width = parsePct + '%';
+          }, 350);
+        };
+        xhr.onload = () => {
+          if (parseTimer) clearInterval(parseTimer);
+          try {
+            const payload = JSON.parse(xhr.responseText || '{}');
+            if (xhr.status < 200 || xhr.status >= 300) {
+              reject(new Error(payload.detail || '请求失败'));
+              return;
+            }
+            const bar = document.getElementById('progressBar');
+            if (bar) bar.style.width = '100%';
+            resolve(payload);
+          } catch (e) {
+            reject(new Error('服务返回格式异常'));
+          }
+        };
+        xhr.onerror = () => {
+          if (parseTimer) clearInterval(parseTimer);
+          reject(new Error('网络错误，上传失败'));
+        };
+        xhr.timeout = 180000;
+        xhr.ontimeout = () => {
+          if (parseTimer) clearInterval(parseTimer);
+          reject(new Error('请求超时，请稍后重试'));
+        };
+        xhr.open('POST', `${API_BASE_URL}/upload`);
+        xhr.send(formData);
+      });
+
+      // Save parsed data
+      const all = JSON.parse(localStorage.getItem('resumes') || '[]');
+      const idx = all.findIndex(r => r.id === resumeId);
+      if (idx >= 0) {
+        all[idx].parsed = true;
+        all[idx].parseResult = data;
+        all[idx].rawText = data.raw_text || '';
+        localStorage.setItem('resumes', JSON.stringify(all));
+      }
+
+      loadResumes();
+      // Refresh status card to show success
+      const card2 = document.getElementById('statusCard');
+      card2.querySelector('.status-icon').textContent = '🎉';
+      card2.querySelector('.status-title').textContent = '解析完成！';
+      const score = data?.parsed_data?.resume_diagnosis?.overall_score;
+      card2.querySelector('.status-sub').textContent = score ? `综合评分 ${score} 分，去看看匹配岗位吧` : '去看看为你匹配的岗位';
+      card2.querySelector('.status-actions').innerHTML = `
+        <button class="btn-primary" onclick="navigateTo('jobs')">查看岗位推荐 →</button>
+        <button class="btn-secondary" onclick="navigateTo('diagnosis')">查看诊断报告</button>
+      `;
+    } catch (err) {
+      alert('解析失败：' + err.message);
+      // Remove the failed resume
+      const all = JSON.parse(localStorage.getItem('resumes') || '[]')
+        .filter(r => r.id !== resumeId);
+      localStorage.setItem('resumes', JSON.stringify(all));
+      loadResumes();
+      updateStatusCard();
+    }
+  }
 
   // Init
   loadResumes();
