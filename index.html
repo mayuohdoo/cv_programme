@@ -314,13 +314,9 @@
     .diag-item-sugg { color: #16a34a; font-weight: 600; }
 
     /* 岗位推荐弹窗 */
-    .job-modal-card {
-      padding: 16px; margin-bottom: 12px;
-      background: rgba(255,255,255,0.7);
-      border: 1px solid rgba(192,132,252,0.15);
-      border-radius: 16px; transition: all 0.2s;
-    }
-    .job-modal-card:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(192,132,252,0.15); }
+    .job-modal-card { padding: 16px; margin-bottom: 12px; background: rgba(255,255,255,0.7); border: 1px solid rgba(192,132,252,0.15); border-radius: 16px; transition: all 0.2s; }
+    .job-modal-card:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(192,132,252,0.2); border-color: rgba(192,132,252,0.4); }
+    .job-modal-card:hover .job-modal-title { text-decoration-color: var(--pink-primary) !important; }
     .job-modal-head { display: flex; justify-content: space-between; align-items: start; margin-bottom: 6px; }
     .job-modal-title { font-size: 15px; font-weight: 700; color: var(--purple-deep); }
     .job-modal-industry { font-size: 12px; color: var(--purple-light); margin-top: 2px; }
@@ -813,16 +809,19 @@
       return;
     }
 
-    const jobsHtml = jobs.map(j => {
+    const jobsHtml = jobs.map((j, idx) => {
       const s = j.salary_range || {};
       const salaryText = (s.min_salary && s.max_salary) ? `${s.min_salary}-${s.max_salary}K` : '面议';
       const city = s.city || '全国';
       const matchScore = j.match_score || (j.match_level === '高' ? 85 : 70);
+      // 构造 BOSS 直聘搜索 URL
+      const cityParam = (city && city !== '全国') ? `&city=${encodeURIComponent(city)}` : '';
+      const bossUrl = `https://www.zhipin.com/job_detail/?query=${encodeURIComponent(j.title || '')}${cityParam}`;
       return `
-        <div class="job-modal-card">
+        <div class="job-modal-card" onclick="window.open('${bossUrl}', '_blank')" style="cursor:pointer" title="点击跳转到 BOSS 直聘搜索">
           <div class="job-modal-head">
             <div>
-              <div class="job-modal-title">${j.title || '岗位'}</div>
+              <div class="job-modal-title" style="text-decoration:underline;text-decoration-color:transparent;text-underline-offset:3px;transition:text-decoration-color 0.2s">${j.title || '岗位'}</div>
               <div class="job-modal-industry">${j.industry || ''}</div>
             </div>
             <span class="job-modal-match">↑ ${matchScore}%</span>
@@ -831,6 +830,7 @@
           <div class="job-modal-meta">
             <span class="job-modal-salary">💰 ${salaryText}</span>
             <span>📍 ${city}</span>
+            <span style="margin-left:auto;color:var(--pink-primary);font-weight:600">点击搜岗位 →</span>
           </div>
         </div>
       `;
