@@ -46,6 +46,10 @@ if not zhipu_api_key:
 client = OpenAI(api_key=zhipu_api_key, base_url="https://open.bigmodel.cn/api/paas/v4/")
 ZHIPU_MODEL = os.getenv("ZHIPU_MODEL", "glm-4-flash")
 
+deepseek_api_key = os.getenv("DEEPSEEK_API_KEY", "").strip()
+deepseek_client = OpenAI(api_key=deepseek_api_key, base_url="https://api.deepseek.com/v1/") if deepseek_api_key else None
+DEEPSEEK_MODEL = os.getenv("DEEPSEEK_MODEL", "deepseek-chat")
+
 
 def _file_extension(filename: str) -> str:
     if not filename or "." not in filename:
@@ -676,8 +680,12 @@ async def chat(request: ChatRequest) -> dict[str, Any]:
         rag_context, rag_status, rag_sources = await _do_rag(request)
         messages, metadata = _build_chat_messages(request, rag_context=rag_context)
 
-        response = client.chat.completions.create(
-            model=ZHIPU_MODEL,
+        is_interview = request.mode == "interview_sim"
+        api_client = deepseek_client if is_interview and deepseek_client else client
+        model = DEEPSEEK_MODEL if is_interview and deepseek_client else ZHIPU_MODEL
+
+        response = api_client.chat.completions.create(
+            model=model,
             messages=messages,
         )
         reply = response.choices[0].message.content
@@ -686,7 +694,7 @@ async def chat(request: ChatRequest) -> dict[str, Any]:
         clean_reply = reply.replace("[RESUME_TEMPLATE]", "").strip()
 
         updated_interview_state = None
-        if request.mode == "interview_sim":
+        if is_interview:
             updated_interview_state = _update_interview_state(request.interview_state, clean_reply)
 
         return {
@@ -707,10 +715,14 @@ async def chat_stream(request: ChatRequest):
         rag_context, rag_status, rag_sources = await _do_rag(request)
         messages, metadata = _build_chat_messages(request, rag_context=rag_context)
 
+        is_interview = request.mode == "interview_sim"
+        api_client = deepseek_client if is_interview and deepseek_client else client
+        model = DEEPSEEK_MODEL if is_interview and deepseek_client else ZHIPU_MODEL
+
         def generate():
             full_reply = ""
-            stream = client.chat.completions.create(
-                model=ZHIPU_MODEL,
+            stream = api_client.chat.completions.create(
+                model=model,
                 messages=messages,
                 stream=True,
             )
@@ -725,7 +737,7 @@ async def chat_stream(request: ChatRequest):
             clean_reply = full_reply.replace("[RESUME_TEMPLATE]", "").strip()
 
             updated_interview_state = None
-            if request.mode == "interview_sim":
+            if is_interview:
                 updated_interview_state = _update_interview_state(request.interview_state, clean_reply)
 
             done_data = {
