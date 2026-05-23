@@ -176,6 +176,7 @@ def _parse_resume_with_ai(raw_text: str) -> dict[str, Any]:
 
 3) inferred_mbti: 字符串，返回空字符串 ""（不再推断MBTI）
 4) mbti_description: 字符串，返回空字符串 ""
+4.5) extracted_phone: 字符串，从简历全文中提取的联系电话（如"188-4412-6785"）。如果没有找到电话，返回空字符串 ""。
 
 5) job_recommendations: 数组，推荐6个适合该候选人的岗位，覆盖不同行业，每项包含：
    - title: 岗位名称
@@ -226,9 +227,9 @@ def _parse_resume_with_ai(raw_text: str) -> dict[str, Any]:
      * 同音字错误（如："测式"应为"测试"，"沟通能里"应为"沟通能力"）
      * 形近字错误（如："项日"应为"项目"）
      * 多字/少字（如："的的项目"应为"的项目"）
-     * 标点错误（如：中文语境中使用英文逗号）
-     【要求】：仔细检查整个简历，每个错别字必须返回 {{"original": "原文片段(5-30字)", "suggestion": "正确写法"}}
-     【示例】：{{"original": "负责产品的测式工作", "suggestion": "负责产品的测试工作"}}
+     【重要排除】：绝对不要把中英文冒号混用（如"民族:汉族"）、或正常的文字间空格（如"共 第一作者"）当作错别字或格式错误。
+     【要求】：仔细检查整个简历，每个错别字必须返回 {{"original": "原文片段(5-30字)", "suggestion": "正确写法", "deduction": 扣除的分数(1-3分)}}
+     【示例】：{{"original": "负责产品的测式工作", "suggestion": "负责产品的测试工作", "deduction": 2}}
 
    - grammar_issues: 数组，病句或语法问题。【检测标准】：
      * 语序不当（如："使用了熟练Python"应为"熟练使用Python"）
@@ -236,30 +237,40 @@ def _parse_resume_with_ai(raw_text: str) -> dict[str, Any]:
      * 搭配不当（如："提高效率的增长"应为"提高效率"或"促进增长"）
      * 表意不明（如："通过使用工具进行了工作"过于模糊）
      * 冗长啰嗦（如："通过使用Python和数据分析工具进行了数据的分析"应为"使用Python进行数据分析"）
-     【要求】：关注动词搭配、介词使用、句子简洁性，每个问题必须返回 {{"original": "原句(10-40字)", "suggestion": "改进后的表达"}}
-     【示例】：{{"original": "通过使用Python进行了数据的分析", "suggestion": "使用Python进行数据分析"}}
+     【要求】：关注动词搭配、介词使用、句子简洁性，每个问题必须返回 {{"original": "原句(10-40字)", "suggestion": "改进后的表达", "deduction": 扣除的分数(1-3分)}}
+     【示例】：{{"original": "通过使用Python进行了数据的分析", "suggestion": "使用Python进行数据分析", "deduction": 2}}
 
    - redundancy: 数组，语意冗杂或表达重复。【检测标准】：
      * 重复词语（如："主要负责主要的项目"应为"负责主要的项目"）
      * 重复表达（如："进行了优化和改进"可简化为"进行了优化"）
      * 无意义修饰（如："非常很重要"应为"非常重要"）
      * 可合并句子（如："负责开发。负责测试。"应为"负责开发和测试"）
-     【要求】：追求简洁有力的表达，每个冗余必须返回 {{"original": "冗余片段(10-40字)", "suggestion": "简化后的表达"}}
-     【示例】：{{"original": "主要负责主要的项目开发", "suggestion": "负责主要的项目开发"}}
+     【要求】：追求简洁有力的表达，每个冗余必须返回 {{"original": "冗余片段(10-40字)", "suggestion": "简化后的表达", "deduction": 扣除的分数(1-2分)}}
+     【示例】：{{"original": "主要负责主要的项目开发", "suggestion": "负责主要的项目开发", "deduction": 1}}
+
+   - timeline_issues: 数组，时间线重合或逻辑错误问题。【检测标准】：
+     * 检查教育经历或工作经历中列出的时间段（如2019.09-2023.06）。
+     * 判断时间段是否有不合理的重合（例如两段全职工作时间重叠，或者本科与硕士时间重叠）。如果是双学位等合理重叠可忽略。
+     * 如果存在冲突，必须指出。
+     【要求】：指出具体冲突的时间段并给出建议，返回 {{"original": "冲突的时间段文本", "suggestion": "指出重叠问题，建议核对时间", "deduction": 扣除的分数(3-5分)}}
+     【示例】：{{"original": "2020.09-2024.06 本科, 2023.09-2026.06 硕士", "suggestion": "本科与硕士时间存在重合，请核对时间是否填写错误", "deduction": 4}}
+
+   - star_issues: 数组，缺乏成果量化或数据支撑的问题（STAR法则检查）。【检测标准】：
+     * 扫视工作经历和项目经验中的描述，找出那些"只有动作，没有结果和数据支撑"的句子。
+     * 例如："负责了公司主要系统的开发，提高了效率" -> 缺乏具体指标和数据。
+     * 例如："参与了营销活动，吸引了大量新用户" -> 缺乏活动的规模数据和具体的新增用户数。
+     【要求】：指出缺乏数据支撑的句子，并给出带占位符的修改建议，返回 {{"original": "原句", "suggestion": "指出缺乏数据，建议修改为带数据的表达，如：负责XX核心系统开发，将并发处理效率提升了X%", "deduction": 扣除的分数(1-3分)}}
+     【示例】：{{"original": "参与了营销活动，吸引了大量新用户", "suggestion": "缺乏具体数据支撑，建议修改为：参与XX营销活动，吸引了约X万名新用户，转化率提升了X%", "deduction": 2}}
 
    - overall_score: 整数 1-100，简历整体质量评分。【评分标准】：
-     * 90-100分：无明显问题，表达专业简洁，用词准确
-     * 80-89分：有1-2个小问题，整体良好
-     * 70-79分：有3-5个问题，需要改进
-     * 60-69分：有6-10个问题，质量一般
-     * 60分以下：问题较多（>10个），需要大幅修改
-     【要求】：根据发现的问题数量严格评分，不要因为礼貌而虚高评分
+     【要求】：基础分100分，必须严格等于 100 减去以上所有问题中扣除的分数（deduction）的总和。
+     比如一共发现3个问题，分别扣了2分、3分、4分，那么总扣分为9分，overall_score 必须是 91。
 
    - overall_comment: 字符串，一句话总体评价（30字以内）。
      【要求】：如果有问题，必须明确指出（如："发现3处错别字和2处病句，建议仔细校对"）；如果质量优秀，可以正面评价（如："表达专业简洁，未发现明显问题"）
 
 【重要提示】：
-- 如果简历质量确实很好，typos/grammar_issues/redundancy 可以为空数组，overall_score 可以给 85-100 分
+- 如果简历质量确实很好，typos/grammar_issues/redundancy/timeline_issues/star_issues 可以为空数组，overall_score 可以给 85-100 分
 - 但如果发现了问题，必须如实指出，不要遗漏，不要因为礼貌而隐瞒
 - original 字段必须是简历中的原文片段，不要编造
 - suggestion 必须是具体可行的修改建议，不要模糊表达
@@ -272,10 +283,66 @@ def _parse_resume_with_ai(raw_text: str) -> dict[str, Any]:
     response = client.chat.completions.create(
         model=DEEPSEEK_MODEL,
         messages=[{"role": "user", "content": prompt}],
+        temperature=0.0,
     )
     raw = response.choices[0].message.content
     try:
-        return _to_json_with_fallback(raw)
+        parsed_data = _to_json_with_fallback(raw)
+        
+        # --- Python 端精确校验手机号 ---
+        phone_text = parsed_data.get("extracted_phone", "")
+        diag = parsed_data.get("resume_diagnosis", {})
+        if "contact_info" not in diag:
+            diag["contact_info"] = []
+            
+        if phone_text:
+            pure_digits = re.sub(r'\D', '', phone_text)
+            if len(pure_digits) != 11:
+                deduct = 3
+                diag["contact_info"].append({
+                    "original": phone_text,
+                    "suggestion": f"手机号位数错误！纯数字为{len(pure_digits)}位，国内手机号应为11位，请严格核实。",
+                    "deduction": deduct
+                })
+                if isinstance(diag.get("overall_score"), int):
+                    diag["overall_score"] = max(0, diag["overall_score"] - deduct)
+        else:
+            fallback_matches = re.findall(r'(?:\+86\s*)?1[3-9][\d\s\-]{8,15}', raw_text)
+            if fallback_matches:
+                fallback_phone = fallback_matches[0]
+                pure_digits = re.sub(r'\D', '', fallback_phone)
+                if len(pure_digits) != 11:
+                    deduct = 3
+                    diag["contact_info"].append({
+                        "original": fallback_phone,
+                        "suggestion": f"检测到疑似手机号，纯数字为{len(pure_digits)}位，应为11位，请严格核实。",
+                        "deduction": deduct
+                    })
+                    if isinstance(diag.get("overall_score"), int):
+                        diag["overall_score"] = max(0, diag["overall_score"] - deduct)
+            else:
+                deduct = 5
+                diag["contact_info"].append({
+                    "original": "",
+                    "suggestion": "未提供有效手机号码，请务必补充以便HR联系。",
+                    "deduction": deduct
+                })
+                if isinstance(diag.get("overall_score"), int):
+                    diag["overall_score"] = max(0, diag["overall_score"] - deduct)
+                    
+        # --- Python 端校验邮箱 ---
+        email_matches = re.findall(r'[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+', raw_text)
+        if not email_matches:
+            deduct = 2
+            diag["contact_info"].append({
+                "original": "",
+                "suggestion": "未提供邮箱，建议补充以便HR联系。",
+                "deduction": deduct
+            })
+            if isinstance(diag.get("overall_score"), int):
+                diag["overall_score"] = max(0, diag["overall_score"] - deduct)
+
+        return parsed_data
     except ValueError:
         print("=====================================")
         print("⚠️ AI 返回内容无法解析为 JSON，原始内容：")

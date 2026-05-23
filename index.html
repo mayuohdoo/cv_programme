@@ -742,13 +742,13 @@
       transform: translateX(4px);
     }
     .diag-original { 
-      color: var(--error); 
-      text-decoration: line-through; 
+      color: var(--gray-500); 
+      font-style: italic; 
       margin-bottom: 6px;
       font-weight: 500;
     }
     .diag-suggestion { 
-      color: var(--success);
+      color: var(--error);
       font-weight: 600;
     }
     .diag-empty { 
@@ -2951,7 +2951,7 @@
     <div id="diagComment" class="diag-comment"></div>
 
     <div class="diag-section">
-      <div class="diag-section-title">🔤 错别字</div>
+      <div class="diag-section-title">🔤 书写错误</div>
       <div id="diagTypos"></div>
     </div>
     <div class="diag-section">
@@ -2961,6 +2961,10 @@
     <div class="diag-section">
       <div class="diag-section-title">♻️ 语意冗杂</div>
       <div id="diagRedundancy"></div>
+    </div>
+    <div class="diag-section">
+      <div class="diag-section-title">🎯 成果量化 (STAR法则)</div>
+      <div id="diagStar"></div>
     </div>
   </div>
 
@@ -3621,14 +3625,17 @@
       items.forEach(item => {
         const div = document.createElement("div");
         div.className = "diag-item";
-        div.innerHTML = `<div class="diag-original">${item.original || ""}</div><div class="diag-suggestion">→ ${item.suggestion || ""}</div>`;
+        const deductionHtml = item.deduction ? `<span style="color:#ff4d4f; font-weight:bold; margin-left:10px; font-size:13px;">(-${item.deduction}分)</span>` : '';
+        div.innerHTML = `<div class="diag-original">${item.original || ""}</div><div class="diag-suggestion">→ ${item.suggestion || ""}${deductionHtml}</div>`;
         el.appendChild(div);
       });
     }
 
-    renderDiagItems("diagTypos", diag.typos);
+    const combinedErrors = (diag.typos || []).concat(diag.contact_info || []).concat(diag.timeline_issues || []);
+    renderDiagItems("diagTypos", combinedErrors);
     renderDiagItems("diagGrammar", diag.grammar_issues);
     renderDiagItems("diagRedundancy", diag.redundancy);
+    renderDiagItems("diagStar", diag.star_issues);
   }
 
   // ── 面试模拟（主区域）──
