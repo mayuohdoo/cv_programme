@@ -460,6 +460,86 @@
       border-radius: 14px; color: var(--purple-light); font-size: 13px;
     }
     /* ========== 结束：个人中心样式 ========== */
+
+    /* ========== 插件安装引导样式 ========== */
+    .install-hero {
+      display: flex; align-items: center; gap: 16px;
+      padding: 18px 20px; margin-bottom: 24px;
+      background: linear-gradient(135deg, rgba(192,132,252,0.12), rgba(244,114,182,0.10));
+      border-radius: 16px;
+      border: 1px solid rgba(192,132,252,0.18);
+    }
+    .install-emoji { font-size: 36px; flex-shrink: 0; }
+    .install-hero-text { flex: 1; }
+    .install-hero-text strong {
+      display: block; font-size: 15px; color: var(--purple-deep);
+      margin-bottom: 4px; font-weight: 700;
+    }
+    .install-hero-text span {
+      font-size: 12px; color: var(--purple-light); line-height: 1.6;
+    }
+
+    .install-section-title {
+      font-size: 13px; font-weight: 700; color: var(--purple-mid);
+      margin-bottom: 12px; letter-spacing: 0.3px;
+    }
+
+    .install-step {
+      display: flex; gap: 14px; padding: 14px 16px;
+      margin-bottom: 10px;
+      background: rgba(255,255,255,0.7);
+      border: 1px solid rgba(192,132,252,0.12);
+      border-radius: 14px;
+      transition: all 0.2s;
+    }
+    .install-step:hover {
+      background: rgba(255,255,255,0.92);
+      border-color: rgba(192,132,252,0.28);
+    }
+    .install-step .step-num {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: var(--gradient-btn); color: white;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 700;
+      flex-shrink: 0;
+      box-shadow: 0 2px 8px rgba(192,132,252,0.3);
+    }
+    .install-step .step-body { flex: 1; min-width: 0; }
+    .install-step .step-body strong {
+      display: block; font-size: 14px; font-weight: 700;
+      color: var(--purple-deep); margin-bottom: 4px;
+    }
+    .install-step .step-body p {
+      font-size: 12px; color: var(--purple-mid); line-height: 1.7;
+    }
+    .install-step .step-body code {
+      background: rgba(192,132,252,0.12); color: var(--purple-mid);
+      padding: 1px 6px; border-radius: 4px;
+      font-family: 'SF Mono', Menlo, Consolas, monospace;
+      font-size: 11px;
+    }
+    .install-step .step-body a {
+      color: var(--pink-primary); font-weight: 600;
+      text-decoration: none; border-bottom: 1px dashed var(--pink-primary);
+    }
+    .install-step .step-body a:hover { opacity: 0.8; }
+    .install-step .step-body b {
+      color: var(--purple-deep); font-weight: 700;
+    }
+
+    .install-actions {
+      display: flex; gap: 10px; flex-wrap: wrap;
+      margin: 18px 0 12px;
+    }
+
+    .install-tip {
+      font-size: 12px; color: var(--purple-light);
+      padding: 12px 14px;
+      background: rgba(192,132,252,0.08);
+      border-radius: 10px;
+      line-height: 1.6;
+    }
+    /* ========== 结束：插件安装引导样式 ========== */
   </style>
 </head>
 <body>
@@ -883,20 +963,65 @@
     openModal('🎤 AI 模拟面试', '沉浸式面试练习，告别紧张', html);
   }
 
-  // 投递追踪弹窗
+  // 投递追踪弹窗（含 Chrome 插件安装引导）
   function showTrackingModal(data) {
     const html = `
-      <div style="text-align:center;padding:30px 20px">
-        <div style="font-size:64px;margin-bottom:16px">📊</div>
-        <p style="font-size:14px;color:var(--purple-light);margin-bottom:24px">
-          可视化追踪所有投递进展<br>安装 Chrome 插件可以自动同步投递记录
-        </p>
-        <button class="btn-primary" onclick="window.location.href='index-original-backup.html#tracking'">
-          查看追踪面板 →
-        </button>
+      <div class="install-hero">
+        <div class="install-emoji">🔌</div>
+        <div class="install-hero-text">
+          <strong>用 Chrome 插件追踪投递</strong>
+          <span>在 Boss 直聘、拉勾、智联等网站，自动填充简历 + 一键记录投递进度</span>
+        </div>
+      </div>
+
+      <div class="install-section-title">📦 安装步骤</div>
+
+      <div class="install-step">
+        <span class="step-num">1</span>
+        <div class="step-body">
+          <strong>下载插件文件</strong>
+          <p>访问项目 <a href="https://github.com/catarina-xxxcc/cv_programme" target="_blank">GitHub 仓库</a>，点击右上角 <code>Code → Download ZIP</code>，解压后找到 <code>chrome-extension-mvp/</code> 文件夹</p>
+        </div>
+      </div>
+
+      <div class="install-step">
+        <span class="step-num">2</span>
+        <div class="step-body">
+          <strong>打开 Chrome 扩展页</strong>
+          <p>地址栏粘贴 <code>chrome://extensions</code> 回车，打开右上角的「<b>开发者模式</b>」开关</p>
+        </div>
+      </div>
+
+      <div class="install-step">
+        <span class="step-num">3</span>
+        <div class="step-body">
+          <strong>加载已解压的扩展</strong>
+          <p>点击左上角「加载已解压的扩展程序」，选择第一步解压出的 <code>chrome-extension-mvp/</code> 文件夹</p>
+        </div>
+      </div>
+
+      <div class="install-step">
+        <span class="step-num">4</span>
+        <div class="step-body">
+          <strong>开始使用</strong>
+          <p>访问 Boss 直聘等招聘网站，会出现浮动按钮，支持<b>一键填充简历</b>和<b>记录投递</b>。投递记录会同步到这里。</p>
+        </div>
+      </div>
+
+      <div class="install-actions">
+        <a href="https://github.com/catarina-xxxcc/cv_programme" target="_blank" class="btn-primary" style="text-decoration:none;display:inline-block">
+          打开 GitHub 仓库 →
+        </a>
+        <a href="https://github.com/catarina-xxxcc/cv_programme/archive/refs/heads/main.zip" class="btn-secondary" style="text-decoration:none;display:inline-block">
+          ⬇️ 直接下载 ZIP
+        </a>
+      </div>
+
+      <div class="install-tip">
+        💡 已安装好插件？等浏览器记录到投递后，会自动同步到这里展示。
       </div>
     `;
-    openModal('📊 投递追踪', '不漏掉任何一个机会', html);
+    openModal('📊 投递追踪', '安装 Chrome 插件后自动同步投递记录', html);
   }
 
   // 求职助手弹窗
