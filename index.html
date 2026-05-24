@@ -637,38 +637,53 @@
     .track-icon-btn:hover { background: rgba(192,132,252,0.20); }
     .track-icon-btn.danger:hover { background: rgba(239,68,68,0.12); color: #dc2626; }
     /* ========== 结束：投递追踪记录列表样式 ========== */
-    /* ========== 面试 UI（统一主站紫粉设计语言） ========== */
+    /* ========== 面试 UI（卡片式嵌入主布局） ========== */
 
     .interview-section { display: none; }
     .interview-section.active {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      background: rgba(60, 30, 90, 0.45);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
       display: flex;
       flex-direction: column;
-      min-height: 480px;
-      background: var(--gradient-bg);
-      background-attachment: fixed;
+      align-items: center;
+      padding: 60px 20px 40px;
+      overflow-y: auto;
     }
 
-    /* 玻璃拟态头部 */
+    /* 面试卡片 - 玻璃拟态，和 status-card 一致 */
+    .interview-card {
+      background: var(--card-bg);
+      box-shadow: var(--card-shadow);
+      border: var(--card-border);
+      border-radius: var(--radius-card);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      height: calc(100vh - 100px);
+      width: 100%;
+      max-width: 1100px;
+    }
+
+    /* 头部 */
     .interview-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 14px 28px;
-      background: rgba(255,255,255,0.75);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border-bottom: var(--card-border);
-      position: sticky;
-      top: 0;
-      z-index: 10;
+      padding: 16px 28px;
+      border-bottom: 1px solid rgba(192,132,252,0.15);
+      flex-shrink: 0;
     }
     .interview-header-title {
-      font-size: 16px;
+      font-size: 15px;
       font-weight: 700;
       color: var(--purple-deep);
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
     }
     .interview-header-title .pos-tag {
       font-size: 12px;
@@ -698,24 +713,55 @@
 
     /* 启动栏 */
     .interview-start-bar {
-      padding: 32px 24px;
-      flex: 1;
       display: flex;
-      align-items: flex-start;
       justify-content: center;
-    }
-    /* 毛玻璃卡片包裹 */
-    .start-bar-card {
-      max-width: 680px;
+      align-items: center;
       width: 100%;
-      background: var(--card-bg);
-      box-shadow: var(--card-shadow);
-      border: var(--card-border);
-      border-radius: var(--radius-card);
-      padding: 32px 36px;
+      max-width: 720px;
+      flex: 1;
+    }
+    .start-bar-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-bottom: 20px;
+      border-bottom: 1px solid rgba(192,132,252,0.15);
+      margin-bottom: 8px;
+    }
+    .start-bar-header-title {
+      font-size: 17px;
+      font-weight: 800;
+      color: var(--purple-deep);
+    }
+    .btn-exit-interview-sm {
+      background: transparent;
+      border: 1.5px solid var(--purple-light);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--purple-mid);
+      cursor: pointer;
+      padding: 5px 14px;
+      border-radius: var(--radius-btn);
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    .btn-exit-interview-sm:hover {
+      background: var(--purple-mid);
+      color: #fff;
+      border-color: var(--purple-mid);
+    }
+
+    .start-bar-card {
+      max-width: 720px;
+      width: 100%;
       display: flex;
       flex-direction: column;
-      gap: 24px;
+      gap: 28px;
+      background: rgba(255,255,255,0.95);
+      border-radius: 24px;
+      padding: 32px 40px;
+      box-shadow: 0 20px 60px rgba(180,120,255,0.3);
+      border: 1px solid rgba(255,255,255,0.9);
     }
     .start-step { display: flex; flex-direction: column; gap: 10px; }
     .start-step-header { display: flex; align-items: center; gap: 8px; }
@@ -747,7 +793,7 @@
       padding: 2px 8px; border-radius: 4px;
     }
 
-    /* 岗位选择器 - 紫粉统一 */
+    /* 岗位选择器 */
     .position-picker { position: relative; }
     .position-picker-btn {
       width: 100%; padding: 12px 16px;
@@ -791,6 +837,7 @@
       border: 2px solid rgba(157,122,184,0.25); border-radius: 12px;
       font-size: 14px; outline: none; transition: border-color 0.2s;
       margin-top: 4px; font-family: inherit;
+      background: #fff;
     }
     .start-bar-custom-input:focus { border-color: var(--purple-mid); }
     .jd-textarea {
@@ -799,6 +846,7 @@
       font-size: 13px; line-height: 1.6; resize: vertical; outline: none;
       transition: border-color 0.2s; font-family: inherit;
       min-height: 72px; max-height: 200px;
+      background: #fff;
     }
     .jd-textarea:focus { border-color: var(--purple-mid); background: rgba(240,232,255,0.3); }
     .jd-textarea::placeholder { color: var(--purple-faint); }
@@ -815,7 +863,7 @@
     .start-bar-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(192,132,252,0.45); }
     .start-bar-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
 
-    /* 阶段选择卡片 - 紫粉主题 */
+    /* 阶段选择卡片 - 选中态用紫粉渐变填充 */
     .stage-intro-cards { display: flex; gap: 14px; max-width: 600px; width: 100%; }
     .stage-intro-card {
       flex: 1; background: rgba(255,255,255,0.6);
@@ -831,9 +879,18 @@
     }
     .stage-intro-card.selected {
       border-color: var(--purple-mid);
-      background: rgba(255,255,255,0.92);
-      box-shadow: 0 0 0 3px rgba(107,53,199,0.15), 0 8px 24px rgba(107,53,199,0.12);
+      background: var(--gradient-btn);
+      color: #fff;
+      box-shadow: 0 8px 24px rgba(107,53,199,0.18);
       transform: translateY(-3px);
+    }
+    .stage-intro-card.selected .stage-intro-name,
+    .stage-intro-card.selected .stage-intro-meta,
+    .stage-intro-card.selected .stage-intro-tag {
+      color: #fff;
+    }
+    .stage-intro-card.selected .stage-intro-tag {
+      background: rgba(255,255,255,0.2);
     }
     .stage-intro-emoji { font-size: 32px; margin-bottom: 6px; display: block; }
     .stage-intro-name { font-size: 15px; font-weight: 700; color: var(--purple-deep); margin-bottom: 4px; }
@@ -845,31 +902,20 @@
     }
     @media (max-width: 520px) { .stage-intro-cards { flex-direction: column; } }
 
-    /* 聊天主体布局（双栏） */
-    .interview-body {
-      flex: 1;
-      display: flex;
-      gap: 0;
-      min-height: 0;
-      padding: 20px 28px;
-    }
+    /* 聊天主体 - 填充卡片 */
     .interview-chat-area {
       flex: 1;
-      min-width: 0;
-      display: flex;
+      display: none;
       flex-direction: column;
       min-height: 0;
-      background: rgba(255,255,255,0.55);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-      border-radius: 20px 0 0 20px;
-      border: var(--card-border);
-      border-right: none;
+    }
+    .interview-chat-area.active {
+      display: flex;
     }
     .interview-chat-messages {
       flex: 1; min-height: 0; overflow-y: auto;
       display: flex; flex-direction: column; gap: 12px;
-      padding: 20px 24px;
+      padding: 24px 28px;
     }
     .interview-chat-messages .msg { display: flex; gap: 10px; align-items: flex-start; }
     .interview-chat-messages .msg.user { flex-direction: row-reverse; }
@@ -885,7 +931,7 @@
       border-top-left-radius: 4px;
     }
     .interview-chat-messages .msg.user .msg-bubble {
-      background: var(--gradient-btn);
+      background: linear-gradient(135deg, #d8b4fe, #f9a8d4);
       color: #fff;
       border-top-right-radius: 4px;
     }
@@ -918,16 +964,15 @@
     .interview-input-area .send-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
 
     @media (max-width: 820px) {
-      .interview-chat-area { border-radius: 20px; border-right: var(--card-border); }
-      .interview-body { padding: 12px 16px; }
+      .interview-section.active { padding: 40px 16px 24px; }
     }
     @media (max-width: 480px) {
-      .start-bar-card { padding: 24px 20px; }
-      .interview-start-bar { padding: 20px 12px; }
+      .start-bar-card { gap: 20px; padding: 24px 20px; }
+      .interview-section.active { padding: 20px 12px 16px; }
       .position-picker-dropdown { width: calc(100vw - 64px); left: 0; }
-      .interview-header { padding: 10px 16px; }
-      .interview-body { padding: 8px 8px; }
-      .interview-chat-messages { padding: 12px 12px; }
+      .interview-header { padding: 12px 16px; }
+      .interview-chat-messages { padding: 16px 16px; }
+      .interview-input-area { padding: 10px 12px 12px; }
     }
   </style>
 </head>
@@ -1009,101 +1054,105 @@
 
   <!-- Resume Bar moved to Profile Center (click avatar to access) -->
 
-</main>
+  <!-- 面试区域 (inside main) -->
+  <div class="interview-section" id="interviewSection">
+    <!-- 启动栏 - 独立弹窗样式 -->
+    <div class="interview-start-bar" id="interviewStartBar">
+      <div class="start-bar-card">
+        <!-- 头部 -->
+        <div class="start-bar-header">
+          <div class="start-bar-header-title"><span id="startBarTitle">沉浸式模拟面试</span></div>
+          <button class="btn-exit-interview-sm" onclick="exitInterview()">退出面试</button>
+        </div>
+        <!-- Step 1: 岗位选择 -->
+        <div class="start-step">
+          <div class="start-step-header">
+            <span class="step-num">1</span>
+            <span class="step-title">选择目标岗位</span>
+            <span class="step-required">必选</span>
+          </div>
+          <div class="position-picker" id="positionPicker">
+            <button class="position-picker-btn" id="positionPickerBtn" onclick="togglePositionDropdown()">👈 点击选择岗位</button>
+            <div class="position-picker-dropdown" id="positionPickerDropdown" style="display:none;">
+              <div class="position-picker-left" id="posCatList"></div>
+              <div class="position-picker-right" id="posJobList"></div>
+            </div>
+          </div>
+          <input class="start-bar-custom-input" id="customPositionInput" placeholder="或者手动输入目标岗位名称..." style="display:none;">
+        </div>
+        <!-- Step 2: 面试阶段 -->
+        <div class="start-step">
+          <div class="start-step-header">
+            <span class="step-num">2</span>
+            <span class="step-title">选择面试阶段</span>
+            <span class="step-required">必选</span>
+          </div>
+          <div class="stage-intro-cards" id="stageCards">
+            <div class="stage-intro-card" data-stage="hr" onclick="selectStageCard(this)">
+              <span class="stage-intro-emoji">🤝</span>
+              <div class="stage-intro-name">HR 面</div>
+              <div class="stage-intro-meta">6 题 · 15-20 分钟</div>
+              <div class="stage-intro-tags">
+                <span class="stage-intro-tag">自我介绍</span>
+                <span class="stage-intro-tag">求职动机</span>
+                <span class="stage-intro-tag">职业规划</span>
+              </div>
+            </div>
+            <div class="stage-intro-card" data-stage="first" onclick="selectStageCard(this)">
+              <span class="stage-intro-emoji">💻</span>
+              <div class="stage-intro-name">一面（技术面）</div>
+              <div class="stage-intro-meta">8 题 · 30-40 分钟</div>
+              <div class="stage-intro-tags">
+                <span class="stage-intro-tag">技术深挖</span>
+                <span class="stage-intro-tag">项目经验</span>
+                <span class="stage-intro-tag">场景设计</span>
+              </div>
+            </div>
+            <div class="stage-intro-card" data-stage="second" onclick="selectStageCard(this)">
+              <span class="stage-intro-emoji">🎯</span>
+              <div class="stage-intro-name">二面（综合面）</div>
+              <div class="stage-intro-meta">6 题 · 25-30 分钟</div>
+              <div class="stage-intro-tags">
+                <span class="stage-intro-tag">架构能力</span>
+                <span class="stage-intro-tag">团队协作</span>
+                <span class="stage-intro-tag">业务理解</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Step 3: JD (可选) -->
+        <div class="start-step">
+          <div class="start-step-header">
+            <span class="step-num">3</span>
+            <span class="step-title">粘贴岗位 JD（可选）</span>
+            <span class="step-optional">选填</span>
+          </div>
+          <textarea class="jd-textarea" id="jdTextarea" placeholder="粘贴岗位描述，AI 会围绕 JD 技能要求出题..." rows="2"></textarea>
+        </div>
+        <button class="start-bar-btn" id="startInterviewBtn" disabled onclick="startInterview()">开始面试 🚀</button>
+      </div>
+    </div>
+    <!-- 面试卡片 - 仅开始面试后显示 -->
+    <div class="interview-card" id="interviewCard" style="display:none;">
+      <!-- Header -->
+      <div class="interview-header">
+        <div class="interview-header-title">
+          <span id="interviewCardTitle">沉浸式模拟面试</span>
+        </div>
+        <button class="btn-exit-interview" onclick="exitInterview()">退出面试</button>
+      </div>
+      <!-- 聊天区域 -->
+      <div class="interview-chat-area" id="interviewChatArea">
+        <div class="interview-chat-messages" id="interviewChatMessages"></div>
+        <div class="interview-input-area">
+          <textarea id="interviewInput" placeholder="输入你的回答..." rows="1"></textarea>
+          <button class="send-btn" id="interviewSendBtn" onclick="sendInterviewChat()">➤</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
-<!-- 面试区域 (hidden by default) -->
-<div class="interview-section" id="interviewSection">
-  <!-- Header -->
-  <div class="interview-header">
-    <div class="interview-header-title">
-      沉浸式模拟面试
-      <span class="pos-tag" id="interviewPositionName"></span>
-    </div>
-    <button class="btn-exit-interview" onclick="exitInterview()">退出面试</button>
-  </div>
-  <!-- 启动栏 -->
-  <div class="interview-start-bar" id="interviewStartBar">
-    <div class="start-bar-card">
-      <!-- Step 1: 岗位选择 -->
-      <div class="start-step">
-        <div class="start-step-header">
-          <span class="step-num">1</span>
-          <span class="step-title">选择目标岗位</span>
-          <span class="step-required">必选</span>
-        </div>
-        <div class="position-picker" id="positionPicker">
-          <button class="position-picker-btn" id="positionPickerBtn" onclick="togglePositionDropdown()">👈 点击选择岗位</button>
-          <div class="position-picker-dropdown" id="positionPickerDropdown" style="display:none;">
-            <div class="position-picker-left" id="posCatList"></div>
-            <div class="position-picker-right" id="posJobList"></div>
-          </div>
-        </div>
-        <input class="start-bar-custom-input" id="customPositionInput" placeholder="或者手动输入目标岗位名称..." style="display:none;">
-      </div>
-      <!-- Step 2: 面试阶段 -->
-      <div class="start-step">
-        <div class="start-step-header">
-          <span class="step-num">2</span>
-          <span class="step-title">选择面试阶段</span>
-          <span class="step-required">必选</span>
-        </div>
-        <div class="stage-intro-cards" id="stageCards">
-          <div class="stage-intro-card" data-stage="hr" onclick="selectStageCard(this)">
-            <span class="stage-intro-emoji">🤝</span>
-            <div class="stage-intro-name">HR 面</div>
-            <div class="stage-intro-meta">6 题 · 15-20 分钟</div>
-            <div class="stage-intro-tags">
-              <span class="stage-intro-tag">自我介绍</span>
-              <span class="stage-intro-tag">求职动机</span>
-              <span class="stage-intro-tag">职业规划</span>
-            </div>
-          </div>
-          <div class="stage-intro-card" data-stage="first" onclick="selectStageCard(this)">
-            <span class="stage-intro-emoji">💻</span>
-            <div class="stage-intro-name">一面（技术面）</div>
-            <div class="stage-intro-meta">8 题 · 30-40 分钟</div>
-            <div class="stage-intro-tags">
-              <span class="stage-intro-tag">技术深挖</span>
-              <span class="stage-intro-tag">项目经验</span>
-              <span class="stage-intro-tag">场景设计</span>
-            </div>
-          </div>
-          <div class="stage-intro-card" data-stage="second" onclick="selectStageCard(this)">
-            <span class="stage-intro-emoji">🎯</span>
-            <div class="stage-intro-name">二面（综合面）</div>
-            <div class="stage-intro-meta">6 题 · 25-30 分钟</div>
-            <div class="stage-intro-tags">
-              <span class="stage-intro-tag">架构能力</span>
-              <span class="stage-intro-tag">团队协作</span>
-              <span class="stage-intro-tag">业务理解</span>
-            </div>
-          </div>
-        </div>
-      </div>
-      <!-- Step 3: JD (可选) -->
-      <div class="start-step">
-        <div class="start-step-header">
-          <span class="step-num">3</span>
-          <span class="step-title">粘贴岗位 JD（可选）</span>
-          <span class="step-optional">选填</span>
-        </div>
-        <textarea class="jd-textarea" id="jdTextarea" placeholder="粘贴岗位描述，AI 会围绕 JD 技能要求出题..." rows="2"></textarea>
-      </div>
-      <button class="start-bar-btn" id="startInterviewBtn" disabled onclick="startInterview()">开始面试 🚀</button>
-    </div>
-  </div>
-  <!-- Body: 聊天 + 头像面板 -->
-  <div class="interview-body" id="interviewBody" style="display:none;">
-    <!-- 聊天区域 -->
-    <div class="interview-chat-area" id="interviewChatArea">
-      <div class="interview-chat-messages" id="interviewChatMessages"></div>
-      <div class="interview-input-area">
-        <textarea id="interviewInput" placeholder="输入你的回答..." rows="1"></textarea>
-        <button class="send-btn" id="interviewSendBtn" onclick="sendInterviewChat()">➤</button>
-      </div>
-    </div>
-  </div>
-</div>
+</main>
 
 <!-- 弹窗 Modal -->
 <div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this)closeModal()">
@@ -1502,6 +1551,7 @@
     { cat: "项目管理", jobs: ["项目经理", "技术项目经理 (TPM)", "Scrum Master", "项目助理", "交付经理"] },
     { cat: "数据金融", jobs: ["数据分析师", "商业分析师 (BA)", "金融分析师", "风控专员", "投资顾问", "精算师"] },
     { cat: "行政支持", jobs: ["行政专员", "人事专员 (HR)", "招聘专员", "财务专员", "会计", "法务专员", "客服专员"] },
+    { cat: "其他", jobs: [] },
   ];
   let activeCat = 0;
 
@@ -1515,12 +1565,45 @@
   function renderPositions() {
     const catList = document.getElementById('posCatList');
     const jobList = document.getElementById('posJobList');
+    const customInput = document.getElementById('customPositionInput');
     catList.innerHTML = POSITION_DATA.map((c, i) =>
       `<div class="cat-item ${i === activeCat ? 'active' : ''}" onclick="selectCat(${i})">${c.cat}</div>`
     ).join('');
-    jobList.innerHTML = POSITION_DATA[activeCat].jobs.map(j =>
-      `<div class="job-item" onclick="selectJob('${j}')">${j}</div>`
-    ).join('');
+    const cat = POSITION_DATA[activeCat];
+    if (cat.cat === '其他') {
+      jobList.style.display = '';
+      jobList.innerHTML = `
+        <div style="padding:7px 12px;font-size:13px;color:var(--purple-dark);font-weight:600;">其他</div>
+        <div style="padding:4px 8px 10px;">
+          <input class="other-job-input" placeholder="输入你想要面试的岗位..."
+            style="width:100%;padding:10px 14px;border:2px solid rgba(157,122,184,0.25);border-radius:12px;font-size:13px;outline:none;font-family:inherit;background:#fff;box-sizing:border-box;">
+        </div>
+      `;
+      const otherInput = jobList.querySelector('.other-job-input');
+      otherInput.addEventListener('input', function() {
+        if (this.value.trim()) {
+          document.getElementById('positionPickerBtn').textContent = `✏️ ${this.value.trim()}`;
+          selectedPosition = this.value.trim();
+        } else {
+          document.getElementById('positionPickerBtn').textContent = `👈 点击选择岗位`;
+          selectedPosition = "";
+        }
+        updateStartBarPosition(selectedPosition);
+        updateStartBtnState();
+      });
+      otherInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && this.value.trim()) {
+          document.getElementById('positionPickerDropdown').style.display = 'none';
+        }
+      });
+      setTimeout(() => otherInput.focus(), 50);
+    } else {
+      jobList.style.display = '';
+      customInput.style.display = 'none';
+      jobList.innerHTML = cat.jobs.map(j =>
+        `<div class="job-item" onclick="selectJob('${j}')">${j}</div>`
+      ).join('');
+    }
   }
 
   function selectCat(i) {
@@ -1528,11 +1611,17 @@
     renderPositions();
   }
 
+  function updateStartBarPosition(name) {
+    const text = name ? `沉浸式模拟面试：${name}` : '沉浸式模拟面试';
+    document.getElementById('startBarTitle').textContent = text;
+  }
+
   function selectJob(job) {
     document.getElementById('positionPickerBtn').textContent = `✅ ${job}`;
     document.getElementById('positionPickerDropdown').style.display = 'none';
     document.getElementById('customPositionInput').style.display = 'none';
     selectedPosition = job;
+    updateStartBarPosition(job);
     updateStartBtnState();
   }
 
@@ -1540,10 +1629,12 @@
     if (this.value.trim()) {
       document.getElementById('positionPickerBtn').textContent = `✏️ ${this.value.trim()}`;
       selectedPosition = this.value.trim();
+      document.getElementById('positionPickerDropdown').style.display = 'none';
     } else {
       document.getElementById('positionPickerBtn').textContent = `👈 点击选择岗位`;
       selectedPosition = "";
     }
+    updateStartBarPosition(selectedPosition);
     updateStartBtnState();
   });
 
@@ -1578,8 +1669,9 @@
     interviewChatHistory = [];
 
     document.getElementById('interviewStartBar').style.display = 'none';
-    document.getElementById('interviewBody').style.display = 'flex';
-    document.getElementById('interviewPositionName').textContent = selectedPosition;
+    document.getElementById('interviewCard').style.display = 'flex';
+    document.getElementById('interviewChatArea').classList.add('active');
+    document.getElementById('interviewCardTitle').textContent = `沉浸式模拟面试：${selectedPosition}`;
 
     // 发送第一条消息给AI，启动面试
     const messages = [{ role: "user", content: `请开始面试，岗位是${selectedPosition}，面试阶段是${selectedStage}` }];
@@ -1708,7 +1800,8 @@
     document.querySelector('.status-card').style.display = '';
     document.querySelector('.tool-section').style.display = '';
     document.getElementById('interviewStartBar').style.display = '';
-    document.getElementById('interviewBody').style.display = 'none';
+    document.getElementById('interviewCard').style.display = 'none';
+    document.getElementById('interviewChatArea').classList.remove('active');
     document.getElementById('interviewChatMessages').innerHTML = '';
     document.getElementById('interviewInput').value = '';
     interviewChatHistory = [];
@@ -1724,8 +1817,10 @@
     document.getElementById('customPositionInput').style.display = 'none';
     document.getElementById('jdTextarea').value = '';
     document.getElementById('interviewStartBar').style.display = '';
-    document.getElementById('interviewBody').style.display = 'none';
+    document.getElementById('interviewCard').style.display = 'none';
+    document.getElementById('interviewChatArea').classList.remove('active');
     document.getElementById('interviewChatMessages').innerHTML = '';
+    updateStartBarPosition('');
     selectedPosition = "";
     selectedStage = "";
     document.querySelectorAll('.stage-intro-card').forEach(c => c.classList.remove('selected'));
