@@ -114,7 +114,18 @@ def _extract_text(content_type: str, file_bytes: bytes) -> str:
 
     elif content_type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
         doc = Document(io.BytesIO(file_bytes))
-        raw_text = "\n".join(para.text for para in doc.paragraphs)
+        texts = []
+        # 1. 提取所有段落的文本
+        for para in doc.paragraphs:
+            if para.text.strip():
+                texts.append(para.text.strip())
+        # 2. 提取所有表格中的文本
+        for table in doc.tables:
+            for row in table.rows:
+                for cell in row.cells:
+                    if cell.text.strip():
+                        texts.append(cell.text.strip())
+        raw_text = "\n".join(texts)
     return raw_text.strip()
 
 
