@@ -322,9 +322,7 @@
     .job-modal-industry { font-size: 12px; color: var(--purple-light); margin-top: 2px; }
     .job-modal-match {
       font-size: 11px; font-weight: 700; padding: 4px 10px;
-      border-radius: 12px;
-      background: linear-gradient(135deg, rgba(192,132,252,0.2), rgba(244,114,182,0.2));
-      color: var(--purple-mid);
+      border-radius: 999px; white-space: nowrap;
     }
     .job-modal-reason { font-size: 12px; color: var(--purple-mid); margin-top: 8px; line-height: 1.6; }
     .job-modal-meta { display: flex; gap: 12px; margin-top: 8px; font-size: 11px; color: var(--purple-light); }
@@ -794,8 +792,22 @@
 
   // 岗位推荐弹窗
   function showJobsModal(data) {
-    const jobs = data.job_recommendations || [];
+    const jobs = (data.job_recommendations || []).slice();
     const skills = data.extracted_skills || [];
+
+    // 按 match_score 从高到低排序
+    jobs.sort((a, b) => {
+      const sa = a.match_score || (a.match_level === '高' ? 80 : 65);
+      const sb = b.match_score || (b.match_level === '高' ? 80 : 65);
+      return sb - sa;
+    });
+
+    // 根据分数返回匹配等级 + 颜色
+    function matchInfo(score) {
+      if (score >= 90) return { label: '极高匹配', bg: 'linear-gradient(135deg, rgba(192,132,252,0.22), rgba(244,114,182,0.22))', color: '#7c3aed', border: 'rgba(192,132,252,0.35)' };
+      if (score >= 75) return { label: '高匹配', bg: 'rgba(168,130,255,0.14)', color: '#8b5cf6', border: 'rgba(168,130,255,0.28)' };
+      return { label: '中匹配', bg: 'rgba(160,124,192,0.10)', color: '#a07cc0', border: 'rgba(160,124,192,0.22)' };
+    }
 
     const skillsHtml = skills.length
       ? `<div style="margin-bottom:20px">
@@ -809,22 +821,22 @@
       return;
     }
 
-    const jobsHtml = jobs.map((j, idx) => {
+    const jobsHtml = jobs.map((j) => {
       const s = j.salary_range || {};
       const salaryText = (s.min_salary && s.max_salary) ? `${s.min_salary}-${s.max_salary}K` : '面议';
       const city = s.city || '全国';
       const matchScore = j.match_score || (j.match_level === '高' ? 85 : 70);
-      // 构造 BOSS 直聘搜索 URL
+      const m = matchInfo(matchScore);
       const cityParam = (city && city !== '全国') ? `&city=${encodeURIComponent(city)}` : '';
       const bossUrl = `https://www.zhipin.com/job_detail/?query=${encodeURIComponent(j.title || '')}${cityParam}`;
       return `
         <div class="job-modal-card" onclick="window.open('${bossUrl}', '_blank')" style="cursor:pointer" title="点击跳转到 BOSS 直聘搜索">
           <div class="job-modal-head">
             <div>
-              <div class="job-modal-title" style="text-decoration:underline;text-decoration-color:transparent;text-underline-offset:3px;transition:text-decoration-color 0.2s">${j.title || '岗位'}</div>
+              <div class="job-modal-title">${j.title || '岗位'}</div>
               <div class="job-modal-industry">${j.industry || ''}</div>
             </div>
-            <span class="job-modal-match">↑ ${matchScore}%</span>
+            <span class="job-modal-match" style="background:${m.bg};color:${m.color};border:1px solid ${m.border}">${m.label}</span>
           </div>
           <div class="job-modal-reason">${j.reason || ''}</div>
           <div class="job-modal-meta">
@@ -836,7 +848,7 @@
       `;
     }).join('');
 
-    openModal('🎯 为你推荐的岗位', `共 ${jobs.length} 个匹配岗位`, skillsHtml + jobsHtml);
+    openModal('🎯 为你推荐的岗位', `共 ${jobs.length} 个匹配岗位（按匹配度排序）`, skillsHtml + jobsHtml);
   }
 
   // 模拟面试弹窗
