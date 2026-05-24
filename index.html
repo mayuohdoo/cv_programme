@@ -1002,6 +1002,43 @@
     .sp-fill-second { background: #9c27b0; }
     .sp-segment.done .sp-fill { width: 100% !important; }
 
+    /* 考查维度覆盖 */
+    .coverage-bar {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 24px 8px;
+      border-bottom: 1px solid rgba(192,132,252,0.10);
+      flex-shrink: 0;
+      flex-wrap: wrap;
+    }
+    .coverage-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--purple-muted);
+      white-space: nowrap;
+    }
+    .coverage-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+    .coverage-tag {
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-weight: 500;
+      transition: all 0.3s;
+    }
+    .coverage-tag.pending {
+      background: rgba(192,132,252,0.08);
+      color: var(--purple-light);
+    }
+    .coverage-tag.done {
+      background: rgba(76,175,80,0.12);
+      color: #2e7d32;
+    }
+
     .interview-chat-area {
       flex: 1;
       display: none;
@@ -1275,6 +1312,11 @@
           </div>
           <div class="sp-track"><div class="sp-fill sp-fill-second" id="spFillSecond"></div></div>
         </div>
+      </div>
+      <!-- 考查维度覆盖 -->
+      <div class="coverage-bar" id="coverageBar">
+        <span class="coverage-label">考查维度：</span>
+        <span class="coverage-tags" id="coverageTags"></span>
       </div>
       <!-- 聊天区域 -->
       <div class="interview-chat-area" id="interviewChatArea">
@@ -1854,10 +1896,18 @@
     selectedPosition = document.getElementById('customPositionInput').value.trim() || selectedPosition;
     if (!selectedPosition || !selectedStage) return;
 
+    // 从冷启动设置中读取用户身份
+    let userIdentity = "";
+    try {
+      const profile = JSON.parse(localStorage.getItem('userProfile') || '{}');
+      userIdentity = profile.identity || "";
+    } catch(e) {}
+
     interviewState = {
       is_active: false,
       target_position: selectedPosition,
       interview_stage: selectedStage,
+      identity: userIdentity,
       jd_text: document.getElementById('jdTextarea').value.trim(),
       current_question_index: 0,
       total_questions: 8,
@@ -1882,6 +1932,7 @@
     badge.textContent = info.name;
     badge.className = 'interview-stage-badge ' + info.cls;
     // 初始化进度条
+    window._prevInterviewStage = selectedStage;
     updateStageProgress(selectedStage, 0, 0);
     // 发送第一条消息给AI，启动面试
     const messages = [{ role: "user", content: `请开始面试，岗位是${selectedPosition}，面试阶段是${selectedStage}` }];
@@ -1912,6 +1963,27 @@
       const el = document.getElementById(fills[currentIdx]);
       if (el) el.style.width = pct + '%';
     }
+    // 更新考查维度覆盖
+    updateCoverage(stage, current, total);
+  }
+
+  // ── 更新考查维度覆盖 ──
+  const STAGE_DIMENSIONS = {
+    hr: ['沟通表达', '自我认知', '求职动机', '团队适配', '成长意愿'],
+    first: ['技术基础', '项目深度', '问题解决', '场景设计', '技术视野'],
+    second: ['架构思维', '业务理解', '决策能力', '协作影响', '成长潜力'],
+  };
+  function updateCoverage(stage, current, total) {
+    const dims = STAGE_DIMENSIONS[stage] || [];
+    const tagsEl = document.getElementById('coverageTags');
+    if (!tagsEl || dims.length === 0) {
+      if (tagsEl) tagsEl.innerHTML = '';
+      return;
+    }
+    const doneCount = Math.min(dims.length, current);
+    tagsEl.innerHTML = dims.map((d, i) =>
+      `<span class="coverage-tag ${i < doneCount ? 'done' : 'pending'}">${i < doneCount ? '✓ ' : ''}${d}</span>`
+    ).join('');
   }
 
   // ── SSE 流式聊天 ──
@@ -1980,6 +2052,16 @@
                 }
                 // 更新三阶段进度条
                 updateStageProgress(interviewState.interview_stage, idx, total);
+                // 检测阶段是否切换，更新徽章和标题
+                const prevStage = window._prevInterviewStage;
+                if (interviewState.interview_stage && interviewState.interview_stage !== prevStage) {
+                  const stageNames = { hr: 'HR 面', first: '一面（技术面）', second: '二面（综合面）' };
+                  const stageCls = { hr: 'stage-hr', first: 'stage-first', second: 'stage-second' };
+                  const badge = document.getElementById('interviewStageBadge');
+                  badge.textContent = stageNames[interviewState.interview_stage] || interviewState.interview_stage;
+                  badge.className = 'interview-stage-badge ' + (stageCls[interviewState.interview_stage] || 'stage-hr');
+                  window._prevInterviewStage = interviewState.interview_stage;
+                }
               }
               interviewChatHistory.push({ role: "assistant", content: fullReply });
             }
@@ -2055,6 +2137,7 @@
     // 重置进度条
     document.querySelectorAll('.sp-segment').forEach(s => { s.classList.remove('active', 'done'); });
     document.querySelectorAll('.sp-fill').forEach(f => { f.style.width = '0%'; });
+    document.getElementById('coverageTags').innerHTML = '';
   }
 
   function resetStartBar() {

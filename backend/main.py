@@ -578,8 +578,79 @@ INTERVIEW_COMMON_RULES = """
 - 段落和段落之间必须用空行隔开
 
 【标记说明】
-[Q:N] 新问题 | [追问] 追问 | [面试结束] 总结评估
+[Q:N] 新问题 | [追问] 追问 | [面试结束] 总结评估 | [继续下一面] 阶段过渡
+
+【阶段过渡规则 - 重要】
+阶段顺序：HR面 → 一面（技术面）→ 二面（综合面）
+
+当当前阶段所有题目完成后：
+1. 先使用 [面试结束] 标记
+2. 输出完整的【结构化反馈】
+3. 然后主动询问候选人是否要继续下一轮面试
+
+如果候选人同意继续：
+4. 在下一轮开始时使用 [继续下一面] 标记
+5. 自然过渡到下一阶段，用新阶段的对应风格提问
+6. 使用 [Q:1] 标记下一阶段的第一个问题
+
+如果候选人拒绝继续：
+4. 正常结束面试
 """
+
+# ── 用户身份规则 ──
+IDENTITY_RULES = {
+    "intern": """
+【用户身份：找实习】
+根据以下规则调整面试内容：
+
+【禁止涉及】
+- ❌ 薪资待遇、五险一金、福利补贴等话题
+- ❌ 离职原因（不适用）
+- ❌ 工作空窗期（不适用）
+
+【允许范围】
+- ✅ 如果简历中有实习经历，可以正常追问实习相关内容
+- ✅ 考察学习能力、发展潜力、专业基础
+- ✅ 职业规划以学习方向和成长路径为主
+
+【面试风格】
+引导式为主，关注潜力和学习能力
+""",
+    "fresh": """
+【用户身份：应届生秋招/春招】
+根据以下规则调整面试内容：
+
+【涉及范围】
+- ✅ 可以提及基础薪资预期，但不深入讨论五险一金等细节
+- ❌ 离职原因（不适用）
+- ❌ 工作空窗期（不适用）
+
+【允许范围】
+- ✅ 如果简历中有实习经历，可以正常追问实习相关内容
+- ✅ 评估综合能力与发展潜力
+- ✅ 职业规划以初期职业发展为主
+
+【面试风格】
+渐进式深挖，关注综合能力与成长性
+""",
+    "experienced": """
+【用户身份：有工作经验】
+根据以下规则调整面试内容：
+
+【必须包含】
+- ✅ 离职原因/跳槽动机（必问）
+- ✅ 薪资福利待遇，涉及五险一金、年终奖等
+- ⚠️ 如有空窗期，可温和询问
+
+【允许范围】
+- ✅ 所有问题以真实工作经历为基础
+- ✅ 追问实战经验、项目复杂度
+- ✅ 职业规划以中期发展和管理/专家路线为主
+
+【面试风格】
+刨根问底，关注实战深度与决策能力
+""",
+}
 
 # ── HR 面 Prompt ──
 HR_INTERVIEW_PROMPT = """你正在主持一场 HR 面试。你的角色是一位专业、亲和力强的 HR 面试官。
@@ -608,13 +679,17 @@ HR_INTERVIEW_PROMPT = """你正在主持一场 HR 面试。你的角色是一位
 ✅ "你说你擅长团队协作，能分享一个你处理团队分歧的具体例子吗？"
 ✅ "你提到职业规划是往管理方向发展，是什么契机让你想做管理呢？"
 
-【题目规划 - HR面 6题】
-1. 自我介绍（重点：表达逻辑 + 简历亮点提炼）
-2. 求职动机（为什么选这个行业/公司/岗位）
-3. 团队协作（团队角色、冲突处理、协作经历）
-4. 优劣势分析（自我认知 + 改进意识）
-5. 职业规划（短期 + 长期规划，与岗位的匹配度）
-6. 薪资期望与反问（薪资范围、对公司的疑问）
+【出题指引】
+根据用户身份和简历内容灵活出题，覆盖以下维度（不必每道题都出，但需确保覆盖主要维度）：
+- 自我介绍与简历亮点提炼
+- 求职动机与行业/公司认知
+- 团队协作风格与冲突处理
+- 优劣势自我认知与改进意识
+- 职业规划与成长意愿
+
+薪资/反问类问题请严格遵守用户身份规则处理。
+
+题目数量控制在 5-7 题之间，根据用户回答的丰富程度灵活调整。
 
 【评估维度和反馈重点】
 面试结束后的反馈需从以下维度给出评价：
@@ -654,15 +729,15 @@ FIRST_TECH_INTERVIEW_PROMPT = """你正在主持一场技术面试。你的角�
 ✅ "这个接口的 QPS 大概是多少？你是怎么优化的？优化前后数据对比如何？"
 ✅ "你说遇到了性能瓶颈，排查思路是怎样的？最终定位到是什么原因？"
 
-【题目规划 - 一面技术面 8题】
-1. 基础摸底（语言/框架基础知识，根据简历技能定制）
-2. 项目深挖1（核心项目：背景、角色、技术方案）
-3. 项目深挖2（难点攻克：遇到的最大挑战及解决过程）
-4. 项目深挖3（技术选型：为什么选某些技术，有对比过其他方案吗）
-5. JD技能验证1（针对JD核心技能出实际场景题）
-6. JD技能验证2（编码/设计思路题，考察解决问题的能力）
-7. 场景设计（开放设计题，考察分析和拆解能力）
-8. 技术视野（关注的技术方向、学习方式、开源贡献等）
+【出题指引】
+根据用户身份和简历内容灵活出题，覆盖以下维度：
+- 技术基础摸底（根据简历技能定制）
+- 项目经历深挖（简历中最核心的项目，追问角色、难点、选型）
+- 问题解决能力（让候选人推演一个实际场景）
+- 技术视野与学习方向
+
+项目相关的问题必须基于简历中的实际经历。如果简历中有实习或工作项目，可以深入追问。
+题目数量控制在 6-8 题之间，根据用户回答的丰富程度灵活调整。
 
 【评估维度和反馈重点】
 面试结束后的反馈需从以下维度给出评价：
@@ -702,13 +777,16 @@ SECOND_COMBO_INTERVIEW_PROMPT = """你正在主持一场综合面试。你的角
 ✅ "如果让你重新设计这个系统，你会做出哪些不同的选择？为什么？"
 ✅ "跨部门合作时，你推动的项目优先级被其他部门质疑过吗？你是怎么处理的？"
 
-【题目规划 - 二面综合面 6题】
-1. 关键决策（过去最重大的技术/业务决策，背后的考量）
-2. 架构设计（系统设计题，考察宏观设计能力）
-3. 跨团队协作（推动跨部门项目的经历，遇到的阻力与解法）
-4. 业务理解（对所在行业/业务的理解深度，技术与业务的结合）
-5. 技术深度（某个技术领域的深度探讨，考察真正的技术功底）
-6. 反向提问（由候选人提问，考察他的关注点和思考层次）
+【出题指引】
+根据用户身份和简历内容灵活出题，覆盖以下维度：
+- 关键决策与判断力（工作中的重要选择及考量）
+- 协作与影响力（跨团队/跨角色合作经历）
+- 业务理解与技术驱动（技术与业务的结合能力）
+- 深度探讨（针对简历中体现最深的方向进行追问）
+- 反向提问（由候选人提问，考察关注点和思考层次）
+
+问题难度和深度请根据用户身份调整。如果经验较少，可适当降低抽象度，结合实际经历来问。
+题目数量控制在 5-7 题之间。
 
 【评估维度和反馈重点】
 面试结束后的反馈需从以下维度给出评价：
@@ -745,6 +823,7 @@ class InterviewState(BaseModel):
     target_position: str = ""
     interview_type: str = ""  # (deprecated) "technical", "behavioral", "comprehensive"
     interview_stage: str = ""  # "hr" | "first" | "second"
+    identity: str = ""  # "intern" | "fresh" | "experienced" — 用户身份
     jd_text: str = ""  # 用户粘贴的岗位 JD
     current_question_index: int = 0
     total_questions: int = 8
@@ -809,6 +888,11 @@ def _build_chat_messages(request: ChatRequest, rag_context: str = "") -> tuple[l
         }
         system = stage_prompts.get(request.interview_state.interview_stage, HR_INTERVIEW_PROMPT)
         system += INTERVIEW_COMMON_RULES
+
+        # 注入身份规则
+        identity = request.interview_state.identity or ""
+        if identity in IDENTITY_RULES:
+            system += IDENTITY_RULES[identity]
     else:
         system = mode_prompts.get(request.mode, DEFAULT_SYSTEM_PROMPT)
 
@@ -923,10 +1007,11 @@ def _build_chat_messages(request: ChatRequest, rag_context: str = "") -> tuple[l
 
 
 def _strip_markers(text: str) -> str:
-    """移除面试标记 [Q:N]、[追问]、[面试结束]，保留标记后的空白和换行"""
+    """移除面试标记 [Q:N]、[追问]、[面试结束]、[继续下一面]，保留标记后的空白和换行"""
     text = re.sub(r'\[Q:\d+\]', '', text)
     text = re.sub(r'\[追问\]', '', text)
     text = re.sub(r'\[面试结束\]', '', text)
+    text = re.sub(r'\[继续下一面\]', '', text)
     return text.strip()
 
 
@@ -955,8 +1040,23 @@ def _update_interview_state(interview_state: InterviewState, clean_reply: str) -
         if q_match:
             new_state.current_question_index = int(q_match.group(1))
 
-        # 检测 [面试结束] 标记
-        if '[面试结束]' in clean_reply or '面试结束' in clean_reply:
+        # 检测 [继续下一面] 标记 → 过渡到下一阶段
+        if '[继续下一面]' in clean_reply:
+            next_map = {"hr": "first", "first": "second", "second": ""}
+            next_stage = next_map.get(new_state.interview_stage, "")
+            if next_stage:
+                new_state.interview_stage = next_stage
+                new_state.current_question_index = 0
+                new_state.is_active = True
+                identity = new_state.identity or ""
+                if next_stage == "hr":
+                    new_state.total_questions = 6
+                elif next_stage == "first":
+                    new_state.total_questions = 6 if identity == "intern" else 8
+                elif next_stage == "second":
+                    new_state.total_questions = 6
+        # 检测 [面试结束] 标记（仅在非过渡时触发）
+        elif '[面试结束]' in clean_reply or '面试结束' in clean_reply:
             new_state.is_active = False
             new_state.current_question_index = new_state.total_questions
     else:
@@ -964,11 +1064,12 @@ def _update_interview_state(interview_state: InterviewState, clean_reply: str) -
             return None
         new_state.is_active = True
         new_state.current_question_index = 1
-        # 根据面试阶段自动设置题目数量
+        # 根据面试阶段和用户身份自动设置题目数量
+        identity = new_state.identity or ""
         if new_state.interview_stage == "hr":
             new_state.total_questions = 6
         elif new_state.interview_stage == "first":
-            new_state.total_questions = 8
+            new_state.total_questions = 6 if identity == "intern" else 8
         elif new_state.interview_stage == "second":
             new_state.total_questions = 6
 
