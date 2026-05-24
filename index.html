@@ -1630,6 +1630,16 @@
             if (localStorage.getItem('activeResumeId') === resumeId) {
               localStorage.setItem('activeResumeId', created.id);
             }
+            // 更新本地缓存的 ID 为数据库的 UUID
+            try {
+              const fileBlob = await getPdfFromDb(resumeId);
+              if (fileBlob) {
+                await savePdfToDb(created.id, fileBlob);
+                await deletePdfFromDb(resumeId);
+              }
+            } catch (e) {
+              console.warn('同步更新 IndexedDB ID 失败', e);
+            }
           }
           await syncResumesFromDb();
         }
