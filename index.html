@@ -1562,7 +1562,6 @@
       loadResumes();
       updateStatusCard();
     } catch (err) {
-      clearInterval(autoTimer);
       alert('解析失败：' + err.message);
       // Remove the failed resume
       const all = JSON.parse(localStorage.getItem('resumes') || '[]')
