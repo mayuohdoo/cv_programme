@@ -48,11 +48,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-zhipu_api_key = os.getenv("ZHIPU_API_KEY", "").strip()
-if not zhipu_api_key:
-    raise RuntimeError("Missing ZHIPU_API_KEY. Add it to your environment or .env file.")
-client = OpenAI(api_key=zhipu_api_key, base_url="https://open.bigmodel.cn/api/paas/v4/")
-ZHIPU_MODEL = os.getenv("ZHIPU_MODEL", "glm-4-flash")
+deepseek_api_key = os.getenv("DEEPSEEK_API_KEY", "").strip()
+if not deepseek_api_key:
+    raise RuntimeError("Missing DEEPSEEK_API_KEY. Add it to your environment or .env file.")
+client = OpenAI(api_key=deepseek_api_key, base_url="https://api.deepseek.com/v1")
+DEEPSEEK_MODEL = os.getenv("DEEPSEEK_MODEL", "deepseek-chat")
 
 
 def _file_extension(filename: str) -> str:
@@ -61,12 +61,57 @@ def _file_extension(filename: str) -> str:
     return "." + filename.rsplit(".", 1)[-1].lower()
 
 
+def _extract_text_from_images(file_bytes: bytes) -> str:
+    """把 PDF 每页渲染成图片，用 DeepSeek Vision 识别文字内容。"""
+    import base64
+    texts = []
+    with fitz.open(stream=file_bytes, filetype="pdf") as doc:
+        for page_num, page in enumerate(doc):
+            mat = fitz.Matrix(2, 2)  # 2x 缩放，提高清晰度
+            pix = page.get_pixmap(matrix=mat)
+            img_bytes = pix.tobytes("png")
+            b64 = base64.b64encode(img_bytes).decode()
+            try:
+                resp = client.chat.completions.create(
+                    model=DEEPSEEK_MODEL,
+                    messages=[
+                        {
+                            "role": "user",
+                            "content": [
+                                {
+                                    "type": "image_url",
+                                    "image_url": {"url": f"data:image/png;base64,{b64}"},
+                                },
+                                {
+                                    "type": "text",
+                                    "text": "请完整提取这张简历图片中的所有文字内容，保持原有格式和结构，不要遗漏任何信息。",
+                                },
+                            ],
+                        }
+                    ],
+                )
+                texts.append(resp.choices[0].message.content)
+            except Exception as e:
+                print(f"⚠️ 第{page_num+1}页图片OCR失败: {e}")
+    return "\n\n".join(texts)
+
+
 def _extract_text(content_type: str, file_bytes: bytes) -> str:
     raw_text = ""
     if content_type == "application/pdf":
         with fitz.open(stream=file_bytes, filetype="pdf") as doc:
             for page in doc:
                 raw_text += page.get_text()
+
+        # 检测乱码：统计中文字符占比
+        if raw_text.strip():
+            chinese_chars = len(re.findall(r'[\u4e00-\u9fff]', raw_text))
+            total_chars = len(raw_text.replace('\n', '').replace(' ', ''))
+            # 如果文本很短但文件不小，或中文占比异常低，判断为乱码
+            if total_chars > 0 and chinese_chars / total_chars < 0.1 and len(raw_text.strip()) < 200:
+                print("⚠️ 检测到PDF字体编码异常，切换为图片OCR模式...")
+                raw_text = _extract_text_from_images(file_bytes)
+
     elif content_type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
         doc = Document(io.BytesIO(file_bytes))
         raw_text = "\n".join(para.text for para in doc.paragraphs)
@@ -75,18 +120,40 @@ def _extract_text(content_type: str, file_bytes: bytes) -> str:
 
 def _to_json_with_fallback(response_text: str) -> dict[str, Any]:
     cleaned = response_text.strip()
-    try:
-        return json.loads(cleaned)
-    except json.JSONDecodeError:
-        pass
+
+    def _sanitize(s: str) -> str:
+        """移除会破坏 JSON 解析的控制字符，但保留换行/制表符。"""
+        return re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]', '', s)
+
+    def _try_parse(text: str):
+        try:
+            return json.loads(text)
+        except json.JSONDecodeError:
+            sanitized = _sanitize(text)
+            if sanitized != text:
+                try:
+                    return json.loads(sanitized)
+                except json.JSONDecodeError:
+                    pass
+        return None
+
+    result = _try_parse(cleaned)
+    if result is not None:
+        return result
 
     code_block_match = re.search(r"```json\s*(\{.*\})\s*```", cleaned, re.DOTALL)
     if code_block_match:
-        return json.loads(code_block_match.group(1))
+        fragment = code_block_match.group(1)
+        result = _try_parse(fragment)
+        if result is not None:
+            return result
 
     object_match = re.search(r"(\{.*\})", cleaned, re.DOTALL)
     if object_match:
-        return json.loads(object_match.group(1))
+        fragment = object_match.group(1)
+        result = _try_parse(fragment)
+        if result is not None:
+            return result
 
     raise ValueError("AI response is not valid JSON")
 
@@ -99,6 +166,10 @@ def _serialize_model(model) -> dict:
 
 
 def _parse_resume_with_ai(raw_text: str) -> dict[str, Any]:
+    # 清洗简历原文，防止其中的特殊字符污染 JSON 输出
+    # 替换会破坏 JSON 的字符，但保留内容可读性
+    safe_text = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]', '', raw_text)
+    safe_text = safe_text.replace('\\', '\\\\').replace('"', '\\"') if False else safe_text  # 不转义，只清洗控制字符
     prompt = f"""
 你是一个资深 HR 分析师、职业人格专家和严格的简历审查专家。请将简历解析为严格 JSON（不要使用 markdown 代码块）。
 
@@ -113,6 +184,7 @@ def _parse_resume_with_ai(raw_text: str) -> dict[str, Any]:
 
 3) inferred_mbti: 字符串，返回空字符串 ""（不再推断MBTI）
 4) mbti_description: 字符串，返回空字符串 ""
+4.5) extracted_phone: 字符串，从简历全文中提取的联系电话（如"188-4412-6785"）。如果没有找到电话，返回空字符串 ""。
 
 5) job_recommendations: 数组，推荐6个适合该候选人的岗位，覆盖不同行业，每项包含：
    - title: 岗位名称
@@ -163,9 +235,9 @@ def _parse_resume_with_ai(raw_text: str) -> dict[str, Any]:
      * 同音字错误（如："测式"应为"测试"，"沟通能里"应为"沟通能力"）
      * 形近字错误（如："项日"应为"项目"）
      * 多字/少字（如："的的项目"应为"的项目"）
-     * 标点错误（如：中文语境中使用英文逗号）
-     【要求】：仔细检查整个简历，每个错别字必须返回 {{"original": "原文片段(5-30字)", "suggestion": "正确写法"}}
-     【示例】：{{"original": "负责产品的测式工作", "suggestion": "负责产品的测试工作"}}
+     【重要排除】：绝对不要把中英文冒号混用（如"民族:汉族"）、或正常的文字间空格（如"共 第一作者"）当作错别字或格式错误。
+     【要求】：仔细检查整个简历，每个错别字必须返回 {{"original": "原文片段(5-30字)", "suggestion": "正确写法", "deduction": 扣除的分数(1-3分)}}
+     【示例】：{{"original": "负责产品的测式工作", "suggestion": "负责产品的测试工作", "deduction": 2}}
 
    - grammar_issues: 数组，病句或语法问题。【检测标准】：
      * 语序不当（如："使用了熟练Python"应为"熟练使用Python"）
@@ -173,30 +245,40 @@ def _parse_resume_with_ai(raw_text: str) -> dict[str, Any]:
      * 搭配不当（如："提高效率的增长"应为"提高效率"或"促进增长"）
      * 表意不明（如："通过使用工具进行了工作"过于模糊）
      * 冗长啰嗦（如："通过使用Python和数据分析工具进行了数据的分析"应为"使用Python进行数据分析"）
-     【要求】：关注动词搭配、介词使用、句子简洁性，每个问题必须返回 {{"original": "原句(10-40字)", "suggestion": "改进后的表达"}}
-     【示例】：{{"original": "通过使用Python进行了数据的分析", "suggestion": "使用Python进行数据分析"}}
+     【要求】：关注动词搭配、介词使用、句子简洁性，每个问题必须返回 {{"original": "原句(10-40字)", "suggestion": "改进后的表达", "deduction": 扣除的分数(1-3分)}}
+     【示例】：{{"original": "通过使用Python进行了数据的分析", "suggestion": "使用Python进行数据分析", "deduction": 2}}
 
    - redundancy: 数组，语意冗杂或表达重复。【检测标准】：
      * 重复词语（如："主要负责主要的项目"应为"负责主要的项目"）
      * 重复表达（如："进行了优化和改进"可简化为"进行了优化"）
      * 无意义修饰（如："非常很重要"应为"非常重要"）
      * 可合并句子（如："负责开发。负责测试。"应为"负责开发和测试"）
-     【要求】：追求简洁有力的表达，每个冗余必须返回 {{"original": "冗余片段(10-40字)", "suggestion": "简化后的表达"}}
-     【示例】：{{"original": "主要负责主要的项目开发", "suggestion": "负责主要的项目开发"}}
+     【要求】：追求简洁有力的表达，每个冗余必须返回 {{"original": "冗余片段(10-40字)", "suggestion": "简化后的表达", "deduction": 扣除的分数(1-2分)}}
+     【示例】：{{"original": "主要负责主要的项目开发", "suggestion": "负责主要的项目开发", "deduction": 1}}
+
+   - timeline_issues: 数组，时间线重合或逻辑错误问题。【检测标准】：
+     * 检查教育经历或工作经历中列出的时间段（如2019.09-2023.06）。
+     * 判断时间段是否有不合理的重合（例如两段全职工作时间重叠，或者本科与硕士时间重叠）。如果是双学位等合理重叠可忽略。
+     * 如果存在冲突，必须指出。
+     【要求】：指出具体冲突的时间段并给出建议，返回 {{"original": "冲突的时间段文本", "suggestion": "指出重叠问题，建议核对时间", "deduction": 扣除的分数(3-5分)}}
+     【示例】：{{"original": "2020.09-2024.06 本科, 2023.09-2026.06 硕士", "suggestion": "本科与硕士时间存在重合，请核对时间是否填写错误", "deduction": 4}}
+
+   - star_issues: 数组，缺乏成果量化或数据支撑的问题（STAR法则检查）。【检测标准】：
+     * 扫视工作经历和项目经验中的描述，找出那些"只有动作，没有结果和数据支撑"的句子。
+     * 例如："负责了公司主要系统的开发，提高了效率" -> 缺乏具体指标和数据。
+     * 例如："参与了营销活动，吸引了大量新用户" -> 缺乏活动的规模数据和具体的新增用户数。
+     【要求】：指出缺乏数据支撑的句子，并给出带占位符的修改建议，返回 {{"original": "原句", "suggestion": "指出缺乏数据，建议修改为带数据的表达，如：负责XX核心系统开发，将并发处理效率提升了X%", "deduction": 扣除的分数(1-3分)}}
+     【示例】：{{"original": "参与了营销活动，吸引了大量新用户", "suggestion": "缺乏具体数据支撑，建议修改为：参与XX营销活动，吸引了约X万名新用户，转化率提升了X%", "deduction": 2}}
 
    - overall_score: 整数 1-100，简历整体质量评分。【评分标准】：
-     * 90-100分：无明显问题，表达专业简洁，用词准确
-     * 80-89分：有1-2个小问题，整体良好
-     * 70-79分：有3-5个问题，需要改进
-     * 60-69分：有6-10个问题，质量一般
-     * 60分以下：问题较多（>10个），需要大幅修改
-     【要求】：根据发现的问题数量严格评分，不要因为礼貌而虚高评分
+     【要求】：基础分100分，必须严格等于 100 减去以上所有问题中扣除的分数（deduction）的总和。
+     比如一共发现3个问题，分别扣了2分、3分、4分，那么总扣分为9分，overall_score 必须是 91。
 
    - overall_comment: 字符串，一句话总体评价（30字以内）。
      【要求】：如果有问题，必须明确指出（如："发现3处错别字和2处病句，建议仔细校对"）；如果质量优秀，可以正面评价（如："表达专业简洁，未发现明显问题"）
 
 【重要提示】：
-- 如果简历质量确实很好，typos/grammar_issues/redundancy 可以为空数组，overall_score 可以给 85-100 分
+- 如果简历质量确实很好，typos/grammar_issues/redundancy/timeline_issues/star_issues 可以为空数组，overall_score 可以给 85-100 分
 - 但如果发现了问题，必须如实指出，不要遗漏，不要因为礼貌而隐瞒
 - original 字段必须是简历中的原文片段，不要编造
 - suggestion 必须是具体可行的修改建议，不要模糊表达
@@ -204,13 +286,77 @@ def _parse_resume_with_ai(raw_text: str) -> dict[str, Any]:
 如果信息缺失，请使用空字符串或空数组，不要省略字段。
 
 简历文本如下：
-{raw_text}
+{safe_text}
 """
     response = client.chat.completions.create(
-        model=ZHIPU_MODEL,
+        model=DEEPSEEK_MODEL,
         messages=[{"role": "user", "content": prompt}],
+        temperature=0.0,
     )
-    return _to_json_with_fallback(response.choices[0].message.content)
+    raw = response.choices[0].message.content
+    try:
+        parsed_data = _to_json_with_fallback(raw)
+        
+        # --- Python 端精确校验手机号 ---
+        phone_text = parsed_data.get("extracted_phone", "")
+        diag = parsed_data.get("resume_diagnosis", {})
+        if "contact_info" not in diag:
+            diag["contact_info"] = []
+            
+        if phone_text:
+            pure_digits = re.sub(r'\D', '', phone_text)
+            if len(pure_digits) != 11:
+                deduct = 3
+                diag["contact_info"].append({
+                    "original": phone_text,
+                    "suggestion": f"手机号位数错误！纯数字为{len(pure_digits)}位，国内手机号应为11位，请严格核实。",
+                    "deduction": deduct
+                })
+                if isinstance(diag.get("overall_score"), int):
+                    diag["overall_score"] = max(0, diag["overall_score"] - deduct)
+        else:
+            fallback_matches = re.findall(r'(?:\+86\s*)?1[3-9][\d\s\-]{8,15}', raw_text)
+            if fallback_matches:
+                fallback_phone = fallback_matches[0]
+                pure_digits = re.sub(r'\D', '', fallback_phone)
+                if len(pure_digits) != 11:
+                    deduct = 3
+                    diag["contact_info"].append({
+                        "original": fallback_phone,
+                        "suggestion": f"检测到疑似手机号，纯数字为{len(pure_digits)}位，应为11位，请严格核实。",
+                        "deduction": deduct
+                    })
+                    if isinstance(diag.get("overall_score"), int):
+                        diag["overall_score"] = max(0, diag["overall_score"] - deduct)
+            else:
+                deduct = 5
+                diag["contact_info"].append({
+                    "original": "",
+                    "suggestion": "未提供有效手机号码，请务必补充以便HR联系。",
+                    "deduction": deduct
+                })
+                if isinstance(diag.get("overall_score"), int):
+                    diag["overall_score"] = max(0, diag["overall_score"] - deduct)
+                    
+        # --- Python 端校验邮箱 ---
+        email_matches = re.findall(r'[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+', raw_text)
+        if not email_matches:
+            deduct = 2
+            diag["contact_info"].append({
+                "original": "",
+                "suggestion": "未提供邮箱，建议补充以便HR联系。",
+                "deduction": deduct
+            })
+            if isinstance(diag.get("overall_score"), int):
+                diag["overall_score"] = max(0, diag["overall_score"] - deduct)
+
+        return parsed_data
+    except ValueError:
+        print("=====================================")
+        print("⚠️ AI 返回内容无法解析为 JSON，原始内容：")
+        print(repr(raw))
+        print("=====================================")
+        raise
 
 
 def _add_default_values_for_new_fields(parsed_data: dict[str, Any]) -> dict[str, Any]:
@@ -634,7 +780,7 @@ async def chat(request: ChatRequest) -> dict[str, Any]:
         messages, metadata = _build_chat_messages(request, rag_context=rag_context)
 
         response = client.chat.completions.create(
-            model=ZHIPU_MODEL,
+            model=DEEPSEEK_MODEL,
             messages=messages,
         )
         reply = response.choices[0].message.content
@@ -667,7 +813,7 @@ async def chat_stream(request: ChatRequest):
         def generate():
             full_reply = ""
             stream = client.chat.completions.create(
-                model=ZHIPU_MODEL,
+                model=DEEPSEEK_MODEL,
                 messages=messages,
                 stream=True,
             )

@@ -327,8 +327,8 @@
       border: 1px solid rgba(192,132,252,0.15);
       border-radius: 12px; font-size: 13px; line-height: 1.6;
     }
-    .diag-item-orig { color: #c44569; text-decoration: line-through; margin-bottom: 4px; }
-    .diag-item-sugg { color: #16a34a; font-weight: 600; }
+    .diag-item-orig { color: #737373; font-style: italic; margin-bottom: 4px; }
+    .diag-item-sugg { color: #ef4444; font-weight: 600; }
 
     /* 岗位推荐弹窗 */
     .job-modal-card { padding: 16px; margin-bottom: 12px; background: rgba(255,255,255,0.7); border: 1px solid rgba(192,132,252,0.15); border-radius: 16px; transition: all 0.2s; }
@@ -928,18 +928,22 @@
     const diag = data.resume_diagnosis || {};
     const score = diag.overall_score || 0;
     const comment = diag.overall_comment || '暂无评语';
-    const typos = diag.typos || [];
+    const typos = (diag.typos || []).concat(diag.contact_info || []).concat(diag.timeline_issues || []);
     const grammar = diag.grammar_issues || [];
     const redundancy = diag.redundancy || [];
+    const starIssues = diag.star_issues || [];
 
     const renderItems = (items, emptyMsg) => {
       if (!items || items.length === 0) return `<div class="modal-empty" style="padding:16px">${emptyMsg}</div>`;
-      return items.map(it => `
+      return items.map(it => {
+        const deductionHtml = it.deduction ? `<span style="color:#ff4d4f; font-weight:bold; margin-left:10px; font-size:13px;">(-${it.deduction}分)</span>` : '';
+        return `
         <div class="diag-item-card">
           <div class="diag-item-orig">${it.original || ''}</div>
-          <div class="diag-item-sugg">→ ${it.suggestion || ''}</div>
+          <div class="diag-item-sugg">→ ${it.suggestion || ''}${deductionHtml}</div>
         </div>
-      `).join('');
+        `;
+      }).join('');
     };
 
     const html = `
@@ -951,8 +955,8 @@
         </div>
       </div>
       <div class="diag-section">
-        <h4>🔤 错别字（${typos.length}）</h4>
-        ${renderItems(typos, '✓ 没有发现错别字')}
+        <h4>🔤 书写错误（${typos.length}）</h4>
+        ${renderItems(typos, '✓ 没有发现书写错误')}
       </div>
       <div class="diag-section">
         <h4>✏️ 病句 / 语法（${grammar.length}）</h4>
@@ -961,6 +965,10 @@
       <div class="diag-section">
         <h4>♻️ 语意冗杂（${redundancy.length}）</h4>
         ${renderItems(redundancy, '✓ 表达简洁')}
+      </div>
+      <div class="diag-section">
+        <h4>🎯 成果量化 (STAR法则)（${starIssues.length}）</h4>
+        ${renderItems(starIssues, '✓ 成果量化充分')}
       </div>
     `;
     openModal('📋 简历诊断', 'AI 帮你找出问题，优化简历表达', html);
