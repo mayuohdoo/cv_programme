@@ -345,89 +345,39 @@ CAREER_PLANNING_PROMPT = """你是一个专业的职业规划顾问。你的任�
 
 每次聚焦一个时间阶段，逐步深入。"""
 
-INTERVIEW_SIM_PROMPT = """你是一个专业的面试官，正在为用户进行面试模拟练习。你的任务是模拟真实面试场景，对用户进行面试提问并给出详细的反馈。
+INTERVIEW_SIM_PROMPT = """你正在协助一场模拟面试。你的唯一工作是：按顺序向候选人提问，偶尔追问。你不是评委，你不打分，你不评价。
 
-【面试模拟流程】
-1. 第一阶段：面试启动
-   - 用户已通过前置面板选择了面试岗位、面试阶段（HR面/一面/二面），并可能粘贴了岗位JD
-   - 岗位信息和JD会在下方【面试配置】中提供，直接使用，不要再询问
-   - 用一句话确认面试开始（包含岗位名称和面试阶段），然后直接提出第一个问题
+【你的行为规范】
+听完候选人的回答后，你只做两件事之一：
+  A. 追问1-2个细节（如果回答不够深入）
+  B. 提出下一个问题（如果回答已经充分）
 
-2. 第二阶段：逐题问答
-   - 每次只提出一个问题，等待用户回答
-   - 用户回答后，立即给出评分（0-10分）和详细的反馈建议
-   - 然后提出下一个问题
-   - 题目数量由面试阶段决定（见下方阶段说明）
+你绝对不能做的事情：
+  - 不能说"评分""得分""分数"
+  - 不能说"优点""亮点""改进""建议"
+  - 不能说"回答得很好""不错""优秀"
+  - 不能给任何数字或等级
+  - 不能做任何形式的评价
 
-3. 第三阶段：总结评估
-   - 所有题目完成后，提供整体表现评估（各维度打分 + 综合建议）
-   - 指出最突出的优点和最需要改进的地方
-   - 给出针对性的练习推荐
-   - 询问用户是否需要进行其他阶段的面试模拟
+【面试流程】
+启动：一句话确认开始 → 提第1题（用 [Q:1] 开头）
+进行：每次只提一个问题，用户回答后追问或进入下一题（用 [Q:N] 或 [追问] 开头）
+结束：全部题目完成后给出总结（用 [面试结束] 开头），只说2-3个亮点和2-3个可改进之处，语气温暖，不评分
 
-【面试阶段说明】—— 根据用户的 interview_stage 调整行为：
+【题目规划】
+HR面（6题）：自我介绍→求职动机→团队协作→优缺点→职业规划→薪资/反问
+一面技术面（8题）：基础摸底→项目深挖(3题)→JD技能验证(2题)→场景设计→技术视野
+二面综合面（6题）：关键决策→架构设计→跨团队协作→业务理解→技术深度→反向提问
 
-### HR面（6题）
-角色定位：HR 面试官，考察软技能、综合素质和文化匹配度。
-题目规划：
-  第1题：自我介绍 / 职业经历概述（热身，考察表达能力和逻辑性）
-  第2题：求职动机（为什么选择这个行业、这家公司、这个岗位）
-  第3题：团队协作 & 冲突处理（STAR法则追问）
-  第4题：优缺点 & 自我认知
-  第5题：职业规划 & 稳定性（1-3年规划）
-  第6题：薪资期望 / 反问环节
-JD用途：提取基本门槛要求、公司文化关键词，用于判断候选人与岗位的基础匹配度。
-评分侧重：表达清晰度(25%)、逻辑结构(25%)、真诚度/不套模板(25%)、文化匹配度(25%)。
+【标记】
+[Q:N] 新问题 | [追问] 追问 | [面试结束] 总结评估
 
-### 一面（8题）—— 技术面导向
-角色定位：技术面试官 / 直属上级，考察技术深度和实践能力。
-题目规划：
-  第1题：基础能力摸底（宽泛热身题）
-  第2-4题：项目深挖，从简历中选2-3个最相关的项目，STAR法则追问（背景→角色→技术难点→结果）
-  第5-6题：JD技能逐条验证，对照JD中的技术栈要求，逐一出题
-  第7题：场景设计题 / 系统设计题（考察实战能力和问题解决思路）
-  第8题：技术视野 & 持续学习能力
-JD用途：逐条提取技能要求，每个关键技能点至少验证一次。
-评分侧重：技术准确性(30%)、项目深度(25%)、问题解决思路(25%)、JD匹配度(20%)。
+【输出示例】
+[Q:2] 请分享一次你在团队中解决冲突的经历。
+[追问] 你刚才提到了协调方案，能具体说说你的角色吗？
+[面试结束] 面试结束。你的亮点是...可以做得更好的是...
 
-### 二面（6题）—— 综合面导向
-角色定位：部门主管 / 技术负责人，考察架构思维、领导力和商业理解。
-题目规划：
-  第1题：项目中的关键决策（热身，引出思考深度和权衡能力）
-  第2题：架构设计题（考察系统思维和技术广度）
-  第3题：跨团队协作 & 推动力（STAR法则追问具体案例）
-  第4题：业务理解 & 商业sense（对公司产品/行业的理解）
-  第5题：技术深度思考（最近深入研究的一个问题或技术）
-  第6题：反向提问（根据用户提问的层次，考察其思考格局）
-JD用途：理解岗位的战略定位和团队角色，考察候选人对岗位的全局理解。
-评分侧重：思考层次/格局(30%)、权衡能力(25%)、业务理解(25%)、成长潜力(20%)。
-
-【评分标准】
-- 0-3分：回答不完整，缺乏关键信息
-- 4-6分：基本回答了问题，但缺乏深度或结构
-- 7-8分：回答完整，结构清晰，有一定深度
-- 9-10分：回答出色，结构清晰，深度足够，有独特见解
-
-【反馈建议内容】
-每次评分后必须提供反馈建议，包括：
-1. 回答的优点和亮点
-2. 需要改进的地方
-3. 建议的回答结构（如STAR法则）
-4. 可以补充的关键信息
-
-【重要规则】
-1. 每次只提一个问题，不要一次性提出多个问题
-2. 用户回答后必须立即给出评分和反馈
-3. 保持专业但友好的态度，既要指出不足也要给予鼓励
-4. 根据用户的简历背景和JD要求调整问题难度
-5. 如果用户回答不完整，可以适当追问
-6. 用户可随时说"结束"或"退出"结束面试模拟模式，此时直接进入总结评估
-
-【特别重要 - 首次回复规则】
-面试启动后的第一条回复，你只做两件事：
-1. 用一句话确认面试开始（"好的，XX岗位的X面模拟现在开始。"）
-2. 提出第一个问题（一个问题，不要多个）
-绝对不要在第一次回复中包含评分、分数、打分或反馈建议。评分和反馈只能在用户真正回答了问题之后才给出。"""
+现在开始吧。"""
 
 
 class ChatMessage(BaseModel):
@@ -461,34 +411,6 @@ class InterviewState(BaseModel):
     feedbacks: list[str] = []  # 每个问题的反馈
 
 
-def _parse_interview_feedback(reply: str) -> dict:
-    """从 AI 回复中解析评分和反馈，支持多种自然语言格式"""
-    result: dict[str, Any] = {"score": None, "feedback": None}
-
-    # 匹配各种评分格式
-    # "评分：8/10", "得分 8", "8分（满分10分）", "评分: 8"
-    score_patterns = [
-        r'(?:评分|得分|分数)[：:]\s*(\d{1,2})(?:/10)?',
-        r'(\d{1,2})\s*分\s*(?:[/|/]\s*10|\(满分10分\))?',
-        r'得分[：:]\s*(\d{1,2})\s*分',
-    ]
-    for pat in score_patterns:
-        m = re.search(pat, reply)
-        if m:
-            result["score"] = max(0, min(10, int(m.group(1))))
-            break
-
-    # 匹配反馈建议部分（"反馈建议：" / "建议：" / "改进建议：" 之后的内容，直到下一个双换行或末尾）
-    fb_match = re.search(
-        r'(?:反馈建议?|改进建议?|建议)[：:]\s*([\s\S]+?)(?=\n\n［|\n\n【|\n\n\d+[.、]|\Z)',
-        reply
-    )
-    if fb_match:
-        result["feedback"] = fb_match.group(1).strip()
-
-    return result
-
-
 class ChatRequest(BaseModel):
     messages: list[ChatMessage]
     mode: str = "default"
@@ -513,7 +435,7 @@ def _build_chat_messages(request: ChatRequest, rag_context: str = "") -> tuple[l
 
     # 如果有简历上下文，在 system prompt 最前面注入简历数据
     ctx = request.resume_context
-    print(f"🔍 [DEBUG] has_resume={ctx.has_resume}, has_text={bool(ctx.resume_text)}, has_skills={bool(ctx.extracted_skills)}, has_diag={ctx.resume_diagnosis is not None}")
+    print(f"[DEBUG] has_resume={ctx.has_resume}, has_text={bool(ctx.resume_text)}, has_skills={bool(ctx.extracted_skills)}, has_diag={ctx.resume_diagnosis is not None}")
     if ctx and ctx.has_resume:
         resume_block = "\n【用户简历数据】\n"
         city_str = f"（{ctx.city}）" if ctx.city else ""
@@ -556,7 +478,7 @@ def _build_chat_messages(request: ChatRequest, rag_context: str = "") -> tuple[l
             resume_block += f"\n【简历原文】\n{ctx.resume_text[:2000]}\n"
 
         force_rules = """
-⚠️ 强制规则（必须100%遵守）：
+[强制规则 - 必须100%遵守]
 用户已经上传了完整的简历，上面就是全部简历数据。
 1. 禁止询问任何简历中已有的信息，包括：姓名、学历、专业、学校、技能、工作经验、项目经历、城市等
 2. 直接基于简历数据回答用户的问题
@@ -589,7 +511,7 @@ def _build_chat_messages(request: ChatRequest, rag_context: str = "") -> tuple[l
 【岗位JD】
 {interview_state.jd_text[:2000]}
 
-⚠️ 请围绕JD中的技能要求和岗位职责出题，问题要有针对性。"""
+[注意] 请围绕JD中的技能要求和岗位职责出题，问题要有针对性。"""
 
         if interview_state.is_active:
             progress_info = f"""
@@ -597,16 +519,9 @@ def _build_chat_messages(request: ChatRequest, rag_context: str = "") -> tuple[l
 【面试模拟状态】
 目标岗位: {interview_state.target_position or "未指定"}
 面试阶段: {stage_name}
-当前问题: {interview_state.current_question_index + 1}/{interview_state.total_questions}
-已完成的题目: {len(interview_state.scores)}/{interview_state.total_questions}
+当前进度: 第 {interview_state.current_question_index}/{interview_state.total_questions} 题
 """
             interview_config += progress_info
-            if interview_state.scores:
-                avg_score = sum(interview_state.scores) / len(interview_state.scores)
-                interview_config += f"平均得分: {avg_score:.1f}/10\n"
-                if interview_state.feedbacks and len(interview_state.feedbacks) > 0:
-                    latest_feedback = interview_state.feedbacks[-1]
-                    interview_config += f"上次反馈: {latest_feedback[:100]}...\n"
 
         system = interview_config + system
 
@@ -621,22 +536,33 @@ def _build_chat_messages(request: ChatRequest, rag_context: str = "") -> tuple[l
     return messages, metadata
 
 
+def _strip_markers(text: str) -> str:
+    """移除面试标记 [Q:N]、[追问]、[面试结束]，不显示给用户"""
+    text = re.sub(r'\[Q:\d+\]\s*', '', text)
+    text = re.sub(r'\[追问\]\s*', '', text)
+    text = re.sub(r'\[面试结束\]\s*', '', text)
+    return text.strip()
+
+
 def _update_interview_state(interview_state: InterviewState, clean_reply: str) -> InterviewState | None:
     """处理面试状态更新，返回更新后的状态（如果没有变化返回 None）"""
     new_state = copy.deepcopy(interview_state)
 
     if new_state.is_active:
-        parsed = _parse_interview_feedback(clean_reply)
-        has_score = parsed["score"] is not None
-        has_feedback = parsed["feedback"] is not None
+        # 解析 [Q:N] 标记来跟踪问题进度
+        q_match = re.search(r'\[Q:(\d+)\]', clean_reply)
+        if q_match:
+            new_state.current_question_index = int(q_match.group(1))
 
-        if has_score:
-            new_state.scores.append(parsed["score"])
-        if has_feedback:
-            new_state.feedbacks.append(parsed["feedback"])
-        if has_score:
-            new_state.current_question_index = min(new_state.current_question_index + 1, new_state.total_questions)
+        # 检测 [面试结束] 标记
+        if '[面试结束]' in clean_reply or '面试结束' in clean_reply:
+            new_state.is_active = False
+            # 将 current_question_index 设置为 total_questions，表示全部完成
+            new_state.current_question_index = new_state.total_questions
     else:
+        # 如果面试已经完成（current_question_index 达到 total_questions），不再重新激活
+        if new_state.current_question_index >= new_state.total_questions and new_state.total_questions > 0:
+            return None
         new_state.is_active = True
         new_state.current_question_index = 1
         # 根据面试阶段自动设置题目数量（HR面6题、一面8题、二面6题）
@@ -670,7 +596,7 @@ async def _do_rag(request: ChatRequest) -> tuple[str, str, list]:
         sources = rag_result.sources or []
         return context, status, sources
     except Exception as e:
-        print(f"⚠️ RAG 检索失败（降级为纯AI）: {e}")
+        print(f"[WARN] RAG retrieval failed (fallback to AI only): {e}")
         return "", "fallback", []
 
 
@@ -696,6 +622,7 @@ async def chat(request: ChatRequest) -> dict[str, Any]:
         updated_interview_state = None
         if is_interview:
             updated_interview_state = _update_interview_state(request.interview_state, clean_reply)
+            clean_reply = _strip_markers(clean_reply)
 
         return {
             "reply": clean_reply,
@@ -721,6 +648,7 @@ async def chat_stream(request: ChatRequest):
 
         def generate():
             full_reply = ""
+            buf = ""  # 缓冲区，避免标记被 chunk 边界切断
             stream = api_client.chat.completions.create(
                 model=model,
                 messages=messages,
@@ -730,7 +658,28 @@ async def chat_stream(request: ChatRequest):
                 if chunk.choices and chunk.choices[0].delta and chunk.choices[0].delta.content:
                     content = chunk.choices[0].delta.content
                     full_reply += content
-                    yield f"data: {json.dumps({'type': 'chunk', 'content': content}, ensure_ascii=False)}\n\n"
+                    if is_interview:
+                        buf += content
+                        # 只有当缓冲区末尾不可能是标记开头时才输出
+                        # 标记都以 "[" 开头，最长标记约 12 字符
+                        safe_end = len(buf)
+                        for i in range(len(buf) - 1, max(-1, len(buf) - 15), -1):
+                            if buf[i] == '[':
+                                safe_end = i
+                                break
+                        if safe_end > 0:
+                            clean = _strip_markers(buf[:safe_end])
+                            buf = buf[safe_end:]
+                            if clean:
+                                yield f"data: {json.dumps({'type': 'chunk', 'content': clean}, ensure_ascii=False)}\n\n"
+                    else:
+                        yield f"data: {json.dumps({'type': 'chunk', 'content': content}, ensure_ascii=False)}\n\n"
+
+            # 输出缓冲区剩余内容
+            if is_interview and buf:
+                clean = _strip_markers(buf)
+                if clean:
+                    yield f"data: {json.dumps({'type': 'chunk', 'content': clean}, ensure_ascii=False)}\n\n"
 
             # 所有 token 发送完毕，发送 done 事件
             has_resume_template = "[RESUME_TEMPLATE]" in full_reply
@@ -739,6 +688,7 @@ async def chat_stream(request: ChatRequest):
             updated_interview_state = None
             if is_interview:
                 updated_interview_state = _update_interview_state(request.interview_state, clean_reply)
+                clean_reply = _strip_markers(clean_reply)
 
             done_data = {
                 "type": "done",

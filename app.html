@@ -2628,9 +2628,9 @@
     // 非面试模式或未激活时不显示
     if (currentMode !== 'interview_sim' || !interviewState.is_active) return;
 
-    const answered = interviewState.scores.length;
+    const answered = Math.max(0, (interviewState.current_question_index || 0) - 1);
     const total = interviewState.total_questions;
-    const pct = Math.round((answered / total) * 100);
+    const pct = total > 0 ? Math.round((answered / total) * 100) : 0;
 
     const progress = document.createElement('div');
     progress.id = 'interviewProgress';

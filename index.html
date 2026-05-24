@@ -3924,39 +3924,6 @@
   }
 
   /**
-   * 在 AI 消息下方追加操作引导按钮（继续讨论 / 下一题）
-   */
-  function appendInterviewActions(afterMsg) {
-    // 移除旧的按钮
-    const old = document.querySelector('.interview-actions');
-    if (old) old.remove();
-
-    const wrap = document.createElement("div");
-    wrap.className = "interview-actions";
-    wrap.innerHTML = `
-      <button class="action-btn" onclick="sendInterviewReply('discuss')">💬 继续讨论这个问题</button>
-      <button class="action-btn action-btn-primary" onclick="sendInterviewReply('next')">➡️ 下一道题目</button>
-    `;
-    afterMsg.parentNode.insertBefore(wrap, afterMsg.nextSibling);
-    interviewMessages.scrollTop = interviewMessages.scrollHeight;
-  }
-
-  /**
-   * 发送面试操作指令（继续讨论 / 下一题）
-   */
-  function sendInterviewReply(type) {
-    const actions = document.querySelector('.interview-actions');
-    if (actions) actions.remove();
-
-    const text = type === 'discuss'
-      ? '请就这个问题继续深入讨论，我想了解更多细节。'
-      : '请继续下一道题目。';
-
-    interviewInput.value = text;
-    sendInterviewChat();
-  }
-
-  /**
    * 添加打字指示器（面试区）
    */
   function appendTyping() {
@@ -4116,9 +4083,6 @@
     appendMsg("user", text);
     interviewChatHistory.push({ role: "user", content: text });
 
-    // 记录本轮之前的评分数量
-    const prevScoreCount = interviewState.scores.length;
-
     // 获取简历上下文
     const resumeCtx = getResumeContext();
 
@@ -4188,11 +4152,6 @@
               if (data.interview_state) {
                 interviewState = data.interview_state;
                 updateInterviewTitle();
-              }
-
-              // 如果本轮有新的评分 → 在消息下方显示操作引导按钮
-              if (interviewState.scores.length > prevScoreCount) {
-                appendInterviewActions(msgEl);
               }
             }
           } catch (e) {
