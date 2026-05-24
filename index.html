@@ -64,6 +64,23 @@
     }
     .nav-tab:hover { background: rgba(192,132,252,0.08); }
     .nav-tab.active { background: rgba(192,132,252,0.15); color: #7c3aed; font-weight: 600; }
+
+    /* 顶部右侧操作区 */
+    .nav-actions { display: flex; align-items: center; gap: 12px; }
+    .nav-action-btn {
+      display: flex; align-items: center; gap: 6px;
+      padding: 6px 14px; border-radius: var(--radius-btn);
+      border: 1px solid rgba(192,132,252,0.25);
+      background: rgba(255,255,255,0.6);
+      color: var(--purple-mid); font-size: 13px; font-weight: 600;
+      cursor: pointer; transition: all 0.2s;
+      font-family: inherit;
+    }
+    .nav-action-btn:hover {
+      background: rgba(192,132,252,0.12);
+      border-color: rgba(192,132,252,0.45);
+      transform: translateY(-1px);
+    }
     .nav-avatar {
       width: 32px; height: 32px; border-radius: 50%;
       background: var(--gradient-btn);
@@ -203,7 +220,7 @@
     }
     @media (max-width: 560px) {
       .tool-grid { grid-template-columns: 1fr; }
-      .nav-tabs { display: none; }
+      .nav-action-btn span:last-child { display: none; }
     }
 
     /* ========== 冷启动引导样式 ========== */
@@ -451,14 +468,13 @@
 <nav class="top-nav">
   <div class="nav-inner">
     <span class="nav-logo">✦ 小小求职拿下</span>
-    <div class="nav-tabs">
-      <a href="#" class="nav-tab active">首页</a>
-      <a href="#" class="nav-tab" onclick="navigateTo('jobs')">岗位</a>
-      <a href="#" class="nav-tab" onclick="navigateTo('interview')">面试</a>
-      <a href="#" class="nav-tab" onclick="navigateTo('applications')">追踪</a>
-      <a href="#" class="nav-tab" onclick="navigateTo('chat')">助手</a>
+    <div class="nav-actions">
+      <button type="button" class="nav-action-btn" onclick="showProfileModal()" title="我的简历">
+        <span>📁</span>
+        <span>我的简历</span>
+      </button>
+      <button type="button" class="nav-avatar" id="navAvatar" onclick="showProfileModal()" title="个人中心">?</button>
     </div>
-    <button type="button" class="nav-avatar" id="navAvatar" onclick="showProfileModal()" title="个人中心">?</button>
   </div>
 </nav>
 
