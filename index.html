@@ -540,6 +540,86 @@
       line-height: 1.6;
     }
     /* ========== 结束：插件安装引导样式 ========== */
+
+    /* ========== 投递追踪记录列表样式 ========== */
+    .track-stats {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;
+      margin-bottom: 16px;
+    }
+    .track-stat {
+      padding: 14px 10px; text-align: center;
+      background: linear-gradient(135deg, rgba(192,132,252,0.10), rgba(244,114,182,0.08));
+      border: 1px solid rgba(192,132,252,0.18);
+      border-radius: 14px;
+      display: flex; flex-direction: column; gap: 4px;
+    }
+    .track-num {
+      font-size: 22px; font-weight: 800;
+      background: var(--gradient-btn);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      line-height: 1;
+    }
+    .track-stat span:last-child {
+      font-size: 11px; color: var(--purple-light); font-weight: 600;
+    }
+
+    .track-insights { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+    .track-insight {
+      padding: 10px 14px; border-radius: 12px;
+      font-size: 12px; line-height: 1.6;
+    }
+    .insight-warn {
+      background: rgba(245,158,11,0.10);
+      border-left: 3px solid #f59e0b;
+      color: #92400e;
+    }
+    .insight-info {
+      background: rgba(192,132,252,0.10);
+      border-left: 3px solid var(--pink-primary);
+      color: var(--purple-mid);
+    }
+    .insight-warn b, .insight-info b { color: var(--purple-deep); }
+
+    .track-list { display: flex; flex-direction: column; gap: 10px; }
+    .track-card {
+      padding: 14px 16px; border-radius: 14px;
+      background: rgba(255,255,255,0.7);
+      border: 1px solid rgba(192,132,252,0.15);
+      transition: all 0.2s;
+    }
+    .track-card:hover { border-color: rgba(192,132,252,0.32); transform: translateY(-1px); }
+    .track-card-head {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 4px;
+    }
+    .track-card-head strong {
+      font-size: 14px; color: var(--purple-deep); font-weight: 700;
+    }
+    .track-date { font-size: 11px; color: var(--purple-light); }
+    .track-position { font-size: 12px; color: var(--purple-mid); margin-bottom: 8px; }
+    .track-card-bottom {
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .track-status {
+      display: inline-block; padding: 3px 10px; border-radius: 999px;
+      font-size: 11px; font-weight: 600;
+    }
+    .track-status-已投递 { background: rgba(99,102,241,0.12); color: #6366f1; }
+    .track-status-待面试 { background: rgba(245,158,11,0.12); color: #d97706; }
+    .track-status-已面试 { background: rgba(168,85,247,0.12); color: #9333ea; }
+    .track-status-已录用 { background: rgba(34,197,94,0.12); color: #16a34a; }
+    .track-status-已拒绝 { background: rgba(239,68,68,0.12); color: #dc2626; }
+
+    .track-actions { display: flex; gap: 6px; }
+    .track-icon-btn {
+      padding: 4px 10px; border-radius: 8px; border: none;
+      background: rgba(192,132,252,0.10); color: var(--purple-mid);
+      font-size: 11px; cursor: pointer; transition: all 0.15s;
+      font-family: inherit;
+    }
+    .track-icon-btn:hover { background: rgba(192,132,252,0.20); }
+    .track-icon-btn.danger:hover { background: rgba(239,68,68,0.12); color: #dc2626; }
+    /* ========== 结束：投递追踪记录列表样式 ========== */
   </style>
 </head>
 <body>
@@ -963,8 +1043,76 @@
     openModal('🎤 AI 模拟面试', '沉浸式面试练习，告别紧张', html);
   }
 
-  // 投递追踪弹窗（含 Chrome 插件安装引导）
-  function showTrackingModal(data) {
+  // 投递追踪 - Chrome 插件通信
+  const Tracking = {
+    pendingRequests: {},
+    reqCounter: 0,
+    init() {
+      window.addEventListener('message', (event) => {
+        if (event.source !== window) return;
+        if (!event.data || event.data.type !== 'RESUME_EXT_RESPONSE') return;
+        const id = event.data.requestId;
+        if (this.pendingRequests[id]) {
+          this.pendingRequests[id](event.data.response);
+          delete this.pendingRequests[id];
+        }
+      });
+    },
+    isExtensionInstalled() {
+      return !!document.documentElement.getAttribute('data-resume-ext-id');
+    },
+    sendToExtension(payload) {
+      return new Promise((resolve, reject) => {
+        if (!this.isExtensionInstalled()) {
+          reject(new Error('扩展未安装'));
+          return;
+        }
+        const id = 'track_' + (++this.reqCounter);
+        const timeout = setTimeout(() => {
+          delete this.pendingRequests[id];
+          reject(new Error('超时'));
+        }, 5000);
+        this.pendingRequests[id] = (response) => {
+          clearTimeout(timeout);
+          resolve(response);
+        };
+        window.postMessage({ type: 'RESUME_EXT_MSG', requestId: id, payload }, '*');
+      });
+    },
+    async fetchRecords() {
+      try {
+        const res = await this.sendToExtension({ action: 'getApplicationRecords' });
+        return (res && res.success && res.data) ? res.data : [];
+      } catch (e) {
+        return null; // 表示扩展未安装/无响应
+      }
+    },
+    async updateStatus(id, status) {
+      return this.sendToExtension({ action: 'updateApplicationRecord', id, data: { status } });
+    },
+    async deleteRecord(id) {
+      return this.sendToExtension({ action: 'deleteApplicationRecord', id });
+    },
+  };
+  Tracking.init();
+
+  // 投递追踪弹窗（含 Chrome 插件安装引导 + 记录展示）
+  async function showTrackingModal() {
+    // 先打开 loading 状态
+    openModal('📊 投递追踪', '检测插件状态...', '<div class="modal-empty"><div style="font-size:32px;margin-bottom:12px">⏳</div>正在检测 Chrome 插件...</div>');
+
+    const records = await Tracking.fetchRecords();
+
+    if (records === null) {
+      // 没装插件：显示安装引导
+      renderInstallGuide();
+    } else {
+      // 装了插件：显示记录列表
+      renderTrackingRecords(records);
+    }
+  }
+
+  function renderInstallGuide() {
     const html = `
       <div class="install-hero">
         <div class="install-emoji">🔌</div>
@@ -1015,14 +1163,113 @@
         <a href="https://github.com/catarina-xxxcc/cv_programme/archive/refs/heads/main.zip" class="btn-secondary" style="text-decoration:none;display:inline-block">
           ⬇️ 直接下载 ZIP
         </a>
+        <button class="btn-secondary" onclick="showTrackingModal()" style="margin-left:auto">
+          🔄 重新检测
+        </button>
       </div>
 
       <div class="install-tip">
-        💡 已安装好插件？等浏览器记录到投递后，会自动同步到这里展示。
+        💡 已安装好插件？点击「重新检测」刷新状态。
       </div>
     `;
     openModal('📊 投递追踪', '安装 Chrome 插件后自动同步投递记录', html);
   }
+
+  function renderTrackingRecords(records) {
+    const total = records.length;
+    const now = new Date();
+    const weekStart = new Date(now);
+    weekStart.setDate(now.getDate() - now.getDay());
+    weekStart.setHours(0, 0, 0, 0);
+    const weekCount = records.filter(r => new Date(r.date) >= weekStart).length;
+    const pending = records.filter(r => r.status === '已投递').length;
+    const interviewing = records.filter(r => r.status === '待面试' || r.status === '已面试').length;
+
+    // 智能提醒
+    const insights = [];
+    const overdue = records.filter(r => {
+      if (r.status !== '已投递') return false;
+      return (now - new Date(r.date)) / (1000 * 60 * 60 * 24) >= 7;
+    });
+    if (overdue.length > 0) {
+      insights.push(`<div class="track-insight insight-warn">⏰ <b>${overdue.length}</b> 家投递超过 7 天未回复，建议主动跟进</div>`);
+    }
+    if (total >= 3) {
+      const rate = Math.round((interviewing / total) * 100);
+      insights.push(`<div class="track-insight insight-info">📊 转化率 <b>${rate}%</b> · ${total} 家投递 → ${interviewing} 家面试</div>`);
+    }
+
+    // 投递记录列表
+    const recordsHtml = records.length === 0
+      ? `<div class="modal-empty"><div style="font-size:36px;margin-bottom:8px">📭</div>还没有投递记录<br><span style="font-size:11px">在招聘网站点击插件浮动按钮记录投递</span></div>`
+      : records.map(r => {
+          const date = new Date(r.date);
+          const dateStr = `${date.getMonth() + 1}/${date.getDate()}`;
+          return `
+            <div class="track-card">
+              <div class="track-card-head">
+                <strong>${r.company || '未知公司'}</strong>
+                <span class="track-date">${dateStr}</span>
+              </div>
+              <div class="track-position">${r.position || '未知岗位'}</div>
+              <div class="track-card-bottom">
+                <span class="track-status track-status-${r.status}">${r.status}</span>
+                <div class="track-actions">
+                  <button class="track-icon-btn" onclick="trackingChangeStatus('${r.id}')">↻ 更新</button>
+                  <button class="track-icon-btn danger" onclick="trackingDelete('${r.id}')">🗑</button>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+    const html = `
+      <div class="track-stats">
+        <div class="track-stat"><span class="track-num">${total}</span><span>总投递</span></div>
+        <div class="track-stat"><span class="track-num">${weekCount}</span><span>本周</span></div>
+        <div class="track-stat"><span class="track-num">${pending}</span><span>待回复</span></div>
+        <div class="track-stat"><span class="track-num">${interviewing}</span><span>面试中</span></div>
+      </div>
+
+      ${insights.length ? `<div class="track-insights">${insights.join('')}</div>` : ''}
+
+      <div class="install-section-title" style="margin-top:18px;display:flex;justify-content:space-between;align-items:center">
+        <span>📋 投递记录</span>
+        <button class="track-icon-btn" onclick="showTrackingModal()" style="font-size:11px">🔄 刷新</button>
+      </div>
+
+      <div class="track-list">
+        ${recordsHtml}
+      </div>
+    `;
+    openModal('📊 投递追踪', `共 ${total} 条记录 · 数据来自 Chrome 插件`, html);
+  }
+
+  // 更新状态
+  window.trackingChangeStatus = async function(id) {
+    const statuses = ['已投递', '待面试', '已面试', '已录用', '已拒绝'];
+    const choice = prompt('选择新状态：\n1. 已投递\n2. 待面试\n3. 已面试\n4. 已录用\n5. 已拒绝\n\n输入数字：');
+    if (!choice) return;
+    const idx = parseInt(choice) - 1;
+    if (idx < 0 || idx >= statuses.length) return;
+    try {
+      await Tracking.updateStatus(id, statuses[idx]);
+      showTrackingModal(); // 刷新
+    } catch (e) {
+      alert('更新失败：' + e.message);
+    }
+  };
+
+  // 删除记录
+  window.trackingDelete = async function(id) {
+    if (!confirm('确定删除这条投递记录吗？')) return;
+    try {
+      await Tracking.deleteRecord(id);
+      showTrackingModal(); // 刷新
+    } catch (e) {
+      alert('删除失败：' + e.message);
+    }
+  };
 
   // 求职助手弹窗
   function showChatModal() {
