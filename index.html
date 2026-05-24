@@ -673,25 +673,56 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 16px 28px;
+      padding: 12px 24px;
       border-bottom: 1px solid rgba(192,132,252,0.15);
       flex-shrink: 0;
+      gap: 12px;
+    }
+    .interview-header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+    .interview-header-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    .interview-stage-badge {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 12px;
+      border-radius: 999px;
+      white-space: nowrap;
+      letter-spacing: 0.3px;
+    }
+    .interview-stage-badge.stage-hr {
+      background: #e8f5e9;
+      color: #2e7d32;
+    }
+    .interview-stage-badge.stage-first {
+      background: #e3f2fd;
+      color: #1565c0;
+    }
+    .interview-stage-badge.stage-second {
+      background: #f3e5f5;
+      color: #7b1fa2;
     }
     .interview-header-title {
-      font-size: 15px;
+      font-size: 14px;
       font-weight: 700;
       color: var(--purple-deep);
       display: flex;
       align-items: center;
       gap: 10px;
+      flex-wrap: wrap;
     }
-    .interview-header-title .pos-tag {
+    .interview-progress {
       font-size: 12px;
       font-weight: 600;
-      color: var(--purple-mid);
-      background: rgba(107,53,199,0.10);
-      padding: 2px 10px;
-      border-radius: 999px;
+      color: var(--purple-light);
     }
     .btn-exit-interview {
       background: transparent;
@@ -886,6 +917,8 @@
     }
     .stage-intro-card.selected .stage-intro-name,
     .stage-intro-card.selected .stage-intro-meta,
+    .stage-intro-card.selected .stage-intro-desc,
+    .stage-intro-card.selected .stage-intro-persona,
     .stage-intro-card.selected .stage-intro-tag {
       color: #fff;
     }
@@ -893,8 +926,10 @@
       background: rgba(255,255,255,0.2);
     }
     .stage-intro-emoji { font-size: 32px; margin-bottom: 6px; display: block; }
-    .stage-intro-name { font-size: 15px; font-weight: 700; color: var(--purple-deep); margin-bottom: 4px; }
-    .stage-intro-meta { font-size: 11px; color: var(--purple-mid); font-weight: 600; margin-bottom: 10px; }
+    .stage-intro-name { font-size: 15px; font-weight: 700; color: var(--purple-deep); margin-bottom: 2px; }
+    .stage-intro-desc { font-size: 11px; color: var(--purple-muted); margin-bottom: 6px; line-height: 1.3; }
+    .stage-intro-meta { font-size: 11px; color: var(--purple-mid); font-weight: 600; margin-bottom: 8px; }
+    .stage-intro-persona { font-size: 10px; color: var(--purple-light); margin-top: 8px; font-weight: 500; }
     .stage-intro-tags { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; }
     .stage-intro-tag {
       font-size: 10px; padding: 3px 8px; border-radius: 6px;
@@ -903,6 +938,70 @@
     @media (max-width: 520px) { .stage-intro-cards { flex-direction: column; } }
 
     /* 聊天主体 - 填充卡片 */
+    /* 三阶段进度条 */
+    .stage-progress-bar {
+      display: flex;
+      padding: 10px 24px 6px;
+      gap: 0;
+      border-bottom: 1px solid rgba(192,132,252,0.10);
+      flex-shrink: 0;
+    }
+    .sp-segment {
+      flex: 1;
+      position: relative;
+      padding: 0 4px;
+    }
+    .sp-segment + .sp-segment::before {
+      content: '';
+      position: absolute;
+      left: -4px;
+      top: 14px;
+      width: 8px;
+      height: 2px;
+      background: #ddd;
+    }
+    .sp-segment-inner {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 6px;
+    }
+    .sp-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      transition: all 0.3s;
+    }
+    .sp-dot-hr { background: #c8e6c9; }
+    .sp-dot-first { background: #bbdefb; }
+    .sp-dot-second { background: #e1bee7; }
+    .sp-segment.active .sp-dot-hr { background: #4caf50; box-shadow: 0 0 6px rgba(76,175,80,0.4); }
+    .sp-segment.active .sp-dot-first { background: #2196f3; box-shadow: 0 0 6px rgba(33,150,243,0.4); }
+    .sp-segment.active .sp-dot-second { background: #9c27b0; box-shadow: 0 0 6px rgba(156,39,176,0.4); }
+    .sp-label {
+      font-size: 11px; font-weight: 600;
+      color: #bbb; transition: color 0.3s;
+      white-space: nowrap;
+    }
+    .sp-segment.active .sp-label { color: var(--purple-dark); }
+    .sp-segment.done .sp-label { color: var(--purple-muted); }
+    .sp-track {
+      height: 4px;
+      background: #f0ecf4;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .sp-fill {
+      height: 100%;
+      border-radius: 4px;
+      width: 0%;
+      transition: width 0.5s ease;
+    }
+    .sp-fill-hr { background: #4caf50; }
+    .sp-fill-first { background: #2196f3; }
+    .sp-fill-second { background: #9c27b0; }
+    .sp-segment.done .sp-fill { width: 100% !important; }
+
     .interview-chat-area {
       flex: 1;
       display: none;
@@ -1091,32 +1190,38 @@
             <div class="stage-intro-card" data-stage="hr" onclick="selectStageCard(this)">
               <span class="stage-intro-emoji">🤝</span>
               <div class="stage-intro-name">HR 面</div>
-              <div class="stage-intro-meta">6 题 · 15-20 分钟</div>
+              <div class="stage-intro-desc">评估文化适配 · 求职动机 · 综合素质</div>
+              <div class="stage-intro-meta">6 题</div>
               <div class="stage-intro-tags">
                 <span class="stage-intro-tag">自我介绍</span>
                 <span class="stage-intro-tag">求职动机</span>
                 <span class="stage-intro-tag">职业规划</span>
               </div>
+              <div class="stage-intro-persona">🎤 面试官：HR 专员 · 亲和专业</div>
             </div>
             <div class="stage-intro-card" data-stage="first" onclick="selectStageCard(this)">
               <span class="stage-intro-emoji">💻</span>
               <div class="stage-intro-name">一面（技术面）</div>
-              <div class="stage-intro-meta">8 题 · 30-40 分钟</div>
+              <div class="stage-intro-desc">评估技术深度 · 项目经验 · 解决问题的能力</div>
+              <div class="stage-intro-meta">8 题</div>
               <div class="stage-intro-tags">
                 <span class="stage-intro-tag">技术深挖</span>
                 <span class="stage-intro-tag">项目经验</span>
                 <span class="stage-intro-tag">场景设计</span>
               </div>
+              <div class="stage-intro-persona">🔧 面试官：Tech Lead · 严谨刨根问底</div>
             </div>
             <div class="stage-intro-card" data-stage="second" onclick="selectStageCard(this)">
               <span class="stage-intro-emoji">🎯</span>
               <div class="stage-intro-name">二面（综合面）</div>
-              <div class="stage-intro-meta">6 题 · 25-30 分钟</div>
+              <div class="stage-intro-desc">评估架构思维 · 业务判断 · 技术领导力</div>
+              <div class="stage-intro-meta">6 题</div>
               <div class="stage-intro-tags">
                 <span class="stage-intro-tag">架构能力</span>
                 <span class="stage-intro-tag">团队协作</span>
                 <span class="stage-intro-tag">业务理解</span>
               </div>
+              <div class="stage-intro-persona">🏛️ 面试官：技术总监 · 高瞻远瞩</div>
             </div>
           </div>
         </div>
@@ -1136,10 +1241,40 @@
     <div class="interview-card" id="interviewCard" style="display:none;">
       <!-- Header -->
       <div class="interview-header">
-        <div class="interview-header-title">
-          <span id="interviewCardTitle">沉浸式模拟面试</span>
+        <div class="interview-header-left">
+          <div class="interview-stage-badge" id="interviewStageBadge">HR 面</div>
+          <div class="interview-header-title">
+            <span id="interviewCardTitle">沉浸式模拟面试</span>
+            <span class="interview-progress" id="interviewProgress"></span>
+          </div>
         </div>
-        <button class="btn-exit-interview" onclick="exitInterview()">退出面试</button>
+        <div class="interview-header-right">
+          <button class="btn-exit-interview" onclick="exitInterview()">退出面试</button>
+        </div>
+      </div>
+      <!-- 三阶段进度条 -->
+      <div class="stage-progress-bar" id="stageProgressBar">
+        <div class="sp-segment" data-stage="hr">
+          <div class="sp-segment-inner">
+            <div class="sp-dot sp-dot-hr"></div>
+            <span class="sp-label">HR 面</span>
+          </div>
+          <div class="sp-track"><div class="sp-fill sp-fill-hr" id="spFillHr"></div></div>
+        </div>
+        <div class="sp-segment" data-stage="first">
+          <div class="sp-segment-inner">
+            <div class="sp-dot sp-dot-first"></div>
+            <span class="sp-label">一面（技术面）</span>
+          </div>
+          <div class="sp-track"><div class="sp-fill sp-fill-first" id="spFillFirst"></div></div>
+        </div>
+        <div class="sp-segment" data-stage="second">
+          <div class="sp-segment-inner">
+            <div class="sp-dot sp-dot-second"></div>
+            <span class="sp-label">二面（综合面）</span>
+          </div>
+          <div class="sp-track"><div class="sp-fill sp-fill-second" id="spFillSecond"></div></div>
+        </div>
       </div>
       <!-- 聊天区域 -->
       <div class="interview-chat-area" id="interviewChatArea">
@@ -1681,6 +1816,7 @@
   function selectJob(job) {
     document.getElementById('positionPickerBtn').textContent = `✅ ${job}`;
     document.getElementById('positionPickerDropdown').style.display = 'none';
+    document.getElementById('customPositionInput').value = job;
     document.getElementById('customPositionInput').style.display = 'none';
     selectedPosition = job;
     updateStartBarPosition(job);
@@ -1733,12 +1869,49 @@
     document.getElementById('interviewStartBar').style.display = 'none';
     document.getElementById('interviewCard').style.display = 'flex';
     document.getElementById('interviewChatArea').classList.add('active');
-    document.getElementById('interviewCardTitle').textContent = `沉浸式模拟面试：${selectedPosition}`;
+    document.getElementById('interviewCardTitle').textContent = `模拟面试：${selectedPosition}`;
 
+    // 设置阶段徽章和提示语
+    const stageInfo = {
+      hr: { name: 'HR 面', cls: 'stage-hr' },
+      first: { name: '一面（技术面）', cls: 'stage-first' },
+      second: { name: '二面（综合面）', cls: 'stage-second' },
+    };
+    const info = stageInfo[selectedStage] || stageInfo.hr;
+    const badge = document.getElementById('interviewStageBadge');
+    badge.textContent = info.name;
+    badge.className = 'interview-stage-badge ' + info.cls;
+    // 初始化进度条
+    updateStageProgress(selectedStage, 0, 0);
     // 发送第一条消息给AI，启动面试
     const messages = [{ role: "user", content: `请开始面试，岗位是${selectedPosition}，面试阶段是${selectedStage}` }];
     interviewChatHistory = messages;
     streamInterviewChat(messages);
+  }
+
+  // ── 更新三阶段进度条 ──
+  function updateStageProgress(stage, current, total) {
+    const stageOrder = ['hr', 'first', 'second'];
+    const currentIdx = stageOrder.indexOf(stage);
+    const segments = document.querySelectorAll('.sp-segment');
+    segments.forEach((seg, i) => {
+      seg.classList.remove('active');
+      if (i < currentIdx) {
+        seg.classList.add('done');
+      } else {
+        seg.classList.remove('done');
+      }
+    });
+    if (currentIdx >= 0 && segments[currentIdx]) {
+      segments[currentIdx].classList.add('active');
+    }
+    // 更新当前阶段的填充进度
+    if (currentIdx >= 0 && total > 0) {
+      const pct = Math.min(100, Math.round((current / total) * 100));
+      const fills = ['spFillHr', 'spFillFirst', 'spFillSecond'];
+      const el = document.getElementById(fills[currentIdx]);
+      if (el) el.style.width = pct + '%';
+    }
   }
 
   // ── SSE 流式聊天 ──
@@ -1798,6 +1971,15 @@
                 .replace(/^[-=]{3,}\s*$/gm, '');
               if (data.interview_state) {
                 interviewState = data.interview_state;
+                // 更新进度显示
+                const idx = interviewState.current_question_index;
+                const total = interviewState.total_questions;
+                const progressEl = document.getElementById('interviewProgress');
+                if (idx > 0 && total > 0) {
+                  progressEl.textContent = `${idx}/${total}`;
+                }
+                // 更新三阶段进度条
+                updateStageProgress(interviewState.interview_stage, idx, total);
               }
               interviewChatHistory.push({ role: "assistant", content: fullReply });
             }
@@ -1870,6 +2052,9 @@
     interviewState = { is_active: false, target_position: "", interview_stage: "", jd_text: "", current_question_index: 0, total_questions: 8, scores: [], feedbacks: [] };
     selectedPosition = "";
     selectedStage = "";
+    // 重置进度条
+    document.querySelectorAll('.sp-segment').forEach(s => { s.classList.remove('active', 'done'); });
+    document.querySelectorAll('.sp-fill').forEach(f => { f.style.width = '0%'; });
   }
 
   function resetStartBar() {
