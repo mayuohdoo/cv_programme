@@ -717,6 +717,68 @@
   const DEFAULT_API_BASE_URL = "http://127.0.0.1:8000";
   const API_BASE_URL = (window.APP_CONFIG?.API_BASE_URL || DEFAULT_API_BASE_URL).replace(/\/+$/, "");
 
+  // ========== 本地 PDF 存储 (IndexedDB) ==========
+  const DB_NAME = 'ResumeFileDB';
+  const STORE_NAME = 'pdfs';
+
+  function openDB() {
+    return new Promise((resolve, reject) => {
+      const request = indexedDB.open(DB_NAME, 1);
+      request.onupgradeneeded = (e) => {
+        e.target.result.createObjectStore(STORE_NAME);
+      };
+      request.onsuccess = (e) => resolve(e.target.result);
+      request.onerror = (e) => reject(e.target.error);
+    });
+  }
+
+  async function savePdfToDb(id, file) {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE_NAME, 'readwrite');
+      const store = tx.objectStore(STORE_NAME);
+      const request = store.put(file, id);
+      request.onsuccess = () => resolve();
+      request.onerror = (e) => reject(e.target.error);
+    });
+  }
+
+  async function getPdfFromDb(id) {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE_NAME, 'readonly');
+      const store = tx.objectStore(STORE_NAME);
+      const request = store.get(id);
+      request.onsuccess = (e) => resolve(e.target.result);
+      request.onerror = (e) => reject(e.target.error);
+    });
+  }
+
+  async function deletePdfFromDb(id) {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE_NAME, 'readwrite');
+      const store = tx.objectStore(STORE_NAME);
+      const request = store.delete(id);
+      request.onsuccess = () => resolve();
+      request.onerror = (e) => reject(e.target.error);
+    });
+  }
+
+  window.openPdfPreview = async function(id) {
+    try {
+      const file = await getPdfFromDb(id);
+      if (!file) {
+        alert('本地缓存中找不到该文件（可能在其他电脑上传，或缓存已清理）');
+        return;
+      }
+      const url = URL.createObjectURL(file);
+      window.open(url, '_blank');
+    } catch (e) {
+      alert('打开文件失败：' + e.message);
+    }
+  };
+
   // ========== API 客户端（数据库同步） ==========
   const Api = {
     async json(url, opts = {}) {
@@ -1322,7 +1384,7 @@
             <div class="pm-resume-item ${isActive ? 'active' : ''}" onclick="setActiveResume('${r.id}')">
               <div class="pm-resume-icon">📄</div>
               <div class="pm-resume-meta">
-                <div class="pm-resume-name">${r.fileName || r.name || '简历'}</div>
+                <div class="pm-resume-name" style="cursor:pointer; text-decoration:underline; text-decoration-color:rgba(192,132,252,0.5); text-underline-offset:2px;" onclick="event.stopPropagation(); openPdfPreview('${r.id}')" title="点击预览源文件">${r.fileName || r.name || '简历'}</div>
                 <div class="pm-resume-info">
                   ${badgeHtml}
                   ${time ? `<span>${time}</span>` : ''}
@@ -1388,6 +1450,14 @@
       if (resumes.length > 0) localStorage.setItem('activeResumeId', resumes[0].id);
       else localStorage.removeItem('activeResumeId');
     }
+    
+    // 清除本地缓存的 PDF 文件
+    try {
+      await deletePdfFromDb(id);
+    } catch (e) {
+      console.warn('删除本地缓存文件失败：', e);
+    }
+
     // 同步到数据库
     try { await Api.deleteResume(id); } catch (e) { console.warn('[deleteResume] DB 同步失败', e); }
     showProfileModal();
@@ -1461,6 +1531,14 @@
     resumes.unshift(newResume);
     localStorage.setItem('resumes', JSON.stringify(resumes));
     localStorage.setItem('activeResumeId', resumeId);
+    
+    // 把文件缓存到本地 IndexedDB，用于之后预览
+    try {
+      await savePdfToDb(resumeId, file);
+    } catch (e) {
+      console.warn('缓存文件到本地失败：', e);
+    }
+
     loadResumes();
     updateStatusCard();
 
@@ -1567,6 +1645,11 @@
       const all = JSON.parse(localStorage.getItem('resumes') || '[]')
         .filter(r => r.id !== resumeId);
       localStorage.setItem('resumes', JSON.stringify(all));
+      
+      try {
+        await deletePdfFromDb(resumeId);
+      } catch (e) {}
+
       loadResumes();
       updateStatusCard();
     }
