@@ -22,11 +22,12 @@
       --pink-accent: #f472b6;
       --gradient-btn: linear-gradient(135deg, #c084fc, #f472b6);
       --gradient-bg: linear-gradient(135deg, #f0e8ff 0%, #fce8f5 50%, #ffe8f0 100%);
-      --card-bg: rgba(255,255,255,0.82);
+      --card-bg: rgba(255,255,255,0.95);
       --card-shadow: 0 8px 32px rgba(180,120,255,0.14), 0 2px 8px rgba(180,120,255,0.07);
       --card-border: 1px solid rgba(255,255,255,0.9);
       --radius-card: 24px;
       --radius-btn: 9999px;
+      --overlay-bg: rgba(60, 30, 90, 0.45);
 
       /* 面试 UI 变量 */
       --white: #FFFFFF;
@@ -277,7 +278,7 @@
     .modal-overlay {
       display: none;
       position: fixed; inset: 0;
-      background: rgba(60, 30, 90, 0.45);
+      background: var(--overlay-bg);
       backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
       z-index: 9999;
       justify-content: center; align-items: center;
@@ -677,7 +678,7 @@
       position: fixed;
       inset: 0;
       z-index: 100;
-      background: rgba(60, 30, 90, 0.45);
+      background: var(--overlay-bg);
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
       display: flex;
@@ -1069,6 +1070,15 @@
     }
     .interview-chat-messages .msg { display: flex; gap: 10px; align-items: flex-start; flex-wrap: wrap; }
     .interview-chat-messages .msg.user { flex-direction: row-reverse; }
+    .interview-chat-messages .msg-avatar {
+      width: 32px; height: 32px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; flex-shrink: 0;
+      background: rgba(240,232,255,0.5);
+    }
+    .interview-chat-messages .msg.user .msg-avatar {
+      background: linear-gradient(135deg, rgba(192,132,252,0.15), rgba(244,114,182,0.15));
+    }
     .interview-chat-messages .msg-bubble {
       max-width: 75%; padding: 12px 16px;
       border-radius: 12px; font-size: 13px;
@@ -2365,7 +2375,8 @@
     msg.className = `msg ${role}`;
     const avatar = document.createElement("div");
     avatar.className = "msg-avatar";
-    avatar.textContent = role === "ai" ? "🤖" : "👤";
+    const _profile = JSON.parse(localStorage.getItem('userProfile') || '{}');
+    avatar.textContent = role === "ai" ? "🤖" : (_profile.avatar || '👤');
     const bubble = document.createElement("div");
     bubble.className = "msg-bubble";
     bubble.textContent = content
