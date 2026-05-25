@@ -1746,13 +1746,33 @@
   let selectedPosition = "";
 
   function showInterviewModal(data) {
-    // 隐藏主页内容，显示面试区域
+    // 检测是否有可恢复的面试会话
+    const saved = getSavedSession();
+    if (saved) {
+      const html = `
+        <div style="text-align:center;padding:8px 0;">
+          <div style="font-size:40px;margin-bottom:12px;">📋</div>
+          <div style="font-size:15px;font-weight:600;color:var(--purple-dark);margin-bottom:6px;">发现上次中断的面试</div>
+          <div style="font-size:13px;color:var(--purple-light);margin-bottom:16px;line-height:1.6;">
+            ${saved.stageName} · ${saved.position}<br>
+            进度：第 ${saved.questionCount}/${saved.totalQuestions} 题
+          </div>
+          <div style="display:flex;gap:10px;justify-content:center;">
+            <button onclick="resumeInterview(getSavedSession())" style="padding:10px 24px;border:none;border-radius:9999px;background:var(--gradient-btn);color:#fff;font-weight:600;font-size:14px;cursor:pointer;font-family:inherit;">继续上次面试</button>
+            <button onclick="restartInterview()" style="padding:10px 24px;border:1px solid rgba(192,132,252,0.25);border-radius:9999px;background:transparent;color:var(--purple-mid);font-weight:600;font-size:14px;cursor:pointer;font-family:inherit;">重新开始</button>
+          </div>
+        </div>
+      `;
+      openModal('', '', html);
+      return;
+    }
+
+    // 无保存会话 → 正常显示
     document.querySelector('.greeting').style.display = 'none';
     document.querySelector('.status-card').style.display = 'none';
     document.querySelector('.tool-section').style.display = 'none';
     document.getElementById('interviewSection').classList.add('active');
     resetStartBar();
-    // 预填岗位推荐
     const jobs = (data.job_recommendations || []).slice();
     if (jobs.length > 0) {
       const firstJob = jobs[0].title || '';
@@ -1881,6 +1901,17 @@
     updateStartBtnState();
   });
 
+  // ── 重启面试（清除保存的会话，重新选择） ──
+  function restartInterview() {
+    clearInterviewSession();
+    closeModal();
+    resetStartBar();
+    document.querySelector('.greeting').style.display = 'none';
+    document.querySelector('.status-card').style.display = 'none';
+    document.querySelector('.tool-section').style.display = 'none';
+    document.getElementById('interviewSection').classList.add('active');
+  }
+
   // ── 阶段选择 ──
   function selectStageCard(card) {
     document.querySelectorAll('.stage-intro-card').forEach(c => c.classList.remove('selected'));
@@ -1896,6 +1927,8 @@
 
   // ── 开始面试 ──
   function startInterview() {
+    // 清除任何保存的会话（这是全新面试）
+    clearInterviewSession();
     selectedPosition = document.getElementById('customPositionInput').value.trim() || selectedPosition;
     if (!selectedPosition || !selectedStage) return;
 
@@ -2098,6 +2131,11 @@
                   interviewState.current_question_index,
                   interviewState.total_questions
                 );
+
+                // 面试已完成，清除保存的会话
+                if (!interviewState.is_active) {
+                  clearInterviewSession();
+                }
               }
               interviewChatHistory.push({ role: "assistant", content: fullReply });
 
@@ -2200,6 +2238,110 @@
     return records;
   }
 
+  // ── 面试中断恢复 ──
+  const SESSION_KEY = 'interviewSession';
+
+  function saveInterviewSession() {
+    if (!interviewChatHistory || interviewChatHistory.length < 2) return;
+    if (!interviewState.current_question_index || !interviewState.total_questions) return;
+    const stageNames = { hr: 'HR 面', first: '一面（专业面）', second: '二面（综合面）' };
+    const session = {
+      savedAt: Date.now(),
+      date: new Date().toLocaleString('zh-CN'),
+      position: interviewState.target_position || selectedPosition,
+      stage: interviewState.interview_stage || selectedStage,
+      stageName: stageNames[interviewState.interview_stage || selectedStage] || '',
+      questionCount: interviewState.current_question_index,
+      totalQuestions: interviewState.total_questions,
+      identity: interviewState.identity || '',
+      gender: interviewState.gender || '',
+      jd_text: interviewState.jd_text || '',
+      messages: JSON.parse(JSON.stringify(interviewChatHistory)),
+      state: JSON.parse(JSON.stringify(interviewState)),
+    };
+    localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+  }
+
+  function clearInterviewSession() {
+    localStorage.removeItem(SESSION_KEY);
+  }
+
+  function getSavedSession() {
+    try {
+      const raw = localStorage.getItem(SESSION_KEY);
+      if (!raw) return null;
+      const s = JSON.parse(raw);
+      // 超过24小时的会话视为过期
+      if (Date.now() - s.savedAt > 24 * 60 * 60 * 1000) {
+        localStorage.removeItem(SESSION_KEY);
+        return null;
+      }
+      return s;
+    } catch { return null; }
+  }
+
+  function resumeInterview(session) {
+    // 关闭弹窗
+    closeModal();
+    // 隐藏主页内容
+    document.querySelector('.greeting').style.display = 'none';
+    document.querySelector('.status-card').style.display = 'none';
+    document.querySelector('.tool-section').style.display = 'none';
+    document.getElementById('interviewSection').classList.add('active');
+
+    // 恢复状态
+    interviewState = session.state || {
+      is_active: false,
+      target_position: session.position,
+      interview_stage: session.stage,
+      identity: session.identity || '',
+      gender: session.gender || '',
+      jd_text: session.jd_text || '',
+      current_question_index: session.questionCount,
+      total_questions: session.totalQuestions,
+      scores: [],
+      feedbacks: [],
+    };
+    interviewChatHistory = session.messages || [];
+    _streamQCount = 0;
+    selectedPosition = session.position;
+    selectedStage = session.stage;
+
+    // 设置UI
+    document.getElementById('interviewStartBar').style.display = 'none';
+    document.getElementById('interviewCard').style.display = 'flex';
+    document.getElementById('interviewChatArea').classList.add('active');
+    document.getElementById('interviewCardTitle').textContent = `模拟面试：${session.position}`;
+
+    // 阶段徽章
+    const stageInfo = {
+      hr: { name: 'HR 面', cls: 'stage-hr' },
+      first: { name: '一面（专业面）', cls: 'stage-first' },
+      second: { name: '二面（综合面）', cls: 'stage-second' },
+    };
+    const info = stageInfo[session.stage] || stageInfo.hr;
+    const badge = document.getElementById('interviewStageBadge');
+    badge.textContent = info.name;
+    badge.className = 'interview-stage-badge ' + info.cls;
+
+    // 进度条初始化
+    window._prevInterviewStage = session.stage;
+    window._cumBase = 0;
+    window._sessionRecordSaved = false;
+    _updateProgressDisplay(session.questionCount, session.totalQuestions);
+
+    // 渲染历史消息
+    const container = document.getElementById('interviewChatMessages');
+    container.innerHTML = '';
+    for (const msg of interviewChatHistory) {
+      appendMsg(msg.role, msg.content);
+    }
+    container.scrollTop = container.scrollHeight;
+
+    // 清除已恢复的会话
+    clearInterviewSession();
+  }
+
   // ── 查看面试记录 ──
   function showInterviewRecords() {
     const records = getInterviewRecords();
@@ -2257,6 +2399,8 @@
   // ── 退出面试 ──
   function exitInterview() {
     if (!confirm('确定退出当前面试吗？')) return;
+    // 退出前保存会话，方便下次继续
+    saveInterviewSession();
     document.getElementById('interviewSection').classList.remove('active');
     document.querySelector('.greeting').style.display = '';
     document.querySelector('.status-card').style.display = '';
