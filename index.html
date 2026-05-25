@@ -1187,7 +1187,10 @@
         <!-- 头部 -->
         <div class="start-bar-header">
           <div class="start-bar-header-title"><span id="startBarTitle">沉浸式模拟面试</span></div>
-          <button class="btn-exit-interview-sm" onclick="exitInterview()">退出面试</button>
+          <div style="display:flex;gap:8px;align-items:center">
+            <button class="btn-exit-interview-sm" onclick="showInterviewRecords()" style="background:rgba(192,132,252,0.12);border:none;color:var(--purple-mid);padding:6px 14px;border-radius:9999px;cursor:pointer;font-weight:600;font-size:13px;font-family:inherit">📋 面试记录</button>
+            <button class="btn-exit-interview-sm" onclick="exitInterview()">退出面试</button>
+          </div>
         </div>
         <!-- Step 1: 岗位选择 -->
         <div class="start-step">
@@ -1293,6 +1296,7 @@
           </div>
         </div>
         <div class="interview-header-right">
+          <button class="btn-exit-interview" onclick="showInterviewRecords()" style="background:rgba(192,132,252,0.08);border:1px solid rgba(192,132,252,0.2);margin-right:6px">📋 面试记录</button>
           <button class="btn-exit-interview" onclick="exitInterview()">退出面试</button>
         </div>
       </div>
@@ -2072,6 +2076,15 @@
                 }
               }
               interviewChatHistory.push({ role: "assistant", content: fullReply });
+              // 面试自然结束时自动保存记录
+              if (interviewState.is_active === false || fullReply.includes('[面试结束]')) {
+                setTimeout(() => {
+                  const originalState = { ...interviewState };
+                  interviewState.is_active = false;
+                  saveInterviewRecord();
+                  Object.assign(interviewState, originalState);
+                }, 100);
+              }
             }
           } catch(e) { console.warn('SSE parse error', e); }
         }
@@ -2126,6 +2139,100 @@
     container.scrollTop = container.scrollHeight;
   }
 
+  // ── 面试记录存储 ──
+  const RECORDS_KEY = 'interviewRecords';
+
+  function saveInterviewRecord() {
+    if (!interviewChatHistory || interviewChatHistory.length < 2) return;
+    const stageNames = { hr: 'HR 面', first: '一面（专业面）', second: '二面（综合面）' };
+    const records = JSON.parse(localStorage.getItem(RECORDS_KEY) || '[]');
+    // 避免重复保存（5秒内同一阶段不去重录）
+    const lastRecord = records[records.length - 1];
+    if (lastRecord && Date.now() - lastRecord.savedAt < 5000
+        && lastRecord.stage === selectedStage && lastRecord.position === selectedPosition) return;
+    const record = {
+      id: 'iv_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+      savedAt: Date.now(),
+      date: new Date().toLocaleString('zh-CN'),
+      position: selectedPosition || interviewState.target_position,
+      stage: selectedStage || interviewState.interview_stage,
+      stageName: stageNames[selectedStage || interviewState.interview_stage] || '',
+      identity: interviewState.identity || '',
+      gender: interviewState.gender || '',
+      questionCount: interviewState.current_question_index || 0,
+      totalQuestions: interviewState.total_questions || 0,
+      messages: JSON.parse(JSON.stringify(interviewChatHistory)),
+    };
+    records.push(record);
+    if (records.length > 50) records.splice(0, records.length - 50);
+    localStorage.setItem(RECORDS_KEY, JSON.stringify(records));
+  }
+
+  function getInterviewRecords() {
+    return JSON.parse(localStorage.getItem(RECORDS_KEY) || '[]');
+  }
+
+  function deleteInterviewRecord(id) {
+    let records = getInterviewRecords();
+    records = records.filter(r => r.id !== id);
+    localStorage.setItem(RECORDS_KEY, JSON.stringify(records));
+    return records;
+  }
+
+  // ── 查看面试记录 ──
+  function showInterviewRecords() {
+    const records = getInterviewRecords();
+    if (records.length === 0) {
+      openModal('📋 面试记录', '还没有面试记录，完成一场模拟面试后会自动保存', '');
+      return;
+    }
+    let html = '<div style="display:flex;flex-direction:column;gap:10px;max-height:400px;overflow-y:auto;">';
+    // 从新到旧
+    for (let i = records.length - 1; i >= 0; i--) {
+      const r = records[i];
+      const msgCount = r.messages ? Math.ceil(r.messages.length / 2) : 0;
+      html += '<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:12px;background:rgba(240,232,255,0.4);border:1px solid rgba(180,120,255,0.15);">';
+      html += '<div style="flex:1;min-width:0;">';
+      html += `<div style="font-weight:600;font-size:13px;color:#4c1d95;">${r.position || '未知岗位'}</div>`;
+      html += `<div style="font-size:11px;color:#9d7ab8;margin-top:2px;">${r.stageName} · ${r.date} · ${msgCount}轮问答</div>`;
+      html += '</div>';
+      html += `<button onclick="viewInterviewRecord('${r.id}')" style="padding:5px 12px;border:none;border-radius:8px;background:linear-gradient(135deg,#c084fc,#f472b6);color:#fff;font-size:11px;font-weight:600;cursor:pointer;">查看</button>`;
+      html += `<button onclick="deleteInterviewRecordAndRefresh('${r.id}')" style="padding:5px 8px;border:none;border-radius:8px;background:rgba(239,68,68,0.1);color:#ef4444;font-size:11px;font-weight:600;cursor:pointer;">×</button>`;
+      html += '</div>';
+    }
+    html += '</div>';
+    openModal('📋 面试记录', `共 ${records.length} 条`, html);
+  }
+
+  function viewInterviewRecord(id) {
+    const records = getInterviewRecords();
+    const r = records.find(rec => rec.id === id);
+    if (!r) { openModal('', '', '<div style="text-align:center;color:#999;padding:20px;">记录不存在</div>'); return; }
+    let html = '<div style="max-height:400px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;">';
+    if (r.messages) {
+      for (const m of r.messages) {
+        const isAi = m.role === 'assistant' || m.role === 'ai';
+        const label = isAi ? '🤖 面试官' : '👤 候选人';
+        const align = isAi ? 'flex-start' : 'flex-end';
+        const bg = isAi ? 'rgba(240,232,255,0.5)' : 'linear-gradient(135deg,#c97ddc,#e87bac)';
+        const color = isAi ? '#4a2d6b' : '#fff';
+        html += `<div style="display:flex;justify-content:${align};">`;
+        html += `<div style="max-width:85%;padding:8px 12px;border-radius:12px;background:${bg};color:${color};font-size:12px;line-height:1.5;">`;
+        html += `<div style="font-size:10px;font-weight:600;margin-bottom:3px;opacity:0.6;">${label}</div>`;
+        html += `<div style="white-space:pre-wrap;">${m.content}</div>`;
+        html += '</div></div>';
+      }
+    }
+    html += '</div>';
+    const sub = `${r.position} · ${r.stageName} · ${r.date}`;
+    openModal('💬 面试详情', sub, html);
+  }
+
+  function deleteInterviewRecordAndRefresh(id) {
+    deleteInterviewRecord(id);
+    showInterviewRecords();
+  }
+
   // ── 退出面试 ──
   function exitInterview() {
     if (!confirm('确定退出当前面试吗？')) return;
@@ -2138,6 +2245,7 @@
     document.getElementById('interviewChatArea').classList.remove('active');
     document.getElementById('interviewChatMessages').innerHTML = '';
     document.getElementById('interviewInput').value = '';
+    saveInterviewRecord();
     interviewChatHistory = [];
     interviewState = { is_active: false, target_position: "", interview_stage: "", identity: "", gender: "", jd_text: "", current_question_index: 0, total_questions: 8, scores: [], feedbacks: [] };
     selectedPosition = "";
