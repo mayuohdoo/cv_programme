@@ -1002,43 +1002,31 @@
     .sp-fill-second { background: #9c27b0; }
     .sp-segment.done .sp-fill { width: 100% !important; }
 
-    /* 考查维度覆盖 */
-    .coverage-bar {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      padding: 4px 24px 8px;
-      border-bottom: 1px solid rgba(192,132,252,0.10);
-      flex-shrink: 0;
-      flex-wrap: wrap;
-    }
-    .coverage-label {
-      font-size: 11px;
-      font-weight: 600;
-      color: var(--purple-muted);
-      white-space: nowrap;
-    }
-    .coverage-tags {
+    /* 各阶段考察维度（挂在进度条下方） */
+    .sp-dimensions {
       display: flex;
       flex-wrap: wrap;
-      gap: 4px;
+      gap: 3px;
+      margin-top: 6px;
+      min-height: 20px;
+      transition: opacity 0.3s;
     }
-    .coverage-tag {
-      font-size: 10px;
-      padding: 2px 8px;
-      border-radius: 6px;
+    .sp-dim-tag {
+      font-size: 9px;
+      padding: 1px 6px;
+      border-radius: 4px;
       font-weight: 500;
       transition: all 0.3s;
+      white-space: nowrap;
     }
-    .coverage-tag.pending {
+    .sp-dim-tag.pending {
       background: rgba(192,132,252,0.08);
       color: var(--purple-light);
     }
-    .coverage-tag.done {
+    .sp-dim-tag.done {
       background: rgba(76,175,80,0.12);
       color: #2e7d32;
     }
-
     .interview-chat-area {
       flex: 1;
       display: none;
@@ -1289,7 +1277,7 @@
           <button class="btn-exit-interview" onclick="exitInterview()">退出面试</button>
         </div>
       </div>
-      <!-- 三阶段进度条 -->
+      <!-- 三阶段进度条 + 各阶段考察维度 -->
       <div class="stage-progress-bar" id="stageProgressBar">
         <div class="sp-segment" data-stage="hr">
           <div class="sp-segment-inner">
@@ -1297,6 +1285,7 @@
             <span class="sp-label">HR 面</span>
           </div>
           <div class="sp-track"><div class="sp-fill sp-fill-hr" id="spFillHr"></div></div>
+          <div class="sp-dimensions" id="spDimsHr"></div>
         </div>
         <div class="sp-segment" data-stage="first">
           <div class="sp-segment-inner">
@@ -1304,6 +1293,7 @@
             <span class="sp-label">一面（技术面）</span>
           </div>
           <div class="sp-track"><div class="sp-fill sp-fill-first" id="spFillFirst"></div></div>
+          <div class="sp-dimensions" id="spDimsFirst"></div>
         </div>
         <div class="sp-segment" data-stage="second">
           <div class="sp-segment-inner">
@@ -1311,12 +1301,8 @@
             <span class="sp-label">二面（综合面）</span>
           </div>
           <div class="sp-track"><div class="sp-fill sp-fill-second" id="spFillSecond"></div></div>
+          <div class="sp-dimensions" id="spDimsSecond"></div>
         </div>
-      </div>
-      <!-- 考查维度覆盖 -->
-      <div class="coverage-bar" id="coverageBar">
-        <span class="coverage-label">考查维度：</span>
-        <span class="coverage-tags" id="coverageTags"></span>
       </div>
       <!-- 聊天区域 -->
       <div class="interview-chat-area" id="interviewChatArea">
@@ -1946,14 +1932,7 @@
     const stageOrder = ['hr', 'first', 'second'];
     const currentIdx = stageOrder.indexOf(stage);
     const segments = document.querySelectorAll('.sp-segment');
-    segments.forEach((seg, i) => {
-      seg.classList.remove('active');
-      if (i < currentIdx) {
-        seg.classList.add('done');
-      } else {
-        seg.classList.remove('done');
-      }
-    });
+    segments.forEach(seg => seg.classList.remove('active'));
     if (currentIdx >= 0 && segments[currentIdx]) {
       segments[currentIdx].classList.add('active');
     }
@@ -1968,23 +1947,30 @@
     updateCoverage(stage, current, total);
   }
 
-  // ── 更新考查维度覆盖 ──
+  // ── 更新各阶段考察维度 ──
   const STAGE_DIMENSIONS = {
     hr: ['沟通表达', '自我认知', '求职动机', '团队适配', '成长意愿'],
     first: ['技术基础', '项目深度', '问题解决', '场景设计', '技术视野'],
     second: ['架构思维', '业务理解', '决策能力', '协作影响', '成长潜力'],
   };
+  const CONTAINER_MAP = { hr: 'spDimsHr', first: 'spDimsFirst', second: 'spDimsSecond' };
+  const STAGE_ORDER = ['hr', 'first', 'second'];
   function updateCoverage(stage, current, total) {
-    const dims = STAGE_DIMENSIONS[stage] || [];
-    const tagsEl = document.getElementById('coverageTags');
-    if (!tagsEl || dims.length === 0) {
-      if (tagsEl) tagsEl.innerHTML = '';
-      return;
-    }
-    const doneCount = Math.min(dims.length, current);
-    tagsEl.innerHTML = dims.map((d, i) =>
-      `<span class="coverage-tag ${i < doneCount ? 'done' : 'pending'}">${i < doneCount ? '✓ ' : ''}${d}</span>`
-    ).join('');
+    STAGE_ORDER.forEach(s => {
+      const dims = STAGE_DIMENSIONS[s] || [];
+      const el = document.getElementById(CONTAINER_MAP[s]);
+      if (!el) return;
+      if (s === stage) {
+        // 当前阶段：已回答的维度打勾，未回答的待办
+        const doneCount = Math.min(dims.length, current);
+        el.innerHTML = dims.map((d, i) =>
+          `<span class="sp-dim-tag ${i < doneCount ? 'done' : 'pending'}">${i < doneCount ? '✓ ' : ''}${d}</span>`
+        ).join('');
+      } else {
+        // 其他阶段：全部待办显示（CSS会自动变灰暗）
+        el.innerHTML = dims.map(d => `<span class="sp-dim-tag pending">${d}</span>`).join('');
+      }
+    });
   }
 
   // ── SSE 流式聊天 ──
@@ -2136,9 +2122,9 @@
     selectedPosition = "";
     selectedStage = "";
     // 重置进度条
-    document.querySelectorAll('.sp-segment').forEach(s => { s.classList.remove('active', 'done'); });
+    document.querySelectorAll('.sp-segment').forEach(s => { s.classList.remove('active'); });
     document.querySelectorAll('.sp-fill').forEach(f => { f.style.width = '0%'; });
-    document.getElementById('coverageTags').innerHTML = '';
+    document.querySelectorAll('.sp-dimensions').forEach(el => el.innerHTML = '');
   }
 
   function resetStartBar() {
