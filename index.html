@@ -619,6 +619,39 @@
     }
     .track-icon-btn:hover { background: rgba(192,132,252,0.20); }
     .track-icon-btn.danger:hover { background: rgba(239,68,68,0.12); color: #dc2626; }
+    /* ========== 多平台投递按钮样式 ========== */
+    .job-apply-row {
+      display: flex; align-items: center; gap: 8px;
+      margin-top: 12px; padding-top: 12px;
+      border-top: 1px dashed rgba(192,132,252,0.2);
+      flex-wrap: wrap;
+    }
+    .job-apply-label {
+      font-size: 11px; color: var(--purple-light); font-weight: 600;
+      flex-shrink: 0;
+    }
+    .job-apply-btn {
+      padding: 5px 14px; border-radius: 999px;
+      font-size: 12px; font-weight: 600; text-decoration: none;
+      transition: all 0.2s; white-space: nowrap;
+      display: inline-block;
+    }
+    .job-apply-btn:hover { transform: translateY(-1px); }
+    .job-apply-btn.boss {
+      background: rgba(99,102,241,0.12); color: #6366f1;
+      border: 1px solid rgba(99,102,241,0.25);
+    }
+    .job-apply-btn.boss:hover { background: rgba(99,102,241,0.22); }
+    .job-apply-btn.job51 {
+      background: rgba(234,88,12,0.10); color: #ea580c;
+      border: 1px solid rgba(234,88,12,0.22);
+    }
+    .job-apply-btn.job51:hover { background: rgba(234,88,12,0.18); }
+    .job-apply-btn.zhaopin {
+      background: rgba(14,165,233,0.10); color: #0ea5e9;
+      border: 1px solid rgba(14,165,233,0.22);
+    }
+    .job-apply-btn.zhaopin:hover { background: rgba(14,165,233,0.18); }
     /* ========== 结束：投递追踪记录列表样式 ========== */
   </style>
 </head>
@@ -1084,16 +1117,26 @@
       return;
     }
 
+    // 为岗位名称生成多平台搜索链接
+    function buildJobLinks(title, city) {
+      const kw = encodeURIComponent(title || '');
+      const cityParam = (city && city !== '全国') ? `&city=${encodeURIComponent(city)}` : '';
+      return {
+        boss:  `https://www.zhipin.com/job_detail/?query=${kw}${cityParam}`,
+        job51: `https://we.51job.com/pc/search?keyword=${kw}`,
+        zhaopin: `https://www.zhaopin.com/sou/?kw=${kw}`
+      };
+    }
+
     const jobsHtml = jobs.map((j) => {
       const s = j.salary_range || {};
       const salaryText = (s.min_salary && s.max_salary) ? `${s.min_salary}-${s.max_salary}K` : '面议';
       const city = s.city || '全国';
       const matchScore = j.match_score || (j.match_level === '高' ? 85 : 70);
       const m = matchInfo(matchScore);
-      const cityParam = (city && city !== '全国') ? `&city=${encodeURIComponent(city)}` : '';
-      const bossUrl = `https://www.zhipin.com/job_detail/?query=${encodeURIComponent(j.title || '')}${cityParam}`;
+      const links = buildJobLinks(j.title, city);
       return `
-        <div class="job-modal-card" onclick="window.open('${bossUrl}', '_blank')" style="cursor:pointer" title="点击跳转到 BOSS 直聘搜索">
+        <div class="job-modal-card">
           <div class="job-modal-head">
             <div>
               <div class="job-modal-title">${j.title || '岗位'}</div>
@@ -1105,7 +1148,13 @@
           <div class="job-modal-meta">
             <span class="job-modal-salary">💰 ${salaryText}</span>
             <span>📍 ${city}</span>
-            <span style="margin-left:auto;color:var(--pink-primary);font-weight:600">点击搜岗位 →</span>
+            <span style="margin-left:auto;color:var(--pink-primary);font-weight:600">选择平台去投递 ↓</span>
+          </div>
+          <div class="job-apply-row">
+            <span class="job-apply-label">去投递：</span>
+            <a href="${links.boss}" target="_blank" rel="noopener" class="job-apply-btn boss">BOSS直聘</a>
+            <a href="${links.job51}" target="_blank" rel="noopener" class="job-apply-btn job51">前程无忧</a>
+            <a href="${links.zhaopin}" target="_blank" rel="noopener" class="job-apply-btn zhaopin">智联招聘</a>
           </div>
         </div>
       `;
