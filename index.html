@@ -1016,17 +1016,9 @@
       font-size: 9px;
       padding: 1px 6px;
       border-radius: 4px;
-      font-weight: 500;
-      transition: all 0.3s;
-      white-space: nowrap;
-    }
-    .sp-dim-tag.pending {
       background: rgba(192,132,252,0.08);
       color: var(--purple-light);
-    }
-    .sp-dim-tag.done {
-      background: rgba(76,175,80,0.12);
-      color: #2e7d32;
+      white-space: nowrap;
     }
     .interview-chat-area {
       flex: 1;
@@ -1042,7 +1034,7 @@
       display: flex; flex-direction: column; gap: 12px;
       padding: 24px 28px;
     }
-    .interview-chat-messages .msg { display: flex; gap: 10px; align-items: flex-start; }
+    .interview-chat-messages .msg { display: flex; gap: 10px; align-items: flex-start; flex-wrap: wrap; }
     .interview-chat-messages .msg.user { flex-direction: row-reverse; }
     .interview-chat-messages .msg-bubble {
       max-width: 75%; padding: 12px 16px;
@@ -1313,7 +1305,7 @@
         <div class="sp-segment" data-stage="first">
           <div class="sp-segment-inner">
             <div class="sp-dot sp-dot-first"></div>
-            <span class="sp-label">一面（技术面）</span>
+            <span class="sp-label">一面（专业面）</span>
           </div>
           <div class="sp-track"><div class="sp-fill sp-fill-first" id="spFillFirst"></div></div>
           <div class="sp-dimensions" id="spDimsFirst"></div>
@@ -1739,6 +1731,7 @@
 
   let interviewChatHistory = [];
   let isInterviewLoading = false;
+  let _streamQCount = 0;  // 前端本地计数：每轮 AI 回答 +1
   let interviewState = {
     is_active: false,
     target_position: "",
@@ -1927,6 +1920,7 @@
       feedbacks: [],
     };
     interviewChatHistory = [];
+    _streamQCount = 0;
 
     document.getElementById('interviewStartBar').style.display = 'none';
     document.getElementById('interviewCard').style.display = 'flex';
@@ -1936,20 +1930,36 @@
     // 设置阶段徽章和提示语
     const stageInfo = {
       hr: { name: 'HR 面', cls: 'stage-hr' },
-      first: { name: '一面（技术面）', cls: 'stage-first' },
+      first: { name: '一面（专业面）', cls: 'stage-first' },
       second: { name: '二面（综合面）', cls: 'stage-second' },
     };
     const info = stageInfo[selectedStage] || stageInfo.hr;
     const badge = document.getElementById('interviewStageBadge');
     badge.textContent = info.name;
     badge.className = 'interview-stage-badge ' + info.cls;
-    // 初始化进度条
+    // 初始化进度条和跨阶段累积计数
     window._prevInterviewStage = selectedStage;
+    window._cumBase = 0;
+    window._sessionRecordSaved = false;
     updateStageProgress(selectedStage, 0, 0);
     // 发送第一条消息给AI，启动面试
     const messages = [{ role: "user", content: `请开始面试，岗位是${selectedPosition}，面试阶段是${selectedStage}` }];
     interviewChatHistory = messages;
     streamInterviewChat(messages);
+  }
+
+  // ── 本地进度更新（前端计数 + 后端双重保障） ──
+  function _updateProgressDisplay(idx, total) {
+    if (!idx || !total || total <= 0) return;
+    const cumBase = window._cumBase || 0;
+    const progressEl = document.getElementById('interviewProgress');
+    const stage = interviewState.interview_stage || window._prevInterviewStage || '';
+    if (progressEl) {
+      progressEl.textContent = cumBase > 0
+        ? `${cumBase + idx}/${cumBase + total}`
+        : `${idx}/${total}`;
+    }
+    updateStageProgress(stage, idx, total);
   }
 
   // ── 更新三阶段进度条 ──
@@ -1985,16 +1995,8 @@
       const dims = STAGE_DIMENSIONS[s] || [];
       const el = document.getElementById(CONTAINER_MAP[s]);
       if (!el) return;
-      if (s === stage) {
-        // 当前阶段：已回答的维度打勾，未回答的待办
-        const doneCount = Math.min(dims.length, current);
-        el.innerHTML = dims.map((d, i) =>
-          `<span class="sp-dim-tag ${i < doneCount ? 'done' : 'pending'}">${i < doneCount ? '✓ ' : ''}${d}</span>`
-        ).join('');
-      } else {
-        // 其他阶段：全部待办显示（CSS会自动变灰暗）
-        el.innerHTML = dims.map(d => `<span class="sp-dim-tag pending">${d}</span>`).join('');
-      }
+      // 统一显示维度名称，不区分完成/待办
+      el.innerHTML = dims.map(d => `<span class="sp-dim-tag">${d}</span>`).join('');
     });
   }
 
@@ -2043,6 +2045,14 @@
                 .replace(/`{1,3}/g, '')
                 .replace(/>\s/g, '')
                 .replace(/^[-=]{3,}\s*$/gm, '');
+            } else if (data.type === "q") {
+              // [Q:N] 标记 → 推进本地计数
+              _streamQCount++;
+              _updateProgressDisplay(_streamQCount, interviewState.total_questions);
+            } else if (data.type === "f") {
+              // 追问标记 → 也推进本地计数
+              _streamQCount++;
+              _updateProgressDisplay(_streamQCount, interviewState.total_questions);
             } else if (data.type === "done") {
               fullReply = data.reply || fullReply;
               if (lastBubble) lastBubble.textContent = fullReply
@@ -2054,37 +2064,43 @@
                 .replace(/>\s/g, '')
                 .replace(/^[-=]{3,}\s*$/gm, '');
               if (data.interview_state) {
-                interviewState = data.interview_state;
-                // 更新进度显示
-                const idx = interviewState.current_question_index;
-                const total = interviewState.total_questions;
-                const progressEl = document.getElementById('interviewProgress');
-                if (idx > 0 && total > 0) {
-                  progressEl.textContent = `${idx}/${total}`;
-                }
-                // 更新三阶段进度条
-                updateStageProgress(interviewState.interview_stage, idx, total);
-                // 检测阶段是否切换，更新徽章和标题
+                // 阶段切换前保存上一阶段的题数（用于累积显示）
+                const prevTotal = interviewState.total_questions;
                 const prevStage = window._prevInterviewStage;
+
+                interviewState = data.interview_state;
+
+                // 用后端的岗位信息更新标题，确保岗位始终是用户选择的
+                if (interviewState.target_position) {
+                  document.getElementById('interviewCardTitle').textContent = `模拟面试：${interviewState.target_position}`;
+                }
+
+                // 检测阶段是否切换 → 将已完成阶段的题数加入累积基数
                 if (interviewState.interview_stage && interviewState.interview_stage !== prevStage) {
-                  const stageNames = { hr: 'HR 面', first: '一面（技术面）', second: '二面（综合面）' };
+                  const stageNames = { hr: 'HR 面', first: '一面（专业面）', second: '二面（综合面）' };
                   const stageCls = { hr: 'stage-hr', first: 'stage-first', second: 'stage-second' };
                   const badge = document.getElementById('interviewStageBadge');
                   badge.textContent = stageNames[interviewState.interview_stage] || interviewState.interview_stage;
                   badge.className = 'interview-stage-badge ' + (stageCls[interviewState.interview_stage] || 'stage-hr');
                   window._prevInterviewStage = interviewState.interview_stage;
+                  // 累积已完成阶段的题数
+                  if (prevTotal > 0) {
+                    window._cumBase = (window._cumBase || 0) + prevTotal;
+                  }
                 }
+
+                // 用后端计数同步本地计数，并更新进度
+                _streamQCount = Math.max(
+                  _streamQCount,
+                  interviewState.current_question_index
+                );
+                _updateProgressDisplay(
+                  interviewState.current_question_index,
+                  interviewState.total_questions
+                );
               }
               interviewChatHistory.push({ role: "assistant", content: fullReply });
-              // 面试自然结束时自动保存记录
-              if (interviewState.is_active === false || fullReply.includes('[面试结束]')) {
-                setTimeout(() => {
-                  const originalState = { ...interviewState };
-                  interviewState.is_active = false;
-                  saveInterviewRecord();
-                  Object.assign(interviewState, originalState);
-                }, 100);
-              }
+
             }
           } catch(e) { console.warn('SSE parse error', e); }
         }
@@ -2116,29 +2132,34 @@
   }
 
   // ── 消息渲染 ──
-  function appendMsg(role, content) {
-    const container = document.getElementById('interviewChatMessages');
-    const msg = document.createElement('div');
+  function appendMsg(role, content, badge) {
+    const container = document.getElementById("interviewChatMessages");
+    const msg = document.createElement("div");
     msg.className = `msg ${role}`;
-    const avatar = document.createElement('div');
-    avatar.className = 'msg-avatar';
-    avatar.textContent = role === 'ai' ? '🤖' : '👤';
-    const bubble = document.createElement('div');
-    bubble.className = 'msg-bubble';
+    const avatar = document.createElement("div");
+    avatar.className = "msg-avatar";
+    avatar.textContent = role === "ai" ? "🤖" : "👤";
+    const bubble = document.createElement("div");
+    bubble.className = "msg-bubble";
     bubble.textContent = content
-      .replace(/\*\*(.+?)\*\*/g, '$1')
-      .replace(/\*(.+?)\*/g, '$1')
-      .replace(/__(.+?)__/g, '$1')
-      .replace(/#{1,6}\s?/g, '')
-      .replace(/`{1,3}/g, '')
-      .replace(/>\s/g, '')
-      .replace(/^[-=]{3,}\s*$/gm, '');
+      .replace(/\*\*(.+?)\*\*/g, "$1")
+      .replace(/\*(.+?)\*/g, "$1")
+      .replace(/__(.+?)__/g, "$1")
+      .replace(/#{1,6}\s?/g, "")
+      .replace(/`{1,3}/g, "")
+      .replace(/>\s/g, "")
+      .replace(/^[-=]{3,}\s*$/gm, "");
+    if (role === "ai" && badge) {
+      const badgeEl = document.createElement("span");
+      badgeEl.className = "msg-badge";
+      badgeEl.textContent = badge;
+      msg.appendChild(badgeEl);
+    }
     msg.appendChild(avatar);
     msg.appendChild(bubble);
     container.appendChild(msg);
     container.scrollTop = container.scrollHeight;
   }
-
   // ── 面试记录存储 ──
   const RECORDS_KEY = 'interviewRecords';
 
@@ -2245,7 +2266,10 @@
     document.getElementById('interviewChatArea').classList.remove('active');
     document.getElementById('interviewChatMessages').innerHTML = '';
     document.getElementById('interviewInput').value = '';
-    saveInterviewRecord();
+    if (!window._sessionRecordSaved) {
+      saveInterviewRecord();
+      window._sessionRecordSaved = true;
+    }
     interviewChatHistory = [];
     interviewState = { is_active: false, target_position: "", interview_stage: "", identity: "", gender: "", jd_text: "", current_question_index: 0, total_questions: 8, scores: [], feedbacks: [] };
     selectedPosition = "";

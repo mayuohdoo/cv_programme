@@ -539,6 +539,12 @@ INTERVIEW_COMMON_RULES = """
   - 新问题使用 [Q:N] 标记
   - [追问] 和 [Q:N] 不要在同一句中出现
 
+【🔥 强制规则：关于 [Q:N] 标记】
+  每次问一个新的面试题时，必须在题目开头使用 [Q:N] 标记。
+  N 的编号必须严格递增：第一个问题 [Q:1]，第二个问题 [Q:2]，第三个问题 [Q:3]……
+  追问（follow-up）用 [追问]，不要用 [Q:N]。
+  这是系统追踪面试进度的唯一方式，如果忘记使用 [Q:N]，面试进度将无法正常显示，请务必遵守。
+
 第三步 - 结束：
   所有题目完成后，先使用 [面试结束] 标记，
   然后输出详细的【结构化反馈】（见下方要求）。
@@ -581,7 +587,7 @@ INTERVIEW_COMMON_RULES = """
 [Q:N] 新问题 | [追问] 追问 | [面试结束] 总结评估 | [继续下一面] 阶段过渡
 
 【阶段过渡规则 - 重要】
-阶段顺序：HR面 → 一面（技术面）→ 二面（综合面）
+阶段顺序：HR面 → 一面（专业面）→ 二面（综合面）
 
 当当前阶段所有题目完成后：
 1. 先使用 [面试结束] 标记
@@ -711,7 +717,7 @@ HR_INTERVIEW_PROMPT = """你正在主持一场 HR 面试。你的角色是一位
 
 薪资/反问类问题请严格遵守用户身份规则处理。
 
-题目数量控制在 5-7 题之间，根据用户回答的丰富程度灵活调整。
+一共 8 题。
 
 【评估维度和反馈重点】
 面试结束后的反馈需从以下维度给出评价：
@@ -723,7 +729,7 @@ HR_INTERVIEW_PROMPT = """你正在主持一场 HR 面试。你的角色是一位
 
 现在开始吧。"""
 
-# ── 一面（技术面）Prompt ──
+# ── 一面（专业面）Prompt ──
 FIRST_TECH_INTERVIEW_PROMPT = """你正在主持一场技术面试。你的角色是一位资深技术专家 / Tech Lead。
 
 【你的面试官人设】
@@ -759,7 +765,7 @@ FIRST_TECH_INTERVIEW_PROMPT = """你正在主持一场技术面试。你的角�
 - 技术视野与学习方向
 
 项目相关的问题必须基于简历中的实际经历。如果简历中有实习或工作项目，可以深入追问。
-题目数量控制在 6-8 题之间，根据用户回答的丰富程度灵活调整。
+一共 8 题。
 
 【评估维度和反馈重点】
 面试结束后的反馈需从以下维度给出评价：
@@ -808,7 +814,7 @@ SECOND_COMBO_INTERVIEW_PROMPT = """你正在主持一场综合面试。你的角
 - 反向提问（由候选人提问，考察关注点和思考层次）
 
 问题难度和深度请根据用户身份调整。如果经验较少，可适当降低抽象度，结合实际经历来问。
-题目数量控制在 5-7 题之间。
+一共 6 题。
 
 【评估维度和反馈重点】
 面试结束后的反馈需从以下维度给出评价：
@@ -917,6 +923,16 @@ def _build_chat_messages(request: ChatRequest, rag_context: str = "") -> tuple[l
         if identity in IDENTITY_RULES:
             system += IDENTITY_RULES[identity]
 
+        # 注入称呼规则：有经验者按性别称呼，实习/应届用同学
+        gender = request.interview_state.gender or ""
+        if identity == "experienced":
+            if gender == "male":
+                system += "\n【称呼规则】全程使用「先生」称呼面试者。\n"
+            elif gender == "female":
+                system += "\n【称呼规则】全程使用「女士」称呼面试者。\n"
+        elif identity in ("intern", "fresh"):
+            system += "\n【称呼规则】全程使用「同学」称呼面试者。\n"
+
         # 注入女性婚育偏见模拟训练（HR面 + 女性 + 非找实习）
         if (request.interview_state.interview_stage == "hr"
                 and request.interview_state.gender == "female"
@@ -988,7 +1004,7 @@ def _build_chat_messages(request: ChatRequest, rag_context: str = "") -> tuple[l
         interview_state = request.interview_state
 
         # 注入面试配置（阶段 + JD）
-        stage_names = {"hr": "HR 面", "first": "一面（技术面）", "second": "二面（综合面）"}
+        stage_names = {"hr": "HR 面", "first": "一面（专业面）", "second": "二面（综合面）"}
         stage_descriptions = {
             "hr": "软素质 / 文化适配 / 职业规划",
             "first": "技术深度 / 项目经验 / 问题解决",
@@ -1012,7 +1028,7 @@ def _build_chat_messages(request: ChatRequest, rag_context: str = "") -> tuple[l
 
 [注意] 请围绕JD中的技能要求和岗位职责出题，问题要有针对性。"""
 
-        if interview_state.is_active:
+        if interview_state.is_active or interview_state.current_question_index > 0:
             progress_info = f"""
 
 【面试模拟状态】
@@ -1048,14 +1064,14 @@ def _ensure_feedback_format(text: str) -> str:
     """
     确保反馈文本有正确的换行格式。
     AI 有时会把编号项写成连续段落（一、回答亮点：1.xxx2.xxx），
-    这里自动在编号前插入换行，保证分段显示。
+    这里先清掉已有换行，再统一在每个章节标题和数字条目前插入换行。
     """
-    # 在 "数字." 前插入换行（前面不是数字也不是换行时，避免误伤版本号如 1.0）
-    text = re.sub(r'(?<!\d)(?<!\n)(?=\d+\.(?!\d))', '\n', text)
-    # 在章节标题前插入双换行（如 "二、可以提升的地方"）
-    text = re.sub(r'(?<=[^\n])(?=[二三四五六]、)', '\n\n', text)
-    # 清理多余换行（连续3个以上换成2个）
-    text = re.sub(r'\n{3,}', '\n\n', text)
+    # 1. 清掉所有已有换行（统一从平铺文本开始处理）
+    text = re.sub(r'\n+', '', text)
+    # 2. 在章节标题前插入双换行（如 "一、回答亮点""二、可以提升的地方"）
+    text = re.sub(r'(?=[一二三四五六七八九十]、)', '\n\n', text)
+    # 3. 在数字编号前插入双换行（如 "1. xxx""2、xxx"），避免误伤版本号如 1.0
+    text = re.sub(r'(?<!\d)(?=\d+[.、](?!\d))', '\n\n', text)
     return text.strip()
 
 
@@ -1064,41 +1080,58 @@ def _update_interview_state(interview_state: InterviewState, clean_reply: str) -
     new_state = copy.deepcopy(interview_state)
 
     if new_state.is_active:
-        # 解析 [Q:N] 标记来跟踪问题进度
-        q_match = re.search(r'\[Q:(\d+)\]', clean_reply)
-        if q_match:
-            new_state.current_question_index = int(q_match.group(1))
-
-        # 检测 [继续下一面] 标记 → 过渡到下一阶段
+        # 检测 [继续下一面] 标记 → 过渡到下一阶段（优先处理）
         if '[继续下一面]' in clean_reply:
             next_map = {"hr": "first", "first": "second", "second": ""}
             next_stage = next_map.get(new_state.interview_stage, "")
             if next_stage:
                 new_state.interview_stage = next_stage
-                new_state.current_question_index = 0
+                new_state.current_question_index = 1
                 new_state.is_active = True
-                identity = new_state.identity or ""
                 if next_stage == "hr":
-                    new_state.total_questions = 6
+                    new_state.total_questions = 8
                 elif next_stage == "first":
-                    new_state.total_questions = 6 if identity == "intern" else 8
+                    new_state.total_questions = 8
                 elif next_stage == "second":
                     new_state.total_questions = 6
-        # 检测 [面试结束] 标记（仅在非过渡时触发）
+        # 检测 [面试结束] 标记
         elif '[面试结束]' in clean_reply or '面试结束' in clean_reply:
             new_state.is_active = False
             new_state.current_question_index = new_state.total_questions
+        else:
+            # 正常面试进行中：每轮 AI 回答算一题
+            new_state.current_question_index = min(new_state.current_question_index + 1, new_state.total_questions)
     else:
+        # 非活跃状态：可能刚启动、或刚结束上一轮面试等待用户决定
+        # 优先检测 [继续下一面] — 用户同意继续下一轮面试，AI 已发出标记
+        if '[继续下一面]' in clean_reply:
+            next_map = {"hr": "first", "first": "second", "second": ""}
+            next_stage = next_map.get(new_state.interview_stage, "")
+            if next_stage:
+                new_state.interview_stage = next_stage
+                new_state.current_question_index = 1
+                new_state.is_active = True
+                identity = new_state.identity or ""
+                if next_stage == "hr":
+                    new_state.total_questions = 8
+                elif next_stage == "first":
+                    new_state.total_questions = 8
+                elif next_stage == "second":
+                    new_state.total_questions = 6
+                return new_state
+
+        # 上一轮面试已完全结束，不再继续
         if new_state.current_question_index >= new_state.total_questions and new_state.total_questions > 0:
             return None
+
+        # 首次启动面试
         new_state.is_active = True
         new_state.current_question_index = 1
-        # 根据面试阶段和用户身份自动设置题目数量
         identity = new_state.identity or ""
         if new_state.interview_stage == "hr":
             new_state.total_questions = 8
         elif new_state.interview_stage == "first":
-            new_state.total_questions = 6 if identity == "intern" else 8
+            new_state.total_questions = 8
         elif new_state.interview_stage == "second":
             new_state.total_questions = 6
 
@@ -1192,7 +1225,15 @@ async def chat_stream(request: ChatRequest):
                                 break
                         if safe_end > 0:
                             clean = _strip_markers(buf[:safe_end])
+                            clean = _ensure_feedback_format(clean)
                             buf = buf[safe_end:]
+                            # 检测完整的 [Q:N] 标记并发送实时进度事件
+                            q_event = re.match(r'^\[Q:(\d+)\]', buf)
+                            if q_event:
+                                yield f"data: {json.dumps({'type': 'q', 'index': int(q_event.group(1))}, ensure_ascii=False)}\n\n"
+                            # 检测 [追问] 标记，前端用来打标签
+                            elif re.match(r'^\[追问\]', buf):
+                                yield f"data: {json.dumps({'type': 'f'}, ensure_ascii=False)}\n\n"
                             if clean:
                                 yield f"data: {json.dumps({'type': 'chunk', 'content': clean}, ensure_ascii=False)}\n\n"
                     else:
@@ -1200,6 +1241,11 @@ async def chat_stream(request: ChatRequest):
 
             # 输出缓冲区剩余内容
             if is_interview and buf:
+                # 检测剩余内容中的 [Q:N] 和 [追问] 标记
+                for m in re.finditer(r'\[Q:(\d+)\]', buf):
+                    yield f"data: {json.dumps({'type': 'q', 'index': int(m.group(1))}, ensure_ascii=False)}\n\n"
+                if re.search(r'\[追问\]', buf):
+                    yield f"data: {json.dumps({'type': 'f'}, ensure_ascii=False)}\n\n"
                 clean = _strip_markers(buf)
                 clean = _ensure_feedback_format(clean)
                 if clean:
