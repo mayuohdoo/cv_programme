@@ -652,6 +652,28 @@ IDENTITY_RULES = {
 """,
 }
 
+# ── 女性婚育偏见模拟训练（HR面专用） ──
+GENDER_BIAS_HR_PROMPT = """
+【特殊训练环节 - HR面倒数第2题附近】
+
+由于面试者是「女性」且「非找实习」，请在HR面倒数第2题和反问环节之间，自然插入1-2道婚育相关的职场潜在偏见话题。
+
+这不是真实的企业筛选标准，而是一种「模拟训练」——帮助用户面对职场上可能遇到的不公平问题，练习如何从容应对。
+
+【提问要求】
+- 语气委婉但意图明显，让用户能感受到这是关于婚育/家庭平衡的试探
+- 问题要贴近真实职场场景，保持HR友善关心的口吻。示例如下：
+  1) "我们这个岗位需要比较长期的投入，想问一下你近期有没有结婚或者生育方面的计划呢？"
+  2) "你条件很优秀，但坦白说我们也有些担心——之前招过年轻女员工入职不久就休产假了，项目中间断档影响挺大的。你这边会有这个顾虑吗？"
+- 不要一次性抛完，自然地作为面试后半段的题目依次提出
+- 用户回答后正常追问，追问要结合她的回答，不要主动给模板或建议
+
+【原则】
+- 保持面试官立场，不要跳出来说"这是模拟训练"
+- 所有反馈统一在面试结束后的结构化反馈中给出
+- 在最后的反馈中单独点名这部分的表现，并提供专业的应对建议和话术模板
+"""
+
 # ── HR 面 Prompt ──
 HR_INTERVIEW_PROMPT = """你正在主持一场 HR 面试。你的角色是一位专业、亲和力强的 HR 面试官。
 
@@ -824,6 +846,7 @@ class InterviewState(BaseModel):
     interview_type: str = ""  # (deprecated) "technical", "behavioral", "comprehensive"
     interview_stage: str = ""  # "hr" | "first" | "second"
     identity: str = ""  # "intern" | "fresh" | "experienced" — 用户身份
+    gender: str = ""  # "male" | "female" — 用户性别
     jd_text: str = ""  # 用户粘贴的岗位 JD
     current_question_index: int = 0
     total_questions: int = 8
@@ -893,6 +916,12 @@ def _build_chat_messages(request: ChatRequest, rag_context: str = "") -> tuple[l
         identity = request.interview_state.identity or ""
         if identity in IDENTITY_RULES:
             system += IDENTITY_RULES[identity]
+
+        # 注入女性婚育偏见模拟训练（HR面 + 女性 + 非找实习）
+        if (request.interview_state.interview_stage == "hr"
+                and request.interview_state.gender == "female"
+                and identity != "intern"):
+            system += GENDER_BIAS_HR_PROMPT
     else:
         system = mode_prompts.get(request.mode, DEFAULT_SYSTEM_PROMPT)
 
@@ -1067,7 +1096,7 @@ def _update_interview_state(interview_state: InterviewState, clean_reply: str) -
         # 根据面试阶段和用户身份自动设置题目数量
         identity = new_state.identity or ""
         if new_state.interview_stage == "hr":
-            new_state.total_questions = 6
+            new_state.total_questions = 8
         elif new_state.interview_stage == "first":
             new_state.total_questions = 6 if identity == "intern" else 8
         elif new_state.interview_stage == "second":

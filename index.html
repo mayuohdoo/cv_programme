@@ -1883,11 +1883,12 @@
     selectedPosition = document.getElementById('customPositionInput').value.trim() || selectedPosition;
     if (!selectedPosition || !selectedStage) return;
 
-    // 从冷启动设置中读取用户身份
-    let userIdentity = "";
+    // 从冷启动设置中读取用户身份和性别
+    let userIdentity = "", userGender = "";
     try {
       const profile = JSON.parse(localStorage.getItem('userProfile') || '{}');
       userIdentity = profile.identity || "";
+      userGender = profile.gender || "";
     } catch(e) {}
 
     interviewState = {
@@ -1895,6 +1896,7 @@
       target_position: selectedPosition,
       interview_stage: selectedStage,
       identity: userIdentity,
+      gender: userGender,
       jd_text: document.getElementById('jdTextarea').value.trim(),
       current_question_index: 0,
       total_questions: 8,
@@ -2118,7 +2120,7 @@
     document.getElementById('interviewChatMessages').innerHTML = '';
     document.getElementById('interviewInput').value = '';
     interviewChatHistory = [];
-    interviewState = { is_active: false, target_position: "", interview_stage: "", jd_text: "", current_question_index: 0, total_questions: 8, scores: [], feedbacks: [] };
+    interviewState = { is_active: false, target_position: "", interview_stage: "", identity: "", gender: "", jd_text: "", current_question_index: 0, total_questions: 8, scores: [], feedbacks: [] };
     selectedPosition = "";
     selectedStage = "";
     // 重置进度条
