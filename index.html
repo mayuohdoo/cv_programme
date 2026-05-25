@@ -734,10 +734,20 @@
 
   async function savePdfToDb(id, file) {
     const db = await openDB();
+    let dataToStore = file;
+    // 兼容 Safari：将 File/Blob 转为 ArrayBuffer 存储，避免被浏览器回收或存取失败
+    if (file instanceof Blob) {
+      try {
+        const buffer = await file.arrayBuffer();
+        dataToStore = { buffer, type: file.type, name: file.name };
+      } catch (e) {
+        console.warn('转换为 ArrayBuffer 失败', e);
+      }
+    }
     return new Promise((resolve, reject) => {
       const tx = db.transaction(STORE_NAME, 'readwrite');
       const store = tx.objectStore(STORE_NAME);
-      const request = store.put(file, id);
+      const request = store.put(dataToStore, id);
       request.onsuccess = () => resolve();
       request.onerror = (e) => reject(e.target.error);
     });
@@ -767,12 +777,19 @@
 
   window.openPdfPreview = async function(id) {
     try {
-      const file = await getPdfFromDb(id);
-      if (!file) {
+      const fileData = await getPdfFromDb(id);
+      if (!fileData) {
         alert('本地缓存中找不到该文件（可能在其他电脑上传，或缓存已清理）');
         return;
       }
-      const url = URL.createObjectURL(file);
+      let blob;
+      if (fileData.buffer) {
+        // 从 ArrayBuffer 还原出 Blob
+        blob = new Blob([fileData.buffer], { type: fileData.type || 'application/pdf' });
+      } else {
+        blob = fileData;
+      }
+      const url = URL.createObjectURL(blob);
       window.open(url, '_blank');
     } catch (e) {
       alert('打开文件失败：' + e.message);
