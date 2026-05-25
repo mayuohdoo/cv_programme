@@ -1410,6 +1410,27 @@
       box-shadow: none;
     }
 
+    /* 麦克风按钮 */
+    .agent-mic-btn {
+      width: 36px; height: 36px; border-radius: 50%; border: 1px solid rgba(108,99,255,0.25);
+      background: rgba(108,99,255,0.06); color: var(--accent);
+      font-size: 16px; cursor: pointer; transition: all 0.15s;
+      flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+    }
+    .agent-mic-btn:hover { background: rgba(108,99,255,0.14); }
+    .agent-mic-btn.recording {
+      background: rgba(239,68,68,0.12); color: #ef4444;
+      border-color: rgba(239,68,68,0.3);
+      animation: mic-pulse 1.2s infinite;
+    }
+    @keyframes mic-pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.4); }
+      50% { box-shadow: 0 0 0 6px rgba(239,68,68,0); }
+    }
+    .agent-mic-unsupported {
+      font-size: 10px; color: #92400e; flex-shrink: 0;
+    }
+
     /* --- Clear chat confirmation modal --- */
     .modal-overlay {
       position: fixed;
@@ -3063,6 +3084,8 @@
         <!-- Input area -->
         <div class="agent-input-area">
           <textarea id="agentInput" class="agent-input" placeholder="输入你的想法，我来帮你分析..." rows="1"></textarea>
+          <button id="micBtn" class="agent-mic-btn" onclick="SpeechInput.toggle()" title="语音输入" style="display:none">🎙️</button>
+          <span id="micUnsupported" class="agent-mic-unsupported" style="display:none">⚠️ 当前浏览器不支持语音输入，请使用文字输入</span>
           <button id="agentSendBtn" class="agent-send-btn" onclick="sendInterviewChat()">
             <span>✈️</span>
           </button>
@@ -3630,6 +3653,109 @@
     renderDiagItems("diagGrammar", diag.grammar_issues);
     renderDiagItems("diagRedundancy", diag.redundancy);
   }
+
+  // ── 语音输入工具（麦克风 → 文字填入输入框）──
+  const SpeechInput = (function() {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    let recognition = null;
+    let isListening = false;
+
+    function init() {
+      const btn = document.getElementById('micBtn');
+      const hint = document.getElementById('micUnsupported');
+      if (!SR) {
+        if (hint) { hint.textContent = '⚠️ 当前浏览器不支持语音输入，请使用文字输入'; hint.style.display = 'inline'; }
+        return;
+      }
+      if (btn) btn.style.display = 'flex';
+      recognition = new SR();
+      recognition.lang = 'zh-CN';
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+
+      recognition.onresult = function(event) {
+        const text = event.results[0][0].transcript;
+        const input = document.getElementById('agentInput');
+        if (input) {
+          const current = input.value.trim();
+          input.value = current ? current + ' ' + text : text;
+          input.style.height = 'auto';
+          input.style.height = Math.min(input.scrollHeight, 120) + 'px';
+          input.focus();
+        }
+        // 隐藏任何之前的错误提示
+        if (hint) hint.style.display = 'none';
+        stopListening();
+      };
+
+      recognition.onerror = function(event) {
+        if (hint) {
+          if (event.error === 'no-speech') {
+            hint.textContent = '🎤 没有检测到声音，请靠近麦克风后重试，也可以直接打字';
+          } else if (event.error === 'not-allowed') {
+            hint.textContent = '🎤 麦克风权限被拒绝，请直接使用文字输入';
+          } else if (event.error === 'audio-capture') {
+            hint.textContent = '🎤 未检测到麦克风设备，请直接使用文字输入';
+          } else {
+            hint.textContent = '🎤 语音识别失败，请直接使用文字输入';
+          }
+          hint.style.display = 'inline';
+        }
+        stopListening();
+      };
+
+      recognition.onend = function() {
+        // 如果仍在 listening 状态（不是手动停止），说明系统自动结束了
+        // 不做额外处理，stopListening() 会恢复 UI
+        stopListening();
+      };
+    }
+
+    function toggle() {
+      if (isListening) { stopListening(); }
+      else { startListening(); }
+    }
+
+    function startListening() {
+      if (!recognition) return;
+      const hint = document.getElementById('micUnsupported');
+      if (hint) hint.style.display = 'none'; // 清除之前的错误提示
+      try {
+        isListening = true;
+        updateUI();
+        recognition.start();
+      } catch (e) {
+        if (hint) { hint.textContent = '🎤 语音识别启动失败，请使用文字输入'; hint.style.display = 'inline'; }
+        stopListening();
+      }
+    }
+
+    function stopListening() {
+      isListening = false;
+      updateUI();
+      if (recognition) {
+        try { recognition.stop(); } catch (e) {}
+      }
+    }
+
+    function updateUI() {
+      const btn = document.getElementById('micBtn');
+      if (!btn) return;
+      if (isListening) {
+        btn.classList.add('recording');
+        btn.textContent = '🔴';
+        btn.title = '正在听，请开始说话...';
+      } else {
+        btn.classList.remove('recording');
+        btn.textContent = '🎙️';
+        btn.title = '语音输入';
+      }
+    }
+
+    init();
+    return { toggle, startListening, stopListening };
+  })();
 
   // ── 面试模拟（主区域）──
   let interviewChatHistory = [];
