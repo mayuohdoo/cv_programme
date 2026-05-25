@@ -1820,6 +1820,7 @@
       `;
       const otherInput = jobList.querySelector('.other-job-input');
       otherInput.addEventListener('input', function() {
+        document.getElementById('customPositionInput').value = this.value;
         if (this.value.trim()) {
           document.getElementById('positionPickerBtn').textContent = `✏️ ${this.value.trim()}`;
           selectedPosition = this.value.trim();
