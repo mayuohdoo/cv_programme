@@ -2636,18 +2636,6 @@
 
     <!-- Chat messages area -->
     <div class="agent-messages" id="agentMessages">
-      <!-- Preset questions (shown initially) -->
-      <div class="preset-questions" id="presetQuestions">
-        <div class="preset-question" onclick="sendPresetQuestion(this)">
-          <span>有哪些技巧可以使简历更加吸引HR的注意？</span>
-        </div>
-        <div class="preset-question" onclick="sendPresetQuestion(this)">
-          <span>有什么秘诀可以使得简历在众多求职者中脱颖而出？</span>
-        </div>
-        <div class="preset-question" onclick="sendPresetQuestion(this)">
-          <span>有哪些常见的面试问题以及回答方式？</span>
-        </div>
-      </div>
     </div>
 
     <!-- Input area -->
@@ -3240,9 +3228,9 @@
   }
 
   /**
-   * 显示预设问题
+   * 显示预设问题（根据模式展示对应问题）
    */
-  function showPresetQuestions() {
+  function showPresetQuestions(mode) {
     let pq = document.getElementById("presetQuestions");
     if (pq) pq.remove();
 
@@ -3250,11 +3238,39 @@
     pq.className = "preset-questions";
     pq.id = "presetQuestions";
 
-    const questions = [
-      "有哪些技巧可以使简历更加吸引HR的注意？",
-      "有什么秘诀可以使得简历在众多求职者中脱颖而出？",
-      "有哪些常见的面试问题以及回答方式？"
-    ];
+    const questionMap = {
+      default: [
+        "找工作应该优先考虑行业、公司还是岗位？",
+        "没有相关经验，怎么证明自己能胜任？",
+        "面试被问到\"你的缺点是什么\"该怎么回答？",
+        "怎么判断一家公司值不值得去？",
+        "面试失败后，该怎么复盘和改进？"
+      ],
+      career_switch: [
+        "想转行但没有相关经验，第一步应该做什么？",
+        "转行面试时，怎么说服面试官\"我真的能行\"？",
+        "如何判断自己是否真的适合新赛道？",
+        "跨行业转行，面试问\"为什么离开原行业\"该怎么答？",
+        "转行后从零开始，怎么快速在新行业站稳脚跟？"
+      ],
+      resume_tailor: [
+        "简历排版有什么讲究？",
+        "项目经历太少怎么写？",
+        "STAR法则怎么用？",
+        "简历怎么写出含金量？",
+        "要不要针对不同岗位准备不同版本的简历？"
+      ],
+      career_planning: [
+        "工作遇到瓶颈或迷茫期，该怎么重新规划？",
+        "如何找到自己真正擅长又喜欢的方向？",
+        "应该在大公司深耕还是去小公司全面发展？",
+        "怎么判断当前工作是在积累能力还是在消耗自己？",
+        "如何制定可执行的短中长期职业发展计划？"
+      ],
+      interview_sim: []
+    };
+
+    const questions = questionMap[mode] || questionMap.default;
 
     questions.forEach(q => {
       const el = document.createElement("div");
@@ -3306,6 +3322,9 @@
     updateAgentHeader(mode);
     updateInputPlaceholder(mode);
 
+    // 切换模式时更新预设问题
+    showPresetQuestions(mode);
+
     // 点击面试模拟时重置面试状态，并移除旧进度显示
     if (mode === 'interview_sim') {
       interviewState = {
@@ -3320,8 +3339,11 @@
       const oldProgress = document.getElementById('interviewProgress');
       if (oldProgress) oldProgress.remove();
     }
-    // 卡片点击后自动发送消息
-    setTimeout(() => sendAgentChat(), 100);
+
+    // 面试模拟模式自动发送（开始面试），其他模式展示预设问题让用户选择
+    if (mode === 'interview_sim') {
+      setTimeout(() => sendAgentChat(), 100);
+    }
   }
 
   /**
@@ -3464,8 +3486,8 @@
       const oldProgress = document.getElementById('interviewProgress');
       if (oldProgress) oldProgress.remove();
 
-      // 重新显示预设问题
-      showPresetQuestions();
+      // 重新显示默认预设问题
+      showPresetQuestions('default');
 
       overlay.remove();
     });
@@ -3582,7 +3604,7 @@
   }
 
   // 初始化显示预设问题和输入框placeholder
-  showPresetQuestions();
+  showPresetQuestions('default');
   updateInputPlaceholder("default");
 
   // ========== 侧边栏功能初始化 ==========
