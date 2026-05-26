@@ -939,7 +939,7 @@
     .msg-avatar {
       width: 32px; height: 32px; border-radius: 50%;
       display: flex; align-items: center; justify-content: center;
-      font-size: 16px; flex-shrink: 0;
+      font-size: 16px; flex-shrink: 0; overflow: hidden;
       box-shadow: 0 2px 8px rgba(0,0,0,0.08);
     }
     .msg.ai .msg-avatar {
@@ -3382,7 +3382,17 @@
 
     const avatar = document.createElement("div");
     avatar.className = "msg-avatar";
-    avatar.textContent = role === "ai" ? "🤖" : "👤";
+    if (role === "ai") {
+      avatar.textContent = "🤖";
+    } else {
+      const _p = JSON.parse(localStorage.getItem('userProfile') || '{}');
+      const av = _p.avatar || '👤';
+      if (/\.(png|jpg|jpeg|gif|webp|svg)/i.test(av)) {
+        avatar.innerHTML = `<img src="${av}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+      } else {
+        avatar.textContent = av;
+      }
+    }
 
     if (isResume) {
       const bubble = document.createElement("div");

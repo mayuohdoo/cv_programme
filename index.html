@@ -1249,7 +1249,7 @@
     .interview-chat-messages .msg-avatar {
       width: 32px; height: 32px; border-radius: 50%;
       display: flex; align-items: center; justify-content: center;
-      font-size: 18px; flex-shrink: 0;
+      font-size: 18px; flex-shrink: 0; overflow: hidden;
       background: rgba(240,232,255,0.5);
     }
     .interview-chat-messages .msg.user .msg-avatar {
@@ -1418,7 +1418,7 @@
     .floating-agent-messages .msg-avatar {
       width: 28px; height: 28px; font-size: 15px;
       display: flex; align-items: center; justify-content: center;
-      border-radius: 50%; flex-shrink: 0; background: #fff;
+      border-radius: 50%; flex-shrink: 0; overflow: hidden; background: #fff;
     }
     .floating-agent-messages .msg-bubble {
       max-width: 75%; padding: 10px 14px; border-radius: 12px;
@@ -2809,7 +2809,12 @@
     const avatar = document.createElement("div");
     avatar.className = "msg-avatar";
     const _profile = JSON.parse(localStorage.getItem('userProfile') || '{}');
-    avatar.textContent = role === "ai" ? "🤖" : (_profile.avatar || '👤');
+    const avatarVal = role === "ai" ? "🤖" : (_profile.avatar || '👤');
+    if (/\.(png|jpg|jpeg|gif|webp|svg)/i.test(avatarVal)) {
+      avatar.innerHTML = `<img src="${avatarVal}" alt="头像" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+    } else {
+      avatar.textContent = avatarVal;
+    }
     const bubble = document.createElement("div");
     bubble.className = "msg-bubble";
     bubble.textContent = content
@@ -3442,7 +3447,18 @@
 
   function appendFloatingMsg(role, content) {
     const msg = document.createElement("div"); msg.className = `msg ${role}`;
-    const avatar = document.createElement("div"); avatar.className = "msg-avatar"; avatar.textContent = role === "ai" ? "🤖" : "👤";
+    const avatar = document.createElement("div"); avatar.className = "msg-avatar";
+    if (role === "ai") {
+      avatar.textContent = "🤖";
+    } else {
+      const _p = JSON.parse(localStorage.getItem('userProfile') || '{}');
+      const av = _p.avatar || '👤';
+      if (/\.(png|jpg|jpeg|gif|webp|svg)/i.test(av)) {
+        avatar.innerHTML = `<img src="${av}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+      } else {
+        avatar.textContent = av;
+      }
+    }
     const bubble = document.createElement("div"); bubble.className = "msg-bubble";
     if (role === "ai") {
       bubble.innerHTML = renderMarkdown(content);
@@ -3574,6 +3590,9 @@
     const activeId = localStorage.getItem('activeResumeId');
     const nickname = profile.nickname || '用户';
     const avatar = profile.avatar || nickname[0].toUpperCase();
+    const avatarHtml = /\.(png|jpg|jpeg|gif|webp|svg)/i.test(avatar)
+      ? `<img src="${avatar}" alt="头像" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`
+      : avatar;
 
     // 简历列表 HTML
     const resumesHtml = resumes.length === 0
@@ -3611,7 +3630,7 @@
 
     const html = `
       <div class="profile-header">
-        <div class="profile-avatar-big">${avatar}</div>
+        <div class="profile-avatar-big">${avatarHtml}</div>
         <div class="profile-info">
           <div class="profile-name">${nickname}</div>
           <div class="profile-meta">${profile.identity || '求职者'} · ${resumes.length} 份简历</div>
