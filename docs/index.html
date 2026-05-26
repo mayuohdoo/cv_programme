@@ -964,6 +964,18 @@
       color: var(--gray-700);
       border-top-left-radius: 4px;
     }
+    .msg.ai .msg-bubble p { margin: 0 0 4px; }
+    .msg.ai .msg-bubble p:last-child { margin: 0; }
+    .msg.ai .msg-bubble strong { color: var(--gray-800); font-weight: 600; }
+    .msg.ai .msg-bubble code {
+      background: #f3f0ff; padding: 1px 5px; border-radius: 4px;
+      font-size: 12px; font-family: 'Courier New', monospace;
+    }
+    .msg.ai .msg-bubble h2, .msg.ai .msg-bubble h3,
+    .msg.ai .msg-bubble h4 { margin: 8px 0 4px; font-weight: 600; color: var(--gray-800); }
+    .msg.ai .msg-bubble h2 { font-size: 15px; }
+    .msg.ai .msg-bubble h3 { font-size: 14px; }
+    .msg.ai .msg-bubble h4 { font-size: 13px; }
     .msg.user .msg-bubble {
       background: linear-gradient(135deg, #FFB7C5 0%, #FF9DB3 100%);
       color: #fff;
@@ -3539,7 +3551,55 @@
   }
 
   /**
-   * 发送消息到 Agent
+   * 简单 Markdown → HTML 渲染（支持分点分段）
+   */
+  function renderMarkdown(text) {
+    if (!text) return '<p></p>';
+    let html = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+    html = html.replace(/`(.+?)`/g, '<code>$1</code>');
+    html = html.replace(/^### (.+)$/gm, '<h4>$1</h4>');
+    html = html.replace(/^## (.+)$/gm, '<h3>$1</h3>');
+    html = html.replace(/^# (.+)$/gm, '<h2>$1</h2>');
+    html = html.replace(/\n\s*\n/g, '</p><p>');
+    html = html.replace(/\n/g, '<br>');
+    return '<p>' + html + '</p>';
+  }
+
+  /**
+   * 创建流式消息容器（空气泡，后续逐步填充）
+   */
+  function createStreamingMsg() {
+    hidePresetQuestions();
+    const msg = document.createElement("div");
+    msg.className = "msg ai";
+
+    const avatar = document.createElement("div");
+    avatar.className = "msg-avatar";
+    avatar.textContent = "🤖";
+
+    const bubble = document.createElement("div");
+    bubble.className = "msg-bubble";
+    bubble.id = "streamingBubble";
+
+    msg.appendChild(avatar);
+    msg.appendChild(bubble);
+    agentMessages.appendChild(msg);
+    agentMessages.scrollTop = agentMessages.scrollHeight;
+    return bubble;
+  }
+
+  /**
+   * 更新流式消息气泡内容（渲染 Markdown）
+   */
+  function updateStreamingBubble(bubble, content) {
+    bubble.innerHTML = renderMarkdown(content);
+    agentMessages.scrollTop = agentMessages.scrollHeight;
+  }
+
+  /**
+   * 发送消息到 Agent（流式输出）
    */
   async function sendAgentChat() {
     const text = agentInput.value.trim();
@@ -3561,7 +3621,7 @@
     const resumeCtx = getResumeContext();
 
     try {
-      const res = await fetch(`${API_BASE_URL}/chat`, {
+      const res = await fetch(`${API_BASE_URL}/chat/stream`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -3571,28 +3631,90 @@
           interview_state: currentMode === 'interview_sim' ? interviewState : {}
         }),
       });
-      const data = await res.json();
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.detail || "请求失败");
+      }
+
+      // 移除打字指示器，创建流式消息气泡
       removeTyping();
+      const bubble = createStreamingMsg();
+      let fullReply = "";
+      let receivedDone = false;
 
-      if (!res.ok) throw new Error(data.detail || "请求失败");
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
 
-      const reply = data.reply || "";
-      agentChatHistory.push({ role: "assistant", content: reply });
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
 
-      // 如果后端返回了模式切换，更新当前模式
-      if (data.mode && data.mode !== currentMode) {
-        currentMode = data.mode;
-        updateAgentHeader(currentMode);
-        updateInputPlaceholder(currentMode);
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || ""; // 保留不完整的行
+
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed.startsWith("data: ")) continue;
+
+          try {
+            const data = JSON.parse(trimmed.slice(6));
+            if (data.type === "chunk") {
+              fullReply += data.content;
+              updateStreamingBubble(bubble, fullReply);
+            } else if (data.type === "done") {
+              receivedDone = true;
+              // 最终完成事件
+              fullReply = data.reply || fullReply;
+
+              // 更新聊天历史
+              agentChatHistory.push({ role: "assistant", content: fullReply });
+
+              // 如果后端返回了模式切换
+              if (data.mode && data.mode !== currentMode) {
+                currentMode = data.mode;
+                updateAgentHeader(currentMode);
+                updateInputPlaceholder(currentMode);
+              }
+
+              // 面试模拟模式：更新面试状态 & 进度显示
+              if (data.interview_state) {
+                interviewState = data.interview_state;
+                updateInterviewProgress();
+              }
+
+              // 简历模板标记
+              if (data.has_resume_template) {
+                bubble.id = "";
+                // 重新创建简历模板显示
+                const parentMsg = bubble.closest(".msg");
+                if (parentMsg) {
+                  const newBubble = document.createElement("div");
+                  newBubble.className = "resume-bubble";
+                  newBubble.style.maxWidth = "85%";
+                  newBubble.innerHTML = `
+                    <div class="resume-bubble-header">
+                      <span class="resume-label">✦ 简历模板</span>
+                      <button class="btn-copy" onclick="copyResume(this)">复制</button>
+                    </div>
+                    <div class="resume-content">${fullReply.replace(/</g, "&lt;")}</div>
+                  `;
+                  bubble.replaceWith(newBubble);
+                }
+              }
+            }
+          } catch (e) {
+            // 跳过无法解析的行
+          }
+        }
       }
 
-      // 面试模拟模式：更新面试状态 & 进度显示
-      if (data.interview_state) {
-        interviewState = data.interview_state;
-        updateInterviewProgress();
+      // 安全兜底：流结束但未收到 done 事件时仍保存已收到的内容
+      if (!receivedDone && fullReply) {
+        agentChatHistory.push({ role: "assistant", content: fullReply });
       }
-
-      appendMsg("ai", reply, data.has_resume_template || false);
 
     } catch (err) {
       removeTyping();

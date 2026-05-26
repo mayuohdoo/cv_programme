@@ -1091,7 +1091,7 @@
       border-top-left-radius: 4px;
     }
     .interview-chat-messages .msg.user .msg-bubble {
-      background: linear-gradient(135deg, #d8b4fe, #f9a8d4);
+      background: linear-gradient(135deg, #c084fc, #f472b6);
       color: #fff;
       border-top-right-radius: 4px;
     }
@@ -1202,20 +1202,22 @@
     }
     .floating-agent-card {
       flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px;
-      padding: 12px 8px; border: 1.5px solid #eee; border-radius: 10px;
+      padding: 12px 8px; border: 1.5px solid #e8e0f0; border-radius: 10px;
       background: #fff; cursor: pointer; transition: all 0.25s;
-      font-size: 13px; font-weight: 600; color: #999; font-family: inherit;
+      font-size: 13px; font-weight: 600; color: #b8a0c8; font-family: inherit;
     }
     .floating-agent-card .card-icon { font-size: 18px; }
     .floating-agent-card .card-title { white-space: nowrap; }
     .floating-agent-card:hover {
-      border-color: #d4b8ff; background: #faf5ff; color: #7c3aed;
+      border-color: #c084fc; background: #faf5ff; color: #7c3aed;
     }
     .floating-agent-card.active {
-      border-color: #a78bfa; background: #f5f0ff;
-      color: #6d28d9; font-weight: 700;
-      box-shadow: inset 0 1px 3px rgba(167,139,250,0.15);
+      border-color: #c084fc;
+      background: linear-gradient(135deg, #c084fc, #f472b6);
+      color: #fff; font-weight: 700;
+      box-shadow: 0 4px 12px rgba(192,132,252,0.35);
     }
+    .floating-agent-card.active .card-icon { color: #fff; }
 
     /* 新建对话按钮 - 灰色虚线 */
     .floating-newchat-btn {
@@ -1247,7 +1249,8 @@
       font-size: 13px; line-height: 1.6; word-break: break-word;
     }
     .floating-agent-messages .msg.user .msg-bubble {
-      background: rgba(108,99,255,0.1); color: #404040;
+      background: linear-gradient(135deg, #c084fc, #f472b6);
+      color: #fff;
       border-bottom-right-radius: 4px;
     }
     .floating-agent-messages .msg.ai .msg-bubble {
@@ -1255,6 +1258,18 @@
       border-bottom-left-radius: 4px;
       box-shadow: 0 1px 3px rgba(0,0,0,0.06);
     }
+    .floating-agent-messages .msg.ai .msg-bubble p { margin: 0 0 4px; }
+    .floating-agent-messages .msg.ai .msg-bubble p:last-child { margin: 0; }
+    .floating-agent-messages .msg.ai .msg-bubble strong { color: #222; font-weight: 600; }
+    .floating-agent-messages .msg.ai .msg-bubble code {
+      background: #f3f0ff; padding: 1px 5px; border-radius: 4px;
+      font-size: 12px; font-family: 'Courier New', monospace;
+    }
+    .floating-agent-messages .msg.ai .msg-bubble h2, .floating-agent-messages .msg.ai .msg-bubble h3,
+    .floating-agent-messages .msg.ai .msg-bubble h4 { margin: 8px 0 4px; font-weight: 600; color: #222; }
+    .floating-agent-messages .msg.ai .msg-bubble h2 { font-size: 15px; }
+    .floating-agent-messages .msg.ai .msg-bubble h3 { font-size: 14px; }
+    .floating-agent-messages .msg.ai .msg-bubble h4 { font-size: 13px; }
 
     /* 居中引导面板 */
     .floating-onboarding {
@@ -3232,13 +3247,48 @@
     renderOnboarding(mode);
   }
 
+  /**
+   * 简单 Markdown → HTML 渲染（支持分点分段）
+   */
+  function renderMarkdown(text) {
+    if (!text) return '<p></p>';
+    let html = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+    html = html.replace(/`(.+?)`/g, '<code>$1</code>');
+    html = html.replace(/^### (.+)$/gm, '<h4>$1</h4>');
+    html = html.replace(/^## (.+)$/gm, '<h3>$1</h3>');
+    html = html.replace(/^# (.+)$/gm, '<h2>$1</h2>');
+    html = html.replace(/\n\s*\n/g, '</p><p>');
+    html = html.replace(/\n/g, '<br>');
+    return '<p>' + html + '</p>';
+  }
+
   function appendFloatingMsg(role, content) {
     const msg = document.createElement("div"); msg.className = `msg ${role}`;
     const avatar = document.createElement("div"); avatar.className = "msg-avatar"; avatar.textContent = role === "ai" ? "🤖" : "👤";
     const bubble = document.createElement("div"); bubble.className = "msg-bubble";
-    bubble.textContent = content.replace(/\*\*(.+?)\*\*/g, '$1').replace(/\*(.+?)\*/g, '$1');
+    if (role === "ai") {
+      bubble.innerHTML = renderMarkdown(content);
+    } else {
+      bubble.textContent = content;
+    }
     msg.appendChild(avatar); msg.appendChild(bubble);
     floatingMessages.appendChild(msg); floatingMessages.scrollTop = floatingMessages.scrollHeight;
+  }
+
+  function createFloatingStreamingMsg() {
+    const msg = document.createElement("div"); msg.className = "msg ai";
+    const avatar = document.createElement("div"); avatar.className = "msg-avatar"; avatar.textContent = "🤖";
+    const bubble = document.createElement("div"); bubble.className = "msg-bubble"; bubble.id = "floatingStreamingBubble";
+    msg.appendChild(avatar); msg.appendChild(bubble);
+    floatingMessages.appendChild(msg); floatingMessages.scrollTop = floatingMessages.scrollHeight;
+    return bubble;
+  }
+
+  function updateFloatingStreamingBubble(bubble, content) {
+    bubble.innerHTML = renderMarkdown(content);
+    floatingMessages.scrollTop = floatingMessages.scrollHeight;
   }
 
   function appendFloatingTyping() {
@@ -3260,15 +3310,50 @@
     appendFloatingTyping();
     const resumeCtx = getResumeContext();
     try {
-      const res = await fetch(`${API_BASE_URL}/chat`, {
+      const res = await fetch(`${API_BASE_URL}/chat/stream`, {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ messages: floatingChatHistory, mode: floatingMode, resume_context: resumeCtx, interview_state: {} }),
       });
-      const data = await res.json(); removeFloatingTyping();
-      if (!res.ok) throw new Error(data.detail || "请求失败");
-      const reply = data.reply || "";
-      floatingChatHistory.push({ role: "assistant", content: reply });
-      appendFloatingMsg("ai", reply);
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.detail || "请求失败");
+      }
+      removeFloatingTyping();
+      const bubble = createFloatingStreamingMsg();
+      let fullReply = "";
+      let receivedDone = false;
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
+
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed.startsWith("data: ")) continue;
+          try {
+            const data = JSON.parse(trimmed.slice(6));
+            if (data.type === "chunk") {
+              fullReply += data.content;
+              updateFloatingStreamingBubble(bubble, fullReply);
+            } else if (data.type === "done") {
+              receivedDone = true;
+              fullReply = data.reply || fullReply;
+              floatingChatHistory.push({ role: "assistant", content: fullReply });
+            }
+          } catch (e) { /* skip */ }
+        }
+      }
+      if (!receivedDone && fullReply) {
+        floatingChatHistory.push({ role: "assistant", content: fullReply });
+      }
     } catch (err) {
       removeFloatingTyping(); appendFloatingMsg("ai", "抱歉，出了点问题：" + err.message);
     } finally { floatingIsLoading = false; floatingSendBtn.disabled = false; }
