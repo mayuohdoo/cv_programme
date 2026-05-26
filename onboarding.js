@@ -98,7 +98,7 @@
   function showProfileSetup(overlay) {
     overlay.innerHTML = '' +
       '<div class="ob-profile">' +
-        '<div class="ob-avatar-preview" id="obAvatarPreview">\uD83E\uDDD1</div>' +
+        '<div class="ob-avatar-preview" id="obAvatarPreview"><img src="assets/avatars/avatar-01.png" alt="默认头像" class="ob-avatar-img" onerror="this.style.display=\'none\'"></div>' +
         '<h2 class="ob-profile-title">\u8BBE\u7F6E\u4F60\u7684\u4E2A\u4EBA\u4FE1\u606F</h2>' +
         '<p class="ob-profile-subtitle">\u9009\u62E9\u5934\u50CF\u3001\u6635\u79F0\u548C\u8EAB\u4EFD\uFF0C\u5F00\u59CB\u4F60\u7684\u6C42\u804C\u4E4B\u65C5</p>' +
         '<div class="ob-section-label">\u6027\u522B</div>' +
@@ -108,18 +108,18 @@
         '</div>' +
         '<div class="ob-section-label">\u5934\u50CF</div>' +
         '<div class="ob-avatar-grid" id="obAvatarGrid">' +
-          '<div class="ob-avatar-option" data-avatar="\uD83E\uDDD1">\uD83E\uDDD1</div>' +
-          '<div class="ob-avatar-option" data-avatar="\uD83D\uDE4B\u200D\u2642\uFE0F">\uD83D\uDE4B\u200D\u2642\uFE0F</div>' +
-          '<div class="ob-avatar-option" data-avatar="\uD83D\uDE4B\u200D\u2640\uFE0F">\uD83D\uDE4B\u200D\u2640\uFE0F</div>' +
-          '<div class="ob-avatar-option" data-avatar="\uD83E\uDDD1\u200D\uD83D\uDCBB">\uD83E\uDDD1\u200D\uD83D\uDCBB</div>' +
-          '<div class="ob-avatar-option" data-avatar="\uD83D\uDC68\u200D\uD83C\uDF93">\uD83D\uDC68\u200D\uD83C\uDF93</div>' +
-          '<div class="ob-avatar-option" data-avatar="\uD83D\uDC69\u200D\uD83C\uDF93">\uD83D\uDC69\u200D\uD83C\uDF93</div>' +
-          '<div class="ob-avatar-option" data-avatar="\uD83D\uDC68\u200D\uD83D\uDCBC">\uD83D\uDC68\u200D\uD83D\uDCBC</div>' +
-          '<div class="ob-avatar-option" data-avatar="\uD83D\uDC69\u200D\uD83D\uDCBC">\uD83D\uDC69\u200D\uD83D\uDCBC</div>' +
-          '<div class="ob-avatar-option" data-avatar="\uD83D\uDC68\u200D\uD83D\uDD2C">\uD83D\uDC68\u200D\uD83D\uDD2C</div>' +
-          '<div class="ob-avatar-option" data-avatar="\uD83D\uDC69\u200D\uD83D\uDD2C">\uD83D\uDC69\u200D\uD83D\uDD2C</div>' +
-          '<div class="ob-avatar-option" data-avatar="\uD83E\uDDD1\u200D\uD83C\uDFA8">\uD83E\uDDD1\u200D\uD83C\uDFA8</div>' +
-          '<div class="ob-avatar-option" data-avatar="\uD83E\uDDD1\u200D\uD83D\uDE80">\uD83E\uDDD1\u200D\uD83D\uDE80</div>' +
+          '<div class="ob-avatar-option" data-avatar="assets/avatars/avatar-01.png"><img src="assets/avatars/avatar-01.png" alt="Avatar 1" loading="lazy" onerror="this.parentElement.style.display=\'none\'"></div>' +
+          '<div class="ob-avatar-option" data-avatar="assets/avatars/avatar-02.png"><img src="assets/avatars/avatar-02.png" alt="Avatar 2" loading="lazy" onerror="this.parentElement.style.display=\'none\'"></div>' +
+          '<div class="ob-avatar-option" data-avatar="assets/avatars/avatar-03.png"><img src="assets/avatars/avatar-03.png" alt="Avatar 3" loading="lazy" onerror="this.parentElement.style.display=\'none\'"></div>' +
+          '<div class="ob-avatar-option" data-avatar="assets/avatars/avatar-04.png"><img src="assets/avatars/avatar-04.png" alt="Avatar 4" loading="lazy" onerror="this.parentElement.style.display=\'none\'"></div>' +
+          '<div class="ob-avatar-option" data-avatar="assets/avatars/avatar-05.png"><img src="assets/avatars/avatar-05.png" alt="Avatar 5" loading="lazy" onerror="this.parentElement.style.display=\'none\'"></div>' +
+          '<div class="ob-avatar-option" data-avatar="assets/avatars/avatar-06.png"><img src="assets/avatars/avatar-06.png" alt="Avatar 6" loading="lazy" onerror="this.parentElement.style.display=\'none\'"></div>' +
+          '<div class="ob-avatar-option" data-avatar="assets/avatars/avatar-07.png"><img src="assets/avatars/avatar-07.png" alt="Avatar 7" loading="lazy" onerror="this.parentElement.style.display=\'none\'"></div>' +
+          '<div class="ob-avatar-option" data-avatar="assets/avatars/avatar-08.png"><img src="assets/avatars/avatar-08.png" alt="Avatar 8" loading="lazy" onerror="this.parentElement.style.display=\'none\'"></div>' +
+          '<div class="ob-avatar-option" data-avatar="assets/avatars/avatar-09.png"><img src="assets/avatars/avatar-09.png" alt="Avatar 9" loading="lazy" onerror="this.parentElement.style.display=\'none\'"></div>' +
+          '<div class="ob-avatar-option" data-avatar="assets/avatars/avatar-10.png"><img src="assets/avatars/avatar-10.png" alt="Avatar 10" loading="lazy" onerror="this.parentElement.style.display=\'none\'"></div>' +
+          '<div class="ob-avatar-option" data-avatar="assets/avatars/avatar-11.png"><img src="assets/avatars/avatar-11.png" alt="Avatar 11" loading="lazy" onerror="this.parentElement.style.display=\'none\'"></div>' +
+          '<div class="ob-avatar-option" data-avatar="assets/avatars/avatar-12.png"><img src="assets/avatars/avatar-12.png" alt="Avatar 12" loading="lazy" onerror="this.parentElement.style.display=\'none\'"></div>' +
         '</div>' +
         '<div class="ob-section-label">\u6635\u79F0</div>' +
         '<input type="text" id="obNicknameInput" class="ob-nickname-input" placeholder="\u8F93\u5165\u4F60\u7684\u6635\u79F0..." maxlength="12" />' +
@@ -150,7 +150,17 @@
         overlay.querySelectorAll('.ob-avatar-option').forEach(function(o) { o.classList.remove('ob-avatar-active'); });
         opt.classList.add('ob-avatar-active');
         selectedAvatar = opt.getAttribute('data-avatar');
-        document.getElementById('obAvatarPreview').textContent = selectedAvatar;
+        var previewEl = document.getElementById('obAvatarPreview');
+        if (previewEl) {
+          var imgEl = previewEl.querySelector('.ob-avatar-img');
+          if (imgEl && /\.(png|jpg|jpeg|gif|webp|svg)/i.test(selectedAvatar)) {
+            imgEl.src = selectedAvatar; imgEl.style.display = '';
+          } else if (imgEl) {
+            imgEl.style.display = 'none'; previewEl.textContent = selectedAvatar;
+          } else {
+            previewEl.textContent = selectedAvatar;
+          }
+        }
         check();
       });
     });
@@ -185,7 +195,13 @@
 
   function updateSidebar(data) {
     var a = document.querySelector('.user-avatar-placeholder'), n = document.querySelector('.user-name');
-    if (a && data.avatar) a.textContent = data.avatar;
+    if (a && data.avatar) {
+      if (/\.(png|jpg|jpeg|gif|webp|svg)/i.test(data.avatar)) {
+        a.innerHTML = '<img src="' + data.avatar + '" alt="头像" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">';
+      } else {
+        a.textContent = data.avatar;
+      }
+    }
     if (n && data.nickname) n.textContent = data.nickname;
   }
 })();
