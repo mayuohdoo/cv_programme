@@ -1363,6 +1363,15 @@
       color: white; flex-shrink: 0;
     }
     .floating-agent-title { font-size: 16px; font-weight: 700; letter-spacing: 0.3px; }
+    .floating-history-btn {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 4px 10px; margin-right: 8px;
+      border: 1px solid rgba(255,255,255,0.35);
+      border-radius: 6px; background: rgba(255,255,255,0.12);
+      color: #fff; cursor: pointer; font-size: 12px; font-weight: 600;
+      font-family: inherit; transition: all 0.2s; white-space: nowrap;
+    }
+    .floating-history-btn:hover { background: rgba(255,255,255,0.25); }
     .floating-agent-close {
       width: 28px; height: 28px; border: none; border-radius: 50%;
       background: rgba(255,255,255,0.25); color: white;
@@ -1818,6 +1827,7 @@
     <button class="floating-agent-card" data-floating-mode="career_planning" onclick="handleFloatingCardClick(this)">
       <span class="card-icon">🗺️</span><span class="card-title">职业规划</span>
     </button>
+    <button class="floating-history-btn" onclick="showFloatingHistory()" title="历史记录">📋</button>
     <button class="floating-newchat-btn" onclick="clearFloatingChat()" title="新建对话"><span>+</span></button>
   </div>
   <!-- 消息区 -->
@@ -1829,8 +1839,8 @@
         <div class="ob-welcome">接下来有什么可以帮你的吗</div>
         <div class="ob-scene" id="obSceneTag">💬 通用问答</div>
         <div class="ob-tips-title">💡 你可以试着这样问我：</div>
-        <div class="ob-tip">简历怎么写出含金量？</div>
-        <div class="ob-tip">没有实习经历怎么写简历？</div>
+        <div class="ob-tip">面试中被问到高频敏感问题（如：缺点、离职原因、空窗期）该怎么高情商回答？</div>
+        <div class="ob-tip">面试完感觉挺好但一直没有下文，如何礼貌地向HR跟进结果？</div>
       </div>
     </div>
   </div>
@@ -3350,23 +3360,23 @@
   const onboardingData = {
     default: {
       scene: "💬 通用问答",
-      tips: ["有哪些技巧可以使简历更加吸引HR的注意？", "如何判断一个岗位是否适合自己？"],
-      faqs: ["简历优化有哪些关键点？", "面试前需要做哪些准备？", "投递简历的最佳时间是什么？"]
+      tips: ["面试中被问到高频敏感问题（如：缺点、离职原因、空窗期）该怎么高情商回答？", "面试完感觉挺好但一直没有下文，如何礼貌地向HR跟进结果？"],
+      faqs: ["面试最后的\"你有什么想问我的吗（反问环节）\"，怎么提问最加分？", "收到录取意向后，入职前有哪些关键的「隐藏细节」需要跟 HR 沟通确认？", "同时拿到多个Offer时，应该从哪些维度进行理性的综合性价比抉择？"]
     },
     career_switch: {
       scene: "🚀 换赛道",
-      tips: ["没有技术背景怎么转岗 AI 产品经理？", "传统行业转型互联网，简历怎么扬长避短？"],
-      faqs: ["跳槽如何谈薪？", "如何评估新赛道？", "零经验转行怎么准备？"]
+      tips: ["如何评估自己是否具备目标新方向的「可迁移能力」？", "跨方向/跨行业求职，如何在面试中把\"跨界\"包装成独特优势？"],
+      faqs: ["没有直接相关经验，如何在简历中体现自己与新岗位的匹配度？", "在决定切入一个全新领域前，有哪些低成本的行业调研方法？", "如何向面试官合理解释自己的\"转行/转方向\"动机，显得专业不盲目？"]
     },
     resume_tailor: {
       scene: "📝 修改简历",
-      tips: ["简历怎么写出含金量？", "STAR 法则怎么用？"],
-      faqs: ["项目经历太少怎么写？", "求职信需要写吗？", "简历排版有什么讲究？"]
+      tips: ["如何根据目标岗位的常设描述（JD），快速定制化修改简历？", "日常经历很琐碎/平淡，如何用STAR法则包装得有深度、有亮点？"],
+      faqs: ["如何用\"数据/成果思维\"复盘经历，让简历更有说服力？", "如何优化简历的排版和信息层级，让HR在3秒内抓到核心重点？", "如何写出一份能顺利通过大厂机器（ATS系统）筛选的高过筛率简历？"]
     },
     career_planning: {
       scene: "🗺️ 职业规划",
-      tips: ["未来三年应该怎么规划？", "技术路线和管理路线怎么选？"],
-      faqs: ["30岁转行还来得及吗？", "应该去大公司还是小公司？", "怎么判断一个行业有没有前景？"]
+      tips: ["如何精准定位自己的核心竞争力，找到真正擅长且有前景的方向？", "在大厂和小而美之间，该如何权衡？"],
+      faqs: ["如何建立自己的\"核心护城河\"，让自己在求职市场上具有不可替代性？", "感觉自己陷入了发展瓶颈期/迷茫期，该如何重新规划下一步？", "如何判断当前的环境是否还能让自己成长，还是该果断看新机会了？"]
     }
   };
 
@@ -3436,11 +3446,41 @@
     let html = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
     html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+    html = html.replace(/_(.+?)_/g, '<em>$1</em>');
     html = html.replace(/`(.+?)`/g, '<code>$1</code>');
     html = html.replace(/^### (.+)$/gm, '<h4>$1</h4>');
     html = html.replace(/^## (.+)$/gm, '<h3>$1</h3>');
     html = html.replace(/^# (.+)$/gm, '<h2>$1</h2>');
+    html = html.replace(/^(\d+)\.\s+/gm, '$1. ');
+    html = html.replace(/^[-*]\s+/gm, '• ');
+    html = html.replace(/^>\s+/gm, '');
+    html = html.replace(/^---+$/gm, '<hr>');
+    // 清除残留的 markdown 符号
+    html = html.replace(/[*_]+/g, '');
     html = html.replace(/\n\s*\n/g, '</p><p>');
+    html = html.replace(/\n/g, '<br>');
+    return '<p>' + html + '</p>';
+  }
+
+  /**
+   * 流式专用渲染 — 不分段，避免 streaming 过程中段落突变
+   */
+  function renderMarkdownStreaming(text) {
+    if (!text) return '<p></p>';
+    let html = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+    html = html.replace(/_(.+?)_/g, '<em>$1</em>');
+    html = html.replace(/`(.+?)`/g, '<code>$1</code>');
+    html = html.replace(/^### (.+)$/gm, '<h4>$1</h4>');
+    html = html.replace(/^## (.+)$/gm, '<h3>$1</h3>');
+    html = html.replace(/^# (.+)$/gm, '<h2>$1</h2>');
+    html = html.replace(/^(\d+)\.\s+/gm, '$1. ');
+    html = html.replace(/^[-*]\s+/gm, '• ');
+    html = html.replace(/^>\s+/gm, '');
+    html = html.replace(/^---+$/gm, '<hr>');
+    html = html.replace(/[*_]+/g, '');
+    // 流式时仅换行，不分段，避免视觉突变
     html = html.replace(/\n/g, '<br>');
     return '<p>' + html + '</p>';
   }
@@ -3479,13 +3519,15 @@
   }
 
   function updateFloatingStreamingBubble(bubble, content) {
-    bubble.innerHTML = renderMarkdown(content);
+    bubble.innerHTML = renderMarkdownStreaming(content);
     floatingMessages.scrollTop = floatingMessages.scrollHeight;
   }
 
-  function appendFloatingTyping() {
+  function appendFloatingTyping(text) {
     const msg = document.createElement("div"); msg.className = "msg ai"; msg.id = "floatingTypingMsg";
-    msg.innerHTML = `<div class="msg-avatar">🤖</div><div class="msg-bubble"><div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div></div>`;
+    msg.innerHTML = text
+      ? `<div class="msg-avatar">🤖</div><div class="msg-bubble" style="color:var(--gray-500);font-size:13px;">${text}</div>`
+      : `<div class="msg-avatar">🤖</div><div class="msg-bubble"><div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div></div>`;
     floatingMessages.appendChild(msg); floatingMessages.scrollTop = floatingMessages.scrollHeight;
   }
   function removeFloatingTyping() { const t = document.getElementById("floatingTypingMsg"); if (t) t.remove(); }
@@ -3538,7 +3580,12 @@
             } else if (data.type === "done") {
               receivedDone = true;
               fullReply = data.reply || fullReply;
+              // 流结束后用完整 markdown 重新渲染（分段）
+              if (bubble && bubble.innerHTML !== undefined) {
+                bubble.innerHTML = renderMarkdown(fullReply);
+              }
               floatingChatHistory.push({ role: "assistant", content: fullReply });
+              saveFloatingChatRecord();
             }
           } catch (e) { /* skip */ }
         }
@@ -3557,6 +3604,95 @@
     floatingHasSent = false;
     document.querySelectorAll(".floating-agent-card").forEach(c => c.classList.remove("active"));
     showOnboarding(); renderOnboarding('default');
+  }
+
+  // ========== 浮动面板聊天记录 ==========
+  const FLOATING_RECORDS_KEY = 'floatingChatRecords';
+
+  function saveFloatingChatRecord() {
+    if (!floatingChatHistory || floatingChatHistory.length < 2) return;
+    const modeNames = { default: '通用问答', career_switch: '换赛道', resume_tailor: '修改简历', career_planning: '职业规划' };
+    const records = JSON.parse(localStorage.getItem(FLOATING_RECORDS_KEY) || '[]');
+    const last = records[records.length - 1];
+    if (last && Date.now() - last.savedAt < 5000 && last.mode === floatingMode) return;
+    const firstMsg = floatingChatHistory[1]?.content?.slice(0, 40) || '';
+    const record = {
+      id: 'fc_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+      savedAt: Date.now(),
+      date: new Date().toLocaleString('zh-CN'),
+      mode: floatingMode,
+      modeName: modeNames[floatingMode] || '通用问答',
+      messageCount: Math.ceil(floatingChatHistory.length / 2),
+      preview: firstMsg,
+      messages: JSON.parse(JSON.stringify(floatingChatHistory)),
+    };
+    records.push(record);
+    if (records.length > 50) records.splice(0, records.length - 50);
+    localStorage.setItem(FLOATING_RECORDS_KEY, JSON.stringify(records));
+  }
+
+  function getFloatingChatRecords() {
+    return JSON.parse(localStorage.getItem(FLOATING_RECORDS_KEY) || '[]');
+  }
+
+  function deleteFloatingChatRecord(id) {
+    let records = getFloatingChatRecords();
+    records = records.filter(r => r.id !== id);
+    localStorage.setItem(FLOATING_RECORDS_KEY, JSON.stringify(records));
+    return records;
+  }
+
+  function showFloatingHistory() {
+    const records = getFloatingChatRecords();
+    if (records.length === 0) {
+      alert('暂无历史记录，完成一段对话后会自动保存');
+      return;
+    }
+    // 用 openModal 展示
+    let html = '<div style="display:flex;flex-direction:column;gap:8px;max-height:380px;overflow-y:auto;">';
+    for (let i = records.length - 1; i >= 0; i--) {
+      const r = records[i];
+      html += '<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:12px;background:rgba(240,232,255,0.4);border:1px solid rgba(180,120,255,0.15);">';
+      html += '<div style="flex:1;min-width:0;">';
+      html += '<div style="font-weight:600;font-size:13px;color:#4c1d95;">' + r.modeName + '</div>';
+      html += '<div style="font-size:11px;color:#9d7ab8;margin-top:2px;">' + r.date + ' · ' + r.messageCount + '轮对话</div>';
+      html += '<div style="font-size:11px;color:#bbb;margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + (r.preview || '') + '</div>';
+      html += '</div>';
+      html += '<button onclick="loadFloatingChatRecord(\'' + r.id + '\')" style="padding:5px 12px;border:none;border-radius:8px;background:linear-gradient(135deg,#c084fc,#f472b6);color:#fff;font-size:11px;font-weight:600;cursor:pointer;">恢复</button>';
+      html += '<button onclick="deleteFloatingRecord(\'' + r.id + '\')" style="padding:5px 8px;border:none;border-radius:8px;background:rgba(239,68,68,0.1);color:#ef4444;font-size:11px;font-weight:600;cursor:pointer;">×</button>';
+      html += '</div>';
+    }
+    html += '</div>';
+    openModal('📋 对话历史', '共 ' + records.length + ' 条记录', html);
+  }
+
+  function loadFloatingChatRecord(id) {
+    const records = getFloatingChatRecords();
+    const r = records.find(rec => rec.id === id);
+    if (!r) { alert('记录不存在'); return; }
+    floatingChatHistory = []; floatingMessages.innerHTML = "";
+    if (r.messages) {
+      r.messages.forEach(function(m) {
+        floatingChatHistory.push({ role: m.role, content: m.content });
+        appendFloatingMsg(m.role === 'user' ? 'user' : 'ai', m.content);
+      });
+    }
+    if (r.mode) {
+      floatingMode = r.mode;
+      floatingInput.placeholder = floatingPlaceholders[r.mode] || floatingPlaceholders.default;
+      document.querySelectorAll(".floating-agent-card").forEach(function(c) {
+        if (c.dataset.floatingMode === r.mode) c.classList.add("active");
+        else c.classList.remove("active");
+      });
+    }
+    floatingHasSent = true;
+    hideOnboarding();
+    closeModal();
+  }
+
+  function deleteFloatingRecord(id) {
+    deleteFloatingChatRecord(id);
+    showFloatingHistory();
   }
 
   floatingInput.addEventListener("input", () => {
