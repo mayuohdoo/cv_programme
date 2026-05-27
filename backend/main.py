@@ -288,6 +288,50 @@ def _parse_resume_with_ai(raw_text: str) -> dict[str, Any]:
    - overall_comment: 字符串，一句话总体评价（30字以内）。
      【要求】：如果有问题，必须明确指出（如："发现3处错别字和2处病句，建议仔细校对"）；如果质量优秀，可以正面评价（如："表达专业简洁，未发现明显问题"）
 
+8) education: 数组，教育背景信息。每项包含：
+   - school: 字符串，学校名称
+   - major: 字符串，专业名称
+   - degree: 字符串，学历（本科/硕士/博士/大专）
+   - period: 字符串，就读时间段（如 "2019.09-2023.06"）
+   【要求】：按时间倒序排列；如果简历中有教育经历段，必须完整提取所有条目；
+            没有教育经历则返回空数组[]
+
+9) experience: 数组，实习/工作经历。每项包含：
+   - company: 字符串，公司名称
+   - position: 字符串，岗位名称
+   - period: 字符串，工作时间段（如 "2022.06-2022.09"）
+   - description: 字符串，经历描述原文。如果简历中只写了岗位名称没有展开描述，返回空字符串 ""
+   【要求】：按时间倒序排列；没有经历则返回空数组[]
+   【重要】description 必须严格来自简历原文，**绝对禁止**根据公司名或岗位名自行编造内容。
+
+10) projects: 数组，项目经历。每项包含：
+    - name: 字符串，项目名称
+    - period: 字符串，项目时间（如 "2023.01-2023.06"）
+    - tech_stack: 字符串，使用的技术栈
+    - contribution: 字符串，个人贡献描述原文
+    - result: 字符串，数据成果描述原文
+    【要求】：按时间倒序排列；没有项目则返回空数组[]
+    【重要】所有字段必须严格来自简历原文，**绝对禁止**根据项目名称自行编造技术栈或成果。
+
+11) competitions: 数组，竞赛/获奖经历。每项包含：
+    - name: 字符串，竞赛名称或奖项名称
+    - level: 字符串，级别（校级/省级/国家级/国际级）
+    - ranking: 字符串，名次或奖项（如 "一等奖" / "金奖" / "前10%"）
+    - description: 字符串，经历描述原文。如果简历中只写了奖项名称没有展开，返回空字符串 ""
+    【要求】：没有则返回空数组[]
+    【重要】description **绝对禁止**编造，没有写就返回 ""
+
+12) campus_experience: 数组，校园经历/社团/学生会/组织活动等。每项包含：
+    - organization: 字符串，组织名称
+    - role: 字符串，担任职务
+    - period: 字符串，时间段
+    - description: 字符串，经历描述原文
+    【要求】：没有则返回空数组[]
+    【重要】description 必须来自简历原文，**绝对禁止**编造。
+
+13) self_evaluation: 字符串，简历中的自我评价/个人总结原文。如果没有则返回空字符串 ""。
+    【重要】必须来自简历原文，**绝对禁止**自行撰写或推断。
+
 【重要提示】：
 - 如果简历质量确实很好，typos/grammar_issues/redundancy/timeline_issues/star_issues 可以为空数组，overall_score 可以给 85-100 分
 - 但如果发现了问题，必须如实指出，不要遗漏，不要因为礼貌而隐瞒
@@ -872,6 +916,12 @@ class ResumeContext(BaseModel):
     extracted_skills: list = []
     resume_text: str = ""
     job_recommendations: list = []
+    education: list = []
+    experience: list = []
+    projects: list = []
+    competitions: list = []
+    campus_experience: list = []
+    self_evaluation: str = ""
 
 
 class InterviewState(BaseModel):
@@ -1012,16 +1062,61 @@ def _build_chat_messages(request: ChatRequest, rag_context: str = "") -> tuple[l
                 resume_block += f"  {i}. {title}（{industry}）{score_str}{salary_str}{ms_str}\n"
 
         if ctx.resume_text:
-            resume_block += f"\n【简历原文】\n{ctx.resume_text[:2000]}\n"
+            resume_block += f"\n【简历原文】\n{ctx.resume_text[:6000]}\n"
+
+        # 结构化经历数据
+        if ctx.education:
+            resume_block += f"\n教育背景:\n"
+            for e in ctx.education:
+                resume_block += f"  - {e.get('school','')} | {e.get('major','')} | {e.get('degree','')} | {e.get('period','')}\n"
+
+        if ctx.experience:
+            resume_block += f"\n实习/工作经历:\n"
+            for e in ctx.experience:
+                resume_block += f"  - {e.get('company','')} | {e.get('position','')} | {e.get('period','')}\n"
+                if e.get('description'):
+                    resume_block += f"    描述: {e['description']}\n"
+
+        if ctx.projects:
+            resume_block += f"\n项目经历:\n"
+            for p in ctx.projects:
+                resume_block += f"  - {p.get('name','')} | {p.get('period','')}\n"
+                if p.get('tech_stack'):
+                    resume_block += f"    技术栈: {p['tech_stack']}\n"
+                if p.get('contribution'):
+                    resume_block += f"    贡献: {p['contribution']}\n"
+                if p.get('result'):
+                    resume_block += f"    成果: {p['result']}\n"
+
+        if ctx.competitions:
+            resume_block += f"\n竞赛/获奖:\n"
+            for c in ctx.competitions:
+                ranking_str = f" | {c.get('ranking','')}" if c.get('ranking') else ""
+                resume_block += f"  - {c.get('name','')}（{c.get('level','')}{ranking_str}）\n"
+                if c.get('description'):
+                    resume_block += f"    描述: {c['description']}\n"
+
+        if ctx.campus_experience:
+            resume_block += f"\n校园经历:\n"
+            for c in ctx.campus_experience:
+                resume_block += f"  - {c.get('organization','')} | {c.get('role','')} | {c.get('period','')}\n"
+                if c.get('description'):
+                    resume_block += f"    描述: {c['description']}\n"
+
+        if ctx.self_evaluation:
+            resume_block += f"\n自我评价: {ctx.self_evaluation}\n"
 
         force_rules = """
 [强制规则 - 必须100%遵守]
-用户已经上传了完整的简历，上面就是全部简历数据。
-1. 禁止询问任何简历中已有的信息，包括：姓名、学历、专业、学校、技能、工作经验、项目经历、城市等
-2. 直接基于简历数据回答用户的问题
-3. 回答时要引用具体的简历内容（如"我看到你有XX技能"、"根据你的XX经历"）
-4. 如果用户问的是简历中没有的细节（如具体某段经历的补充信息），可以请用户补充
-5. 绝对不要以"请先告诉我以下信息"开头
+用户已经上传了完整的简历。"【简历原文】"中是完整的简历文本，结构化摘要（教育背景/实习经历等）仅为辅助提炼。
+1. **优先查看【简历原文】**中的完整文本获取信息，结构化摘要可能不完整。
+2. 禁止询问任何简历中已有的信息，包括：姓名、学历、专业、学校、技能、工作经验、项目经历、城市等
+3. 直接基于简历数据回答用户的问题
+4. 回答时要引用具体的简历内容（如"我看到你有XX技能"、"根据你的XX经历"）
+5. 如果用户问的是简历中没有的细节（如具体某段经历的补充信息），可以请用户补充
+6. 绝对不要以"请先告诉我以下信息"开头
+7. **绝不编造简历内容**。对于简历中没有详细描述的经历（仅有名称无具体内容），
+   保持原样并引导用户补充，不得自行编造工作内容、项目细节、成果数据等。
 
 """
         system = resume_block + force_rules + system

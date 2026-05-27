@@ -2432,7 +2432,7 @@
     const activeId = localStorage.getItem('activeResumeId');
     const active = resumes.find(r => r.id === activeId) || resumes.find(r => r.parsed) || null;
     if (!active || !active.parsed) {
-      return { has_resume: false, candidate_summary: "", resume_text: "", extracted_skills: [], job_recommendations: [], resume_diagnosis: null };
+      return { has_resume: false, candidate_summary: "", resume_text: "", extracted_skills: [], job_recommendations: [], resume_diagnosis: null, education: [], experience: [], projects: [], competitions: [], campus_experience: [], self_evaluation: "" };
     }
     const pd = active.parseResult?.parsed_data || {};
     return {
@@ -2446,6 +2446,12 @@
       extracted_skills: pd.extracted_skills || [],
       resume_text: active.parsed_text || active.parseResult?.raw_text || "",
       job_recommendations: pd.job_recommendations || [],
+      education: pd.education || [],
+      experience: pd.experience || [],
+      projects: pd.projects || [],
+      competitions: pd.competitions || [],
+      campus_experience: pd.campus_experience || [],
+      self_evaluation: pd.self_evaluation || "",
     };
   }
 
