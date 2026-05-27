@@ -1455,6 +1455,9 @@
     .floating-agent-messages .msg.ai .msg-bubble h2 { font-size: 15px; }
     .floating-agent-messages .msg.ai .msg-bubble h3 { font-size: 14px; }
     .floating-agent-messages .msg.ai .msg-bubble h4 { font-size: 13px; }
+    .floating-agent-messages .msg.ai .msg-bubble table { border-collapse: collapse; width: 100%; margin: 6px 0; font-size: 13px; }
+    .floating-agent-messages .msg.ai .msg-bubble th, .floating-agent-messages .msg.ai .msg-bubble td { border: 1px solid #ddd; padding: 5px 8px; text-align: left; }
+    .floating-agent-messages .msg.ai .msg-bubble th { background: #f5f5f5; font-weight: 600; }
 
     /* 居中引导面板 */
     .floating-onboarding {
@@ -3441,13 +3444,32 @@
   /**
    * 简单 Markdown → HTML 渲染（支持分点分段）
    */
+  function escapeHtml(text) {
+    return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function renderTable(m) {
+    var lines = m.split('\n').filter(function(l){ return l.trim(); });
+    if (lines.length < 2) return escapeHtml(m);
+    var sepIdx = -1;
+    for (var i = 0; i < lines.length; i++) { if (/^\|[\s:| -]+\|$/.test(lines[i].trim())) { sepIdx = i; break; } }
+    if (sepIdx < 0) return escapeHtml(m);
+    var tbl = '<table>';
+    for (var i = 0; i < sepIdx; i++) { var c = lines[i].split('|').filter(function(x){ return x.trim(); }); if (c.length) tbl += '<tr><th>' + c.map(function(x){ return x.trim(); }).join('</th><th>') + '</th></tr>'; }
+    for (var i = sepIdx + 1; i < lines.length; i++) { if (/^[\s:| -]+$/.test(lines[i].trim())) continue; var c = lines[i].split('|').filter(function(x){ return x.trim(); }); if (c.length) tbl += '<tr><td>' + c.map(function(x){ return x.trim(); }).join('</td><td>') + '</td></tr>'; }
+    return tbl + '</table>';
+  }
+
   function renderMarkdown(text) {
     if (!text) return '<p></p>';
-    let html = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    let html = text.replace(/<br\s*\/?>/gi, '\n');
+    html = escapeHtml(html);
     html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
     html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
     html = html.replace(/_(.+?)_/g, '<em>$1</em>');
     html = html.replace(/`(.+?)`/g, '<code>$1</code>');
+    // 表格支持
+    html = html.replace(/((?:\|[^\n]*\|[ \t]*(?:\n|$)){2,})/g, renderTable);
     html = html.replace(/^### (.+)$/gm, '<h4>$1</h4>');
     html = html.replace(/^## (.+)$/gm, '<h3>$1</h3>');
     html = html.replace(/^# (.+)$/gm, '<h2>$1</h2>');
@@ -3463,26 +3485,11 @@
   }
 
   /**
-   * 流式专用渲染 — 不分段，避免 streaming 过程中段落突变
+   * 流式专用渲染 — 与完整渲染逻辑完全一致
+   * 流结束后不再重新渲染，避免 DOM 突变
    */
   function renderMarkdownStreaming(text) {
-    if (!text) return '<p></p>';
-    let html = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-    html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
-    html = html.replace(/_(.+?)_/g, '<em>$1</em>');
-    html = html.replace(/`(.+?)`/g, '<code>$1</code>');
-    html = html.replace(/^### (.+)$/gm, '<h4>$1</h4>');
-    html = html.replace(/^## (.+)$/gm, '<h3>$1</h3>');
-    html = html.replace(/^# (.+)$/gm, '<h2>$1</h2>');
-    html = html.replace(/^(\d+)\.\s+/gm, '$1. ');
-    html = html.replace(/^[-*]\s+/gm, '• ');
-    html = html.replace(/^>\s+/gm, '');
-    html = html.replace(/^---+$/gm, '<hr>');
-    html = html.replace(/[*_]+/g, '');
-    // 流式时仅换行，不分段，避免视觉突变
-    html = html.replace(/\n/g, '<br>');
-    return '<p>' + html + '</p>';
+    return renderMarkdown(text);
   }
 
   function appendFloatingMsg(role, content) {
@@ -3580,10 +3587,7 @@
             } else if (data.type === "done") {
               receivedDone = true;
               fullReply = data.reply || fullReply;
-              // 流结束后用完整 markdown 重新渲染（分段）
-              if (bubble && bubble.innerHTML !== undefined) {
-                bubble.innerHTML = renderMarkdown(fullReply);
-              }
+              // 流式渲染已与完整渲染一致，无需重新渲染避免 DOM 突变
               floatingChatHistory.push({ role: "assistant", content: fullReply });
               saveFloatingChatRecord();
             }
