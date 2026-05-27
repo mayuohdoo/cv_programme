@@ -2059,7 +2059,8 @@
   const profile = JSON.parse(localStorage.getItem('userProfile') || '{}');
   if (profile.nickname) {
     document.getElementById('greetingText').textContent = `Hi，${profile.nickname} 👋`;
-    document.getElementById('navAvatar').textContent = profile.nickname[0].toUpperCase();
+    const navAvatarEl = document.getElementById('navAvatar');
+    if (navAvatarEl) navAvatarEl.textContent = profile.nickname[0].toUpperCase();
   }
 
   // Load resumes - now updates Profile Modal if open, plus tools unlock state
