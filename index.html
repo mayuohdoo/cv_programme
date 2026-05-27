@@ -1249,7 +1249,7 @@
     .interview-chat-messages .msg-avatar {
       width: 32px; height: 32px; border-radius: 50%;
       display: flex; align-items: center; justify-content: center;
-      font-size: 18px; flex-shrink: 0;
+      font-size: 18px; flex-shrink: 0; overflow: hidden;
       background: rgba(240,232,255,0.5);
     }
     .interview-chat-messages .msg.user .msg-avatar {
@@ -1267,7 +1267,7 @@
       border-top-left-radius: 4px;
     }
     .interview-chat-messages .msg.user .msg-bubble {
-      background: linear-gradient(135deg, #d8b4fe, #f9a8d4);
+      background: linear-gradient(135deg, #c084fc, #f472b6);
       color: #fff;
       border-top-right-radius: 4px;
     }
@@ -1331,6 +1331,230 @@
       .interview-chat-messages { padding: 16px 16px; }
       .interview-input-area { padding: 10px 12px 12px; }
     }
+    /* ========== 求职助手浮动面板 ========== */
+    .floating-agent-backdrop {
+      position: fixed; inset: 0; z-index: 1999;
+      background: var(--overlay-bg);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      display: none;
+    }
+    .floating-agent-backdrop.open { display: block; }
+
+    .floating-agent-overlay {
+      position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      z-index: 2000;
+      width: 100%; max-width: 1100px;
+      height: calc(100vh - 100px);
+      background: var(--card-bg);
+      box-shadow: var(--card-shadow);
+      border: var(--card-border);
+      border-radius: var(--radius-card);
+      display: none; flex-direction: column;
+      overflow: hidden;
+    }
+    .floating-agent-overlay.open { display: flex; }
+
+    /* Header */
+    .floating-agent-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 24px;
+      background: linear-gradient(135deg, #c084fc, #f472b6);
+      color: white; flex-shrink: 0;
+    }
+    .floating-agent-title { font-size: 16px; font-weight: 700; letter-spacing: 0.3px; }
+    .floating-history-btn {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 4px 10px; margin-right: 8px;
+      border: 1px solid rgba(255,255,255,0.35);
+      border-radius: 6px; background: rgba(255,255,255,0.12);
+      color: #fff; cursor: pointer; font-size: 12px; font-weight: 600;
+      font-family: inherit; transition: all 0.2s; white-space: nowrap;
+    }
+    .floating-history-btn:hover { background: rgba(255,255,255,0.25); }
+    .floating-agent-close {
+      width: 28px; height: 28px; border: none; border-radius: 50%;
+      background: rgba(255,255,255,0.25); color: white;
+      cursor: pointer; font-size: 14px; display: flex;
+      align-items: center; justify-content: center; transition: background 0.2s;
+    }
+    .floating-agent-close:hover { background: rgba(255,255,255,0.4); }
+
+    /* 场景卡片行 */
+    .floating-agent-cards {
+      display: flex; gap: 8px; padding: 16px 24px 12px;
+      flex-shrink: 0; background: #fff;
+    }
+    .floating-agent-card {
+      flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px;
+      padding: 12px 8px; border: 1.5px solid #e8e0f0; border-radius: 10px;
+      background: #fff; cursor: pointer; transition: all 0.25s;
+      font-size: 13px; font-weight: 600; color: #b8a0c8; font-family: inherit;
+    }
+    .floating-agent-card .card-icon { font-size: 18px; }
+    .floating-agent-card .card-title { white-space: nowrap; }
+    .floating-agent-card:hover {
+      border-color: #c084fc; background: #faf5ff; color: #7c3aed;
+    }
+    .floating-agent-card.active {
+      border-color: #c084fc;
+      background: linear-gradient(135deg, #c084fc, #f472b6);
+      color: #fff; font-weight: 700;
+      box-shadow: 0 4px 12px rgba(192,132,252,0.35);
+    }
+    .floating-agent-card.active .card-icon { color: #fff; }
+
+    /* 新建对话按钮 - 灰色虚线 */
+    .floating-newchat-btn {
+      width: 40px; height: 40px; flex-shrink: 0; align-self: center;
+      border: 1.5px dashed #d4d4d4; border-radius: 10px;
+      background: transparent; color: #bbb;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      font-size: 18px; font-weight: 400; transition: all 0.2s;
+    }
+    .floating-newchat-btn:hover {
+      border-color: #a78bfa; color: #a78bfa; background: #faf5ff;
+    }
+
+    /* 消息区 */
+    .floating-agent-messages {
+      flex: 1; overflow-y: auto; padding: 12px 24px;
+      display: flex; flex-direction: column; gap: 10px;
+      min-height: 0; background: #fafafa;
+    }
+    .floating-agent-messages .msg { display: flex; gap: 8px; max-width: 100%; }
+    .floating-agent-messages .msg.user { flex-direction: row-reverse; }
+    .floating-agent-messages .msg-avatar {
+      width: 28px; height: 28px; font-size: 15px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 50%; flex-shrink: 0; overflow: hidden; background: #fff;
+    }
+    .floating-agent-messages .msg-bubble {
+      max-width: 75%; padding: 10px 14px; border-radius: 12px;
+      font-size: 13px; line-height: 1.6; word-break: break-word;
+    }
+    .floating-agent-messages .msg.user .msg-bubble {
+      background: linear-gradient(135deg, #c084fc, #f472b6);
+      color: #fff;
+      border-bottom-right-radius: 4px;
+    }
+    .floating-agent-messages .msg.ai .msg-bubble {
+      background: #fff; color: #404040;
+      border-bottom-left-radius: 4px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+    .floating-agent-messages .msg.ai .msg-bubble p { margin: 0 0 4px; }
+    .floating-agent-messages .msg.ai .msg-bubble p:last-child { margin: 0; }
+    .floating-agent-messages .msg.ai .msg-bubble strong { color: #222; font-weight: 600; }
+    .floating-agent-messages .msg.ai .msg-bubble code {
+      background: #f3f0ff; padding: 1px 5px; border-radius: 4px;
+      font-size: 12px; font-family: 'Courier New', monospace;
+    }
+    .floating-agent-messages .msg.ai .msg-bubble h2, .floating-agent-messages .msg.ai .msg-bubble h3,
+    .floating-agent-messages .msg.ai .msg-bubble h4 { margin: 8px 0 4px; font-weight: 600; color: #222; }
+    .floating-agent-messages .msg.ai .msg-bubble h2 { font-size: 15px; }
+    .floating-agent-messages .msg.ai .msg-bubble h3 { font-size: 14px; }
+    .floating-agent-messages .msg.ai .msg-bubble h4 { font-size: 13px; }
+    .floating-agent-messages .msg.ai .msg-bubble table { border-collapse: collapse; width: 100%; margin: 6px 0; font-size: 13px; }
+    .floating-agent-messages .msg.ai .msg-bubble th, .floating-agent-messages .msg.ai .msg-bubble td { border: 1px solid #ddd; padding: 5px 8px; text-align: left; }
+    .floating-agent-messages .msg.ai .msg-bubble th { background: #f5f5f5; font-weight: 600; }
+
+    /* 居中引导面板 */
+    .floating-onboarding {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 20px; text-align: center;
+    }
+    .floating-onboarding-inner {
+      max-width: 520px; width: 100%;
+      background: #fff; border-radius: 12px;
+      padding: 36px 32px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+    }
+    .floating-onboarding-inner .ob-emoji {
+      font-size: 40px; display: block; margin-bottom: 16px;
+    }
+    .floating-onboarding-inner .ob-welcome {
+      font-size: 15px; font-weight: 600; color: #333;
+      margin-bottom: 16px; line-height: 1.6;
+    }
+    .floating-onboarding-inner .ob-scene {
+      display: inline-block;
+      background: linear-gradient(135deg, #ede9fe, #fdf2f8);
+      color: #7c3aed; font-weight: 700;
+      padding: 4px 14px; border-radius: 999px;
+      font-size: 13px; margin-bottom: 20px;
+    }
+    .floating-onboarding-inner .ob-tips-title {
+      font-size: 12px; color: #999; font-weight: 600;
+      margin-bottom: 10px;
+    }
+    .floating-onboarding-inner .ob-tip {
+      font-size: 13px; color: #666; line-height: 1.8;
+      padding: 6px 14px; margin: 4px 0;
+      background: #f9f9f9; border-radius: 8px;
+      text-align: left; cursor: pointer; transition: all 0.15s;
+    }
+    .floating-onboarding-inner .ob-tip:hover {
+      background: #f3edff; color: #6d28d9;
+    }
+    .floating-onboarding-inner .ob-tip::before {
+      content: "• "; color: #a78bfa; font-weight: 700;
+    }
+    .floating-onboarding-inner .ob-faq-title {
+      font-size: 12px; color: #bbb; font-weight: 600;
+      margin: 16px 0 8px; padding-top: 12px;
+      border-top: 1px solid #f0f0f0; text-align: center;
+    }
+
+    /* 输入区 */
+    .floating-agent-input-area {
+      display: flex; gap: 8px; padding: 4px 24px 16px;
+      flex-shrink: 0; background: #fff;
+    }
+    .floating-agent-input {
+      flex: 1; border: 1.5px solid #e5e5e5; border-radius: 10px;
+      padding: 10px 14px; font-size: 13px; font-family: inherit;
+      resize: none; outline: none; min-height: 40px; max-height: 96px;
+      line-height: 1.5; transition: border-color 0.2s;
+    }
+    .floating-agent-input:focus { border-color: #a78bfa; }
+    .floating-agent-send-btn {
+      width: 40px; height: 40px; border: none; border-radius: 10px;
+      background: #a78bfa; color: white; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; flex-shrink: 0; transition: all 0.2s;
+    }
+    .floating-agent-send-btn:hover { background: #8b6fe8; }
+    .floating-agent-send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* Typing indicator */
+    .typing-indicator { display: flex; gap: 4px; align-items: center; padding: 4px 0; }
+    .typing-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: #ccc; animation: typingBounce 1.4s infinite ease-in-out;
+    }
+    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes typingBounce {
+      0%, 80%, 100% { transform: translateY(0); }
+      40% { transform: translateY(-6px); }
+    }
+
+    .nav-action-btn.agent-active {
+      background: rgba(192,132,252,0.2) !important;
+      border-color: rgba(192,132,252,0.5) !important;
+      color: #7c3aed !important;
+    }
+
+    @media (max-width: 560px) {
+      .floating-agent-overlay {
+        width: calc(100vw - 32px); max-height: 80vh;
+      }
+      .floating-agent-card { padding: 10px 6px; font-size: 12px; }
+      .floating-onboarding-inner { padding: 24px 16px; }
+      .floating-preset-tag { font-size: 11px; padding: 5px 12px; }
+    }
   </style>
 </head>
 <body>
@@ -1340,6 +1564,10 @@
   <div class="nav-inner">
     <span class="nav-logo">✦ 小小求职拿下</span>
     <div class="nav-actions">
+      <button type="button" class="nav-action-btn" id="floatingAgentToggle" onclick="toggleFloatingAgent()" title="求职助手">
+        <span>🤖</span>
+        <span>求职助手</span>
+      </button>
       <button type="button" class="nav-action-btn" onclick="showProfileModal()" title="我的简历">
         <span>📁</span>
         <span>我的简历</span>
@@ -1581,6 +1809,48 @@
     <div class="modal-title" id="modalTitle">标题</div>
     <div class="modal-subtitle" id="modalSubtitle">副标题</div>
     <div id="modalContent"></div>
+  </div>
+</div>
+
+<!-- 求职助手模态面板 -->
+<div class="floating-agent-backdrop" id="floatingAgentBackdrop" onclick="toggleFloatingAgent()"></div>
+<div class="floating-agent-overlay" id="floatingAgentPanel">
+  <div class="floating-agent-header">
+    <span class="floating-agent-title">🤖 求职小助手</span>
+    <button class="floating-agent-close" onclick="toggleFloatingAgent()" title="关闭">✕</button>
+  </div>
+  <!-- 场景卡片 -->
+  <div class="floating-agent-cards">
+    <button class="floating-agent-card" data-floating-mode="career_switch" onclick="handleFloatingCardClick(this)">
+      <span class="card-icon">🚀</span><span class="card-title">换赛道</span>
+    </button>
+    <button class="floating-agent-card" data-floating-mode="resume_tailor" onclick="handleFloatingCardClick(this)">
+      <span class="card-icon">📝</span><span class="card-title">修改简历</span>
+    </button>
+    <button class="floating-agent-card" data-floating-mode="career_planning" onclick="handleFloatingCardClick(this)">
+      <span class="card-icon">🗺️</span><span class="card-title">职业规划</span>
+    </button>
+    <button class="floating-history-btn" onclick="showFloatingHistory()" title="历史记录">📋</button>
+    <button class="floating-newchat-btn" onclick="clearFloatingChat()" title="新建对话"><span>+</span></button>
+  </div>
+  <!-- 消息区 -->
+  <div class="floating-agent-messages" id="floatingAgentMessages">
+    <!-- 居中引导面板（默认显示，发送第一条消息后隐藏） -->
+    <div class="floating-onboarding" id="floatingOnboarding">
+      <div class="floating-onboarding-inner">
+        <span class="ob-emoji">👋</span>
+        <div class="ob-welcome">接下来有什么可以帮你的吗</div>
+        <div class="ob-scene" id="obSceneTag">💬 通用问答</div>
+        <div class="ob-tips-title">💡 你可以试着这样问我：</div>
+        <div class="ob-tip">面试中被问到高频敏感问题（如：缺点、离职原因、空窗期）该怎么高情商回答？</div>
+        <div class="ob-tip">面试完感觉挺好但一直没有下文，如何礼貌地向HR跟进结果？</div>
+      </div>
+    </div>
+  </div>
+  <!-- 输入区 -->
+  <div class="floating-agent-input-area">
+    <textarea id="floatingAgentInput" class="floating-agent-input" placeholder="输入求职相关的问题..." rows="1"></textarea>
+    <button id="floatingAgentSendBtn" class="floating-agent-send-btn" onclick="sendFloatingAgentChat()" title="发送">✈️</button>
   </div>
 </div>
 
@@ -2552,7 +2822,12 @@
     const avatar = document.createElement("div");
     avatar.className = "msg-avatar";
     const _profile = JSON.parse(localStorage.getItem('userProfile') || '{}');
-    avatar.textContent = role === "ai" ? "🤖" : (_profile.avatar || '👤');
+    const avatarVal = role === "ai" ? "🤖" : (_profile.avatar || '👤');
+    if (/\.(png|jpg|jpeg|gif|webp|svg)/i.test(avatarVal)) {
+      avatar.innerHTML = `<img src="${avatarVal}" alt="头像" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+    } else {
+      avatar.textContent = avatarVal;
+    }
     const bubble = document.createElement("div");
     bubble.className = "msg-bubble";
     bubble.textContent = content
@@ -3061,6 +3336,405 @@
     }
   };
 
+  // ========== 浮动求职助手 ==========
+  let floatingChatHistory = [];
+  let floatingMode = 'default';
+  let floatingIsLoading = false;
+  let floatingHasSent = false;
+
+  const floatingMessages = document.getElementById("floatingAgentMessages");
+  const floatingInput = document.getElementById("floatingAgentInput");
+  const floatingSendBtn = document.getElementById("floatingAgentSendBtn");
+  const floatingOnboarding = document.getElementById("floatingOnboarding");
+
+  const floatingPlaceholders = {
+    default: "输入求职相关的问题...",
+    career_switch: "说说你当前行业和想转的方向...",
+    resume_tailor: "说说你的目标岗位，我来帮你优化简历...",
+    career_planning: "聊聊你的职业现状和未来想法...",
+  };
+  const floatingPrompts = {
+    career_switch: "我想了解一下如何从当前行业转到目标行业，你能帮我分析一下吗？",
+    resume_tailor: "我想针对目标岗位优化我的简历，你能给我一些具体的修改建议吗？",
+    career_planning: "我想做一下职业规划，你能帮我分析一下吗？",
+  };
+
+  // 引导文案 + 常见问题（按场景）
+  const onboardingData = {
+    default: {
+      scene: "💬 通用问答",
+      tips: ["面试中被问到高频敏感问题（如：缺点、离职原因、空窗期）该怎么高情商回答？", "面试完感觉挺好但一直没有下文，如何礼貌地向HR跟进结果？"],
+      faqs: ["面试最后的\"你有什么想问我的吗（反问环节）\"，怎么提问最加分？", "收到录取意向后，入职前有哪些关键的隐藏细节需要跟 HR 沟通确认？", "同时拿到多个Offer时，应该从哪些维度进行理性的综合性价比抉择？"]
+    },
+    career_switch: {
+      scene: "🚀 换赛道",
+      tips: ["如何评估自己是否具备目标新方向的「可迁移能力」？", "跨方向/跨行业求职，如何在面试中把\"跨界\"包装成独特优势？"],
+      faqs: ["没有直接相关经验，如何在简历中体现自己与新岗位的匹配度？", "在决定切入一个全新领域前，有哪些低成本的行业调研方法？", "如何向面试官合理解释自己的\"转行/转方向\"动机，显得专业不盲目？"]
+    },
+    resume_tailor: {
+      scene: "📝 修改简历",
+      tips: ["如何根据目标岗位的常设描述（JD），快速定制化修改简历？", "日常经历很琐碎/平淡，如何用STAR法则包装得有深度、有亮点？"],
+      faqs: ["如何用\"数据/成果思维\"复盘经历，让简历更有说服力？", "如何优化简历的排版和信息层级，让HR在3秒内抓到核心重点？", "如何写出一份能顺利通过大厂机器（ATS系统）筛选的高过筛率简历？"]
+    },
+    career_planning: {
+      scene: "🗺️ 职业规划",
+      tips: ["如何精准定位自己的核心竞争力，找到真正擅长且有前景的方向？", "在大厂和小而美之间，该如何权衡？"],
+      faqs: ["如何建立自己的\"核心护城河\"，让自己在求职市场上具有不可替代性？", "感觉自己陷入了发展瓶颈期/迷茫期，该如何重新规划下一步？", "如何判断当前的环境是否还能让自己成长，还是该果断看新机会了？"]
+    }
+  };
+
+  function sendFloatingTip(el) {
+    const text = el.textContent.trim();
+    if (!text) return;
+    floatingInput.value = text;
+    sendFloatingAgentChat();
+  }
+
+  function renderOnboarding(mode) {
+    const data = onboardingData[mode] || onboardingData.default;
+    const sceneEl = document.getElementById("obSceneTag");
+    if (!sceneEl || !floatingOnboarding) return;
+    sceneEl.textContent = data.scene;
+    const inner = floatingOnboarding.querySelector(".floating-onboarding-inner");
+    const tipsTitle = inner?.querySelector(".ob-tips-title");
+    if (!tipsTitle) return;
+    inner.querySelectorAll(".ob-tip, .ob-faq-title, .ob-faq").forEach(el => el.remove());
+    data.tips.forEach(tip => {
+      const el = document.createElement("div"); el.className = "ob-tip";
+      el.textContent = tip; el.onclick = () => sendFloatingTip(el);
+      tipsTitle.after(el);
+    });
+    const faqTitle = document.createElement("div");
+    faqTitle.className = "ob-faq-title"; faqTitle.textContent = "❓ 常见问题";
+    tipsTitle.after(faqTitle);
+    data.faqs.forEach(q => {
+      const el = document.createElement("div"); el.className = "ob-tip";
+      el.textContent = q; el.onclick = () => sendFloatingTip(el);
+      faqTitle.after(el);
+    });
+  }
+
+  function toggleFloatingAgent() {
+    const panel = document.getElementById("floatingAgentPanel");
+    const btn = document.getElementById("floatingAgentToggle");
+    const backdrop = document.getElementById("floatingAgentBackdrop");
+    panel.classList.toggle("open");
+    backdrop.classList.toggle("open");
+    btn.classList.toggle("agent-active");
+    if (panel.classList.contains("open")) renderOnboarding(floatingMode);
+  }
+
+  function handleFloatingCardClick(card) {
+    const mode = card.dataset.floatingMode;
+    if (card.classList.contains("active")) {
+      card.classList.remove("active"); floatingMode = 'default';
+      floatingInput.placeholder = floatingPlaceholders.default;
+      renderOnboarding('default'); return;
+    }
+    document.querySelectorAll(".floating-agent-card").forEach(c => c.classList.remove("active"));
+    card.classList.add("active"); floatingMode = mode;
+    floatingInput.placeholder = floatingPlaceholders[mode] || "";
+    floatingInput.value = floatingPrompts[mode] || "";
+    floatingInput.focus();
+    floatingInput.style.height = "auto";
+    floatingInput.style.height = Math.min(floatingInput.scrollHeight, 96) + "px";
+    renderOnboarding(mode);
+  }
+
+  /**
+   * 简单 Markdown → HTML 渲染（支持分点分段）
+   */
+  function escapeHtml(text) {
+    return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function renderTable(m) {
+    var lines = m.split('\n').filter(function(l){ return l.trim(); });
+    if (lines.length < 2) return escapeHtml(m);
+    var sepIdx = -1;
+    for (var i = 0; i < lines.length; i++) { if (/^\|[\s:| -]+\|$/.test(lines[i].trim())) { sepIdx = i; break; } }
+    if (sepIdx < 0) return escapeHtml(m);
+    var tbl = '<table>';
+    for (var i = 0; i < sepIdx; i++) { var c = lines[i].split('|').filter(function(x){ return x.trim(); }); if (c.length) tbl += '<tr><th>' + c.map(function(x){ return x.trim(); }).join('</th><th>') + '</th></tr>'; }
+    for (var i = sepIdx + 1; i < lines.length; i++) { if (/^[\s:| -]+$/.test(lines[i].trim())) continue; var c = lines[i].split('|').filter(function(x){ return x.trim(); }); if (c.length) tbl += '<tr><td>' + c.map(function(x){ return x.trim(); }).join('</td><td>') + '</td></tr>'; }
+    return tbl + '</table>';
+  }
+
+  function renderMarkdown(text) {
+    if (!text) return '<p></p>';
+    let html = text.replace(/<br\s*\/?>/gi, '\n');
+    html = escapeHtml(html);
+    html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+    html = html.replace(/_(.+?)_/g, '<em>$1</em>');
+    html = html.replace(/`(.+?)`/g, '<code>$1</code>');
+    // 表格支持
+    html = html.replace(/((?:\|[^\n]*\|[ \t]*(?:\n|$)){2,})/g, renderTable);
+    html = html.replace(/^### (.+)$/gm, '<h4>$1</h4>');
+    html = html.replace(/^## (.+)$/gm, '<h3>$1</h3>');
+    html = html.replace(/^# (.+)$/gm, '<h2>$1</h2>');
+    html = html.replace(/^(\d+)\.\s+/gm, '$1. ');
+    html = html.replace(/^[-*]\s+/gm, '• ');
+    html = html.replace(/^>\s+/gm, '');
+    html = html.replace(/^---+$/gm, '<hr>');
+    // 清除残留的 markdown 符号
+    html = html.replace(/[*_]+/g, '');
+    html = html.replace(/\n\s*\n/g, '</p><p>');
+    html = html.replace(/\n/g, '<br>');
+    return '<p>' + html + '</p>';
+  }
+
+  /**
+   * 流式专用渲染 — 与完整渲染逻辑完全一致
+   * 流结束后不再重新渲染，避免 DOM 突变
+   */
+  function renderMarkdownStreaming(text) {
+    return renderMarkdown(text);
+  }
+
+  function appendFloatingMsg(role, content) {
+    const msg = document.createElement("div"); msg.className = `msg ${role}`;
+    const avatar = document.createElement("div"); avatar.className = "msg-avatar";
+    if (role === "ai") {
+      avatar.textContent = "🤖";
+    } else {
+      const _p = JSON.parse(localStorage.getItem('userProfile') || '{}');
+      const av = _p.avatar || '👤';
+      if (/\.(png|jpg|jpeg|gif|webp|svg)/i.test(av)) {
+        avatar.innerHTML = `<img src="${av}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+      } else {
+        avatar.textContent = av;
+      }
+    }
+    const bubble = document.createElement("div"); bubble.className = "msg-bubble";
+    if (role === "ai") {
+      bubble.innerHTML = renderMarkdown(content);
+    } else {
+      bubble.textContent = content;
+    }
+    msg.appendChild(avatar); msg.appendChild(bubble);
+    floatingMessages.appendChild(msg); floatingMessages.scrollTop = floatingMessages.scrollHeight;
+  }
+
+  function createFloatingStreamingMsg() {
+    const msg = document.createElement("div"); msg.className = "msg ai";
+    const avatar = document.createElement("div"); avatar.className = "msg-avatar"; avatar.textContent = "🤖";
+    const bubble = document.createElement("div"); bubble.className = "msg-bubble"; bubble.id = "floatingStreamingBubble";
+    msg.appendChild(avatar); msg.appendChild(bubble);
+    floatingMessages.appendChild(msg); floatingMessages.scrollTop = floatingMessages.scrollHeight;
+    return bubble;
+  }
+
+  function updateFloatingStreamingBubble(bubble, content) {
+    bubble.innerHTML = renderMarkdownStreaming(content);
+    floatingMessages.scrollTop = floatingMessages.scrollHeight;
+  }
+
+  function appendFloatingTyping(text) {
+    const msg = document.createElement("div"); msg.className = "msg ai"; msg.id = "floatingTypingMsg";
+    msg.innerHTML = text
+      ? `<div class="msg-avatar">🤖</div><div class="msg-bubble" style="color:var(--gray-500);font-size:13px;">${text}</div>`
+      : `<div class="msg-avatar">🤖</div><div class="msg-bubble"><div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div></div>`;
+    floatingMessages.appendChild(msg); floatingMessages.scrollTop = floatingMessages.scrollHeight;
+  }
+  function removeFloatingTyping() { const t = document.getElementById("floatingTypingMsg"); if (t) t.remove(); }
+  function hideOnboarding() { if (floatingOnboarding) floatingOnboarding.style.display = 'none'; }
+  function showOnboarding() { if (floatingOnboarding) floatingOnboarding.style.display = ''; }
+
+  async function sendFloatingAgentChat() {
+    const text = floatingInput.value.trim();
+    if (!text || floatingIsLoading) return;
+    floatingInput.value = ""; floatingInput.style.height = "auto";
+    floatingIsLoading = true; floatingSendBtn.disabled = true;
+    if (!floatingHasSent) { floatingHasSent = true; hideOnboarding(); }
+    appendFloatingMsg("user", text); floatingChatHistory.push({ role: "user", content: text });
+    appendFloatingTyping();
+    const resumeCtx = getResumeContext();
+    try {
+      const res = await fetch(`${API_BASE_URL}/chat/stream`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: floatingChatHistory, mode: floatingMode, resume_context: resumeCtx, interview_state: {} }),
+      });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.detail || "请求失败");
+      }
+      removeFloatingTyping();
+      const bubble = createFloatingStreamingMsg();
+      let fullReply = "";
+      let receivedDone = false;
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
+
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed.startsWith("data: ")) continue;
+          try {
+            const data = JSON.parse(trimmed.slice(6));
+            if (data.type === "chunk") {
+              fullReply += data.content;
+              updateFloatingStreamingBubble(bubble, fullReply);
+            } else if (data.type === "done") {
+              receivedDone = true;
+              fullReply = data.reply || fullReply;
+              // 流式渲染已与完整渲染一致，无需重新渲染避免 DOM 突变
+              floatingChatHistory.push({ role: "assistant", content: fullReply });
+              saveFloatingChatRecord();
+            }
+          } catch (e) { /* skip */ }
+        }
+      }
+      if (!receivedDone && fullReply) {
+        floatingChatHistory.push({ role: "assistant", content: fullReply });
+      }
+    } catch (err) {
+      removeFloatingTyping(); appendFloatingMsg("ai", "抱歉，出了点问题：" + err.message);
+    } finally { floatingIsLoading = false; floatingSendBtn.disabled = false; }
+  }
+
+  function clearFloatingChat() {
+    floatingChatHistory = []; floatingMessages.innerHTML = "";
+    floatingMode = 'default'; floatingInput.placeholder = floatingPlaceholders.default;
+    floatingHasSent = false;
+    document.querySelectorAll(".floating-agent-card").forEach(c => c.classList.remove("active"));
+    showOnboarding(); renderOnboarding('default');
+  }
+
+  // ========== 浮动面板聊天记录 ==========
+  const FLOATING_RECORDS_KEY = 'floatingChatRecords';
+
+  function saveFloatingChatRecord() {
+    if (!floatingChatHistory || floatingChatHistory.length < 2) return;
+    const modeNames = { default: '通用问答', career_switch: '换赛道', resume_tailor: '修改简历', career_planning: '职业规划' };
+    const records = JSON.parse(localStorage.getItem(FLOATING_RECORDS_KEY) || '[]');
+    const last = records[records.length - 1];
+    if (last && Date.now() - last.savedAt < 5000 && last.mode === floatingMode) return;
+    const firstMsg = floatingChatHistory[1]?.content?.slice(0, 40) || '';
+    const record = {
+      id: 'fc_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+      savedAt: Date.now(),
+      date: new Date().toLocaleString('zh-CN'),
+      mode: floatingMode,
+      modeName: modeNames[floatingMode] || '通用问答',
+      messageCount: Math.ceil(floatingChatHistory.length / 2),
+      preview: firstMsg,
+      messages: JSON.parse(JSON.stringify(floatingChatHistory)),
+    };
+    records.push(record);
+    if (records.length > 50) records.splice(0, records.length - 50);
+    localStorage.setItem(FLOATING_RECORDS_KEY, JSON.stringify(records));
+  }
+
+  function getFloatingChatRecords() {
+    return JSON.parse(localStorage.getItem(FLOATING_RECORDS_KEY) || '[]');
+  }
+
+  function deleteFloatingChatRecord(id) {
+    let records = getFloatingChatRecords();
+    records = records.filter(r => r.id !== id);
+    localStorage.setItem(FLOATING_RECORDS_KEY, JSON.stringify(records));
+    return records;
+  }
+
+  function showFloatingHistory() {
+    const records = getFloatingChatRecords();
+    if (records.length === 0) {
+      alert('暂无历史记录，完成一段对话后会自动保存');
+      return;
+    }
+    // 用 openModal 展示
+    let html = '<div style="display:flex;flex-direction:column;gap:8px;max-height:380px;overflow-y:auto;">';
+    for (let i = records.length - 1; i >= 0; i--) {
+      const r = records[i];
+      html += '<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:12px;background:rgba(240,232,255,0.4);border:1px solid rgba(180,120,255,0.15);">';
+      html += '<div style="flex:1;min-width:0;">';
+      html += '<div style="font-weight:600;font-size:13px;color:#4c1d95;">' + r.modeName + '</div>';
+      html += '<div style="font-size:11px;color:#9d7ab8;margin-top:2px;">' + r.date + ' · ' + r.messageCount + '轮对话</div>';
+      html += '<div style="font-size:11px;color:#bbb;margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + (r.preview || '') + '</div>';
+      html += '</div>';
+      html += '<button onclick="viewFloatingChatRecord(\'' + r.id + '\')" style="padding:5px 10px;border:none;border-radius:8px;background:rgba(108,99,255,0.1);color:#6c63ff;font-size:11px;font-weight:600;cursor:pointer;">查看</button>';
+      html += '<button onclick="loadFloatingChatRecord(\'' + r.id + '\')" style="padding:5px 12px;border:none;border-radius:8px;background:linear-gradient(135deg,#c084fc,#f472b6);color:#fff;font-size:11px;font-weight:600;cursor:pointer;">恢复</button>';
+      html += '<button onclick="deleteFloatingRecord(\'' + r.id + '\')" style="padding:5px 8px;border:none;border-radius:8px;background:rgba(239,68,68,0.1);color:#ef4444;font-size:11px;font-weight:600;cursor:pointer;">×</button>';
+      html += '</div>';
+    }
+    html += '</div>';
+    openModal('📋 对话历史', '共 ' + records.length + ' 条记录', html);
+  }
+
+  function viewFloatingChatRecord(id) {
+    const records = getFloatingChatRecords();
+    const r = records.find(rec => rec.id === id);
+    if (!r) { openModal('', '', '<div style="text-align:center;color:#999;padding:20px;">记录不存在</div>'); return; }
+    let html = '<div style="max-height:400px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;">';
+    if (r.messages) {
+      for (const m of r.messages) {
+        const isAi = m.role === 'assistant' || m.role === 'ai';
+        const label = isAi ? '🤖 求职助手' : '👤 我';
+        const align = isAi ? 'flex-start' : 'flex-end';
+        const bg = isAi ? 'rgba(240,232,255,0.5)' : 'linear-gradient(135deg,#c97ddc,#e87bac)';
+        const color = isAi ? '#4a2d6b' : '#fff';
+        html += '<div style="display:flex;justify-content:' + align + ';">';
+        html += '<div style="max-width:85%;padding:8px 12px;border-radius:12px;background:' + bg + ';color:' + color + ';font-size:12px;line-height:1.5;">';
+        html += '<div style="font-size:10px;font-weight:600;margin-bottom:3px;opacity:0.6;">' + label + '</div>';
+        if (isAi) {
+          html += '<div style="white-space:pre-wrap;">' + renderMarkdown(m.content) + '</div>';
+        } else {
+          html += '<div style="white-space:pre-wrap;">' + escapeHtml(m.content) + '</div>';
+        }
+        html += '</div></div>';
+      }
+    }
+    html += '</div>';
+    openModal('💬 对话详情', r.modeName + ' · ' + r.date + ' · ' + r.messageCount + ' 轮对话', html);
+  }
+
+  function loadFloatingChatRecord(id) {
+    const records = getFloatingChatRecords();
+    const r = records.find(rec => rec.id === id);
+    if (!r) { alert('记录不存在'); return; }
+    floatingChatHistory = []; floatingMessages.innerHTML = "";
+    if (r.messages) {
+      r.messages.forEach(function(m) {
+        floatingChatHistory.push({ role: m.role, content: m.content });
+        appendFloatingMsg(m.role === 'user' ? 'user' : 'ai', m.content);
+      });
+    }
+    if (r.mode) {
+      floatingMode = r.mode;
+      floatingInput.placeholder = floatingPlaceholders[r.mode] || floatingPlaceholders.default;
+      document.querySelectorAll(".floating-agent-card").forEach(function(c) {
+        if (c.dataset.floatingMode === r.mode) c.classList.add("active");
+        else c.classList.remove("active");
+      });
+    }
+    floatingHasSent = true;
+    hideOnboarding();
+    closeModal();
+  }
+
+  function deleteFloatingRecord(id) {
+    deleteFloatingChatRecord(id);
+    showFloatingHistory();
+  }
+
+  floatingInput.addEventListener("input", () => {
+    floatingInput.style.height = "auto";
+    floatingInput.style.height = Math.min(floatingInput.scrollHeight, 96) + "px";
+  });
+  floatingInput.addEventListener("keydown", e => {
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendFloatingAgentChat(); }
+  });
+
   // 求职助手弹窗
   function showChatModal() {
     const html = `
@@ -3084,6 +3758,9 @@
     const activeId = localStorage.getItem('activeResumeId');
     const nickname = profile.nickname || '用户';
     const avatar = profile.avatar || nickname[0].toUpperCase();
+    const avatarHtml = /\.(png|jpg|jpeg|gif|webp|svg)/i.test(avatar)
+      ? `<img src="${avatar}" alt="头像" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`
+      : avatar;
 
     // 简历列表 HTML
     const resumesHtml = resumes.length === 0
@@ -3121,7 +3798,7 @@
 
     const html = `
       <div class="profile-header">
-        <div class="profile-avatar-big">${avatar}</div>
+        <div class="profile-avatar-big">${avatarHtml}</div>
         <div class="profile-info">
           <div class="profile-name">${nickname}</div>
           <div class="profile-meta">${profile.identity || '求职者'} · ${resumes.length} 份简历</div>
