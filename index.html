@@ -1853,7 +1853,7 @@
     <button id="floatingAgentSendBtn" class="floating-agent-send-btn" onclick="sendFloatingAgentChat()" title="发送">✈️</button>
   </div>
 </div>
-
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
 <script src="./config.js"></script>
 <script>
   const DEFAULT_API_BASE_URL = "http://127.0.0.1:8000";
@@ -1924,15 +1924,52 @@
         alert('本地缓存中找不到该文件（可能在其他电脑上传，或缓存已清理）');
         return;
       }
-      let blob;
+      
+      const title = fileData.name || '简历预览';
+      let arrayBuffer;
+      
       if (fileData.buffer) {
-        // 从 ArrayBuffer 还原出 Blob
-        blob = new Blob([fileData.buffer], { type: fileData.type || 'application/pdf' });
+        arrayBuffer = fileData.buffer;
       } else {
-        blob = fileData;
+        arrayBuffer = await fileData.arrayBuffer();
       }
+
+      // 尝试使用 pdf-lib 动态修改 PDF 的内置 Title，防止浏览器显示 uuid 或错误的自带标题
+      if (typeof PDFLib !== 'undefined') {
+        try {
+          const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer);
+          pdfDoc.setTitle(title);
+          const pdfBytes = await pdfDoc.save();
+          arrayBuffer = pdfBytes.buffer || pdfBytes;
+        } catch (err) {
+          console.warn('动态修改PDF标题失败，将使用原文件', err);
+        }
+      }
+
+      const blob = new Blob([arrayBuffer], { type: 'application/pdf' });
       const url = URL.createObjectURL(blob);
-      window.open(url, '_blank');
+      
+      const newWin = window.open('', '_blank');
+      if (newWin) {
+        newWin.document.write(`
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <title>${title}</title>
+              <style>
+                body { margin: 0; padding: 0; overflow: hidden; background-color: #525659; }
+                iframe { width: 100vw; height: 100vh; border: none; }
+              </style>
+            </head>
+            <body>
+              <iframe src="${url}"></iframe>
+            </body>
+          </html>
+        `);
+        newWin.document.close();
+      } else {
+        window.open(url, '_blank');
+      }
     } catch (e) {
       alert('打开文件失败：' + e.message);
     }
