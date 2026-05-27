@@ -3364,7 +3364,7 @@
     default: {
       scene: "💬 通用问答",
       tips: ["面试中被问到高频敏感问题（如：缺点、离职原因、空窗期）该怎么高情商回答？", "面试完感觉挺好但一直没有下文，如何礼貌地向HR跟进结果？"],
-      faqs: ["面试最后的\"你有什么想问我的吗（反问环节）\"，怎么提问最加分？", "收到录取意向后，入职前有哪些关键的「隐藏细节」需要跟 HR 沟通确认？", "同时拿到多个Offer时，应该从哪些维度进行理性的综合性价比抉择？"]
+      faqs: ["面试最后的\"你有什么想问我的吗（反问环节）\"，怎么提问最加分？", "收到录取意向后，入职前有哪些关键的隐藏细节需要跟 HR 沟通确认？", "同时拿到多个Offer时，应该从哪些维度进行理性的综合性价比抉择？"]
     },
     career_switch: {
       scene: "🚀 换赛道",
@@ -3662,12 +3662,40 @@
       html += '<div style="font-size:11px;color:#9d7ab8;margin-top:2px;">' + r.date + ' · ' + r.messageCount + '轮对话</div>';
       html += '<div style="font-size:11px;color:#bbb;margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + (r.preview || '') + '</div>';
       html += '</div>';
+      html += '<button onclick="viewFloatingChatRecord(\'' + r.id + '\')" style="padding:5px 10px;border:none;border-radius:8px;background:rgba(108,99,255,0.1);color:#6c63ff;font-size:11px;font-weight:600;cursor:pointer;">查看</button>';
       html += '<button onclick="loadFloatingChatRecord(\'' + r.id + '\')" style="padding:5px 12px;border:none;border-radius:8px;background:linear-gradient(135deg,#c084fc,#f472b6);color:#fff;font-size:11px;font-weight:600;cursor:pointer;">恢复</button>';
       html += '<button onclick="deleteFloatingRecord(\'' + r.id + '\')" style="padding:5px 8px;border:none;border-radius:8px;background:rgba(239,68,68,0.1);color:#ef4444;font-size:11px;font-weight:600;cursor:pointer;">×</button>';
       html += '</div>';
     }
     html += '</div>';
     openModal('📋 对话历史', '共 ' + records.length + ' 条记录', html);
+  }
+
+  function viewFloatingChatRecord(id) {
+    const records = getFloatingChatRecords();
+    const r = records.find(rec => rec.id === id);
+    if (!r) { openModal('', '', '<div style="text-align:center;color:#999;padding:20px;">记录不存在</div>'); return; }
+    let html = '<div style="max-height:400px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;">';
+    if (r.messages) {
+      for (const m of r.messages) {
+        const isAi = m.role === 'assistant' || m.role === 'ai';
+        const label = isAi ? '🤖 求职助手' : '👤 我';
+        const align = isAi ? 'flex-start' : 'flex-end';
+        const bg = isAi ? 'rgba(240,232,255,0.5)' : 'linear-gradient(135deg,#c97ddc,#e87bac)';
+        const color = isAi ? '#4a2d6b' : '#fff';
+        html += '<div style="display:flex;justify-content:' + align + ';">';
+        html += '<div style="max-width:85%;padding:8px 12px;border-radius:12px;background:' + bg + ';color:' + color + ';font-size:12px;line-height:1.5;">';
+        html += '<div style="font-size:10px;font-weight:600;margin-bottom:3px;opacity:0.6;">' + label + '</div>';
+        if (isAi) {
+          html += '<div style="white-space:pre-wrap;">' + renderMarkdown(m.content) + '</div>';
+        } else {
+          html += '<div style="white-space:pre-wrap;">' + escapeHtml(m.content) + '</div>';
+        }
+        html += '</div></div>';
+      }
+    }
+    html += '</div>';
+    openModal('💬 对话详情', r.modeName + ' · ' + r.date + ' · ' + r.messageCount + ' 轮对话', html);
   }
 
   function loadFloatingChatRecord(id) {
