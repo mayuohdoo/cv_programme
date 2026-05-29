@@ -7,6 +7,7 @@
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
   <title>小小求职拿下 ✦ AI 简历解析</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Serif+SC:wght@400;600;700&display=swap');
 
@@ -414,6 +415,14 @@
     }
     .job-card:active {
       transform: translateY(-2px);
+    }
+    .job-card.selected {
+      border-color: var(--sakura-primary);
+      box-shadow: 0 0 0 3px rgba(255, 183, 197, 0.3);
+    }
+    .job-card.selected:hover {
+      box-shadow: 0 0 0 3px rgba(255, 183, 197, 0.3), 0 8px 24px rgba(255,183,197,0.2);
+      transform: translateY(-4px);
     }
     .job-card .job-header {
       display: flex;
@@ -1779,6 +1788,158 @@
     .parser-toast.error { background: #f8d7da; color: #721c24; }
     .parser-toast.info { background: #d1ecf1; color: #0c5460; }
     /* ========== 结束：智能简历解析器样式 ========== */
+
+    /* ========== 六维评分样式 ========== */
+    .score-section {
+      margin-top: 24px;
+      background: var(--white);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      box-shadow: var(--shadow);
+    }
+    .score-section-title {
+      font-size: 16px; font-weight: 700; color: var(--gray-800);
+      margin-bottom: 16px; display: flex; align-items: center; gap: 8px;
+    }
+    .score-form {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .score-form-group { display: flex; flex-direction: column; gap: 6px; }
+    .score-label {
+      font-size: 13px; font-weight: 600; color: var(--gray-700);
+      display: flex; align-items: center; gap: 6px;
+    }
+    .score-optional { font-weight: 400; color: var(--gray-400); font-size: 12px; }
+    .score-input {
+      height: 40px; border: 1.5px solid var(--gray-200); border-radius: var(--radius-sm);
+      padding: 0 12px; font-size: 13px; font-family: inherit; color: var(--gray-800);
+      background: var(--white); outline: none; transition: border-color 0.15s;
+    }
+    .score-input:focus { border-color: var(--sakura-primary); }
+    .score-input::placeholder { color: var(--gray-400); }
+    .location-select-wrap { display: flex; gap: 8px; align-items: flex-start; flex-wrap: wrap; }
+    .score-select {
+      height: 40px; border: 1.5px solid var(--gray-200); border-radius: var(--radius-sm);
+      padding: 0 10px; font-size: 13px; font-family: inherit; color: var(--gray-700);
+      background: var(--white); outline: none; cursor: pointer; min-width: 100px;
+    }
+    .score-select:focus { border-color: var(--sakura-primary); }
+    .score-select:disabled { opacity: 0.5; cursor: not-allowed; }
+    .selected-cities { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px; }
+    .city-tag {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 10px; border-radius: var(--radius-sm);
+      background: var(--sakura-lighter); color: var(--sakura-dark);
+      font-size: 12px; font-weight: 600;
+    }
+    .city-tag-remove { cursor: pointer; font-size: 14px; line-height: 1; opacity: 0.6; }
+    .city-tag-remove:hover { opacity: 1; }
+    .btn-score {
+      width: 100%; height: 44px;
+      background: linear-gradient(135deg, var(--sakura-primary), var(--sakura-dark));
+      color: #fff; border: none; border-radius: var(--radius-sm);
+      cursor: pointer; font-size: 14px; font-weight: 600; font-family: inherit;
+      transition: opacity 0.15s, transform 0.1s; margin-top: 4px;
+    }
+    .btn-score:hover:not(:disabled) { opacity: 0.9; }
+    .btn-score:active { transform: scale(0.98); }
+    .btn-score:disabled { opacity: 0.5; cursor: not-allowed; }
+    .job-add-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .btn-add-job {
+      height: 40px; padding: 0 14px;
+      background: var(--sakura-primary); color: var(--white);
+      border: none; border-radius: var(--radius-sm); cursor: pointer;
+      font-size: 13px; font-weight: 600; font-family: inherit;
+      transition: opacity 0.15s; white-space: nowrap;
+    }
+    .btn-add-job:hover { opacity: 0.85; }
+    .selected-jobs-wrap { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; min-height: 36px; }
+    .job-tag {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 6px 12px; border-radius: var(--radius-sm);
+      background: var(--sakura-lighter); border: 1.5px solid var(--sakura-primary);
+      font-size: 13px; color: var(--sakura-dark); font-weight: 600;
+      max-width: 280px;
+    }
+    .job-tag-info { display: flex; flex-direction: column; gap: 1px; }
+    .job-tag-title { font-weight: 700; }
+    .job-tag-meta { font-size: 11px; font-weight: 400; opacity: 0.7; }
+    .job-tag-remove { cursor: pointer; font-size: 16px; line-height: 1; opacity: 0.5; padding-left: 4px; flex-shrink: 0; }
+    .job-tag-remove:hover { opacity: 1; }
+    .score-result { display: none; margin-top: 20px; }
+    .score-result.visible { display: block; }
+    .score-loading { text-align: center; padding: 20px; }
+    .loading-dots { display: flex; justify-content: center; gap: 6px; margin-top: 8px; }
+    .loading-dots span {
+      width: 8px; height: 8px; background: var(--sakura-primary); border-radius: 50%;
+      animation: loadingPulse 1.2s infinite;
+    }
+    .loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+    .loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes loadingPulse { 0%, 100% { opacity: 0.3; transform: scale(0.8); } 50% { opacity: 1; transform: scale(1.2); } }
+    .match-overview {
+      text-align: center; padding: 20px; background: var(--sakura-lighter);
+      border-radius: var(--radius-lg); margin-bottom: 16px;
+    }
+    .match-percent { font-size: 48px; font-weight: 800; line-height: 1.2;
+      background: linear-gradient(135deg, var(--sakura-primary), var(--sakura-dark));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .match-label { font-size: 13px; color: var(--gray-500); margin-top: 2px; }
+    .match-summary { font-size: 14px; color: var(--gray-700); margin-top: 8px; line-height: 1.5; }
+    .radar-wrap {
+      background: var(--white); border-radius: var(--radius-lg);
+      padding: 12px; box-shadow: var(--shadow); margin-bottom: 16px;
+      max-width: 350px; margin-left: auto; margin-right: auto;
+    }
+    .radar-wrap canvas {
+      max-height: 280px !important;
+    }
+    .radar-tabs { display: flex; gap: 0; margin-bottom: 12px; border-radius: var(--radius-sm); overflow: hidden; border: 1.5px solid var(--gray-200); }
+    .radar-tab { flex: 1; padding: 8px 0; text-align: center; font-size: 13px; font-weight: 600; cursor: pointer; background: var(--white); color: var(--gray-500); border: none; transition: all 0.15s; font-family: inherit; }
+    .radar-tab.active { background: var(--sakura-lighter); color: var(--sakura-dark); }
+    .radar-tab:hover:not(.active) { background: var(--gray-50); }
+    .radar-panel { display: none; }
+    .radar-panel.active { display: block; }
+    .radar-legend { display: flex; justify-content: center; gap: 24px; margin-top: 8px; font-size: 12px; color: var(--gray-500); }
+    .radar-legend-item { display: flex; align-items: center; gap: 6px; }
+    .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .achieve-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; }
+    .achieve-card { background: var(--white); border: 1px solid var(--gray-100); border-radius: var(--radius); padding: 12px 14px; display: flex; align-items: center; gap: 12px; }
+    .achieve-ring { width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; }
+    .achieve-ring.green { background: #DCFCE7; color: #166534; }
+    .achieve-ring.yellow { background: #FEF9C3; color: #854D0E; }
+    .achieve-ring.red { background: #FEE2E2; color: #991B1B; }
+    .achieve-info { flex: 1; min-width: 0; }
+    .achieve-name { font-size: 13px; font-weight: 600; color: var(--gray-700); }
+    .achieve-bar-wrap { height: 6px; background: var(--gray-100); border-radius: 3px; margin-top: 6px; overflow: hidden; }
+    .achieve-bar { height: 100%; border-radius: 3px; transition: width 0.4s; }
+    .achieve-bar.green { background: #22C55E; }
+    .achieve-bar.yellow { background: #EAB308; }
+    .achieve-bar.red { background: #EF4444; }
+    .achieve-status { font-size: 11px; margin-top: 4px; font-weight: 600; }
+    .achieve-status.green { color: #16A34A; }
+    .achieve-status.yellow { color: #CA8A04; }
+    .achieve-status.red { color: #DC2626; }
+    .score-warning { margin-bottom: 12px; padding: 10px 14px; border-radius: var(--radius-sm); background: #FEF3C7; color: #92400E; font-size: 12px; line-height: 1.5; border: 1px solid #FDE68A; }
+    .section-title { font-size: 14px; font-weight: 700; color: var(--gray-700); margin: 12px 0 10px; }
+    .score-details { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .score-detail-card { background: var(--white); border: 1px solid var(--gray-100); border-radius: var(--radius); padding: 14px; }
+    .score-detail-card:hover { box-shadow: var(--shadow); }
+    .score-detail-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .score-detail-name { font-size: 13px; font-weight: 600; color: var(--gray-700); }
+    .score-detail-scores { display: flex; gap: 6px; align-items: center; }
+    .score-badge-candidate { font-size: 11px; font-weight: 700; background: var(--sakura-lighter); color: var(--sakura-dark); padding: 2px 8px; border-radius: 20px; }
+    .score-badge-require { font-size: 11px; font-weight: 700; background: #EFF6FF; color: #3B82F6; padding: 2px 8px; border-radius: 20px; }
+    .score-gap { font-size: 11px; font-weight: 700; padding: 2px 6px; border-radius: 20px; }
+    .score-gap.positive { background: #DCFCE7; color: #166534; }
+    .score-gap.negative { background: #FEE2E2; color: #991B1B; }
+    .score-gap.neutral { background: var(--gray-100); color: var(--gray-500); }
+    .score-detail-reason { font-size: 12px; color: var(--gray-600); line-height: 1.5; display: flex; flex-direction: column; gap: 3px; }
+    /* ========== 结束：六维评分样式 ========== */
   </style>
 </head>
 <body>
@@ -2073,6 +2234,73 @@
         </div>
       </div>
 
+      <!-- 六维评分 -->
+      <div class="score-section" id="scoreSection">
+        <div class="score-section-title">🎯 六维岗位匹配评分</div>
+        <div class="score-form">
+          <!-- 已选岗位标签区 -->
+          <div id="selectedJobsWrap" class="selected-jobs-wrap" style="grid-column: 1 / -1;"></div>
+          <!-- 添加新岗位 -->
+          <div class="score-form-group" style="grid-column: 1 / -1;">
+            <label class="score-label">添加对比岗位</label>
+            <div class="job-add-row">
+              <input id="newJobTitle" class="score-input" type="text" placeholder="目标岗位，如：产品经理">
+              <input id="newJobCompany" class="score-input" type="text" placeholder="目标公司（选填）">
+              <select id="newJobProvince" class="score-select" onchange="onNewJobProvinceChange()">
+                <option value="">城市</option>
+              </select>
+              <select id="newJobCity" class="score-select" disabled>
+                <option value="">选择城市</option>
+              </select>
+              <button class="btn-add-job" onclick="addJobToScore()">+ 添加</button>
+            </div>
+            <div id="newJobCities" class="selected-cities" style="margin-top:6px;"></div>
+          </div>
+        </div>
+        <button id="scoreBtn" class="btn-score" onclick="requestScore()">生成对比评分</button>
+
+        <div id="scoreResult" class="score-result">
+          <div id="scoreLoading" class="score-loading" style="display:none">
+            <div>AI 正在评分中</div>
+            <div class="loading-dots"><span></span><span></span><span></span></div>
+          </div>
+          <div id="scoreContent" style="display:none">
+            <div id="scoreWarnings" class="score-warning" style="display:none"></div>
+            <div class="match-overview">
+              <div class="match-percent" id="matchPercent">—</div>
+              <div class="match-label">综合匹配度</div>
+              <div class="match-summary" id="matchSummary"></div>
+            </div>
+            <div class="radar-wrap">
+              <div class="radar-tabs">
+                <button class="radar-tab active" onclick="switchRadarTab('compare')">评分对比</button>
+                <button class="radar-tab" onclick="switchRadarTab('achieve')">达标率</button>
+              </div>
+              <div id="radarPanelCompare" class="radar-panel active">
+                <canvas id="radarChart"></canvas>
+                <div class="radar-legend">
+                  <div class="radar-legend-item"><div class="legend-dot" style="background: #FFB7C5;"></div><span>候选人得分</span></div>
+                  <div class="radar-legend-item"><div class="legend-dot" style="background: #3B82F6;"></div><span>岗位要求</span></div>
+                </div>
+              </div>
+              <div id="radarPanelAchieve" class="radar-panel">
+                <canvas id="achieveChart"></canvas>
+                <div class="radar-legend">
+                  <div class="radar-legend-item"><div class="legend-dot" style="background: #22C55E;"></div><span>达标率</span></div>
+                  <div class="radar-legend-item"><div class="legend-dot" style="background: #E5E5E5; border: 1.5px dashed #999;"></div><span>基准线 100%</span></div>
+                </div>
+              </div>
+            </div>
+            <div id="achieveCardsWrap" style="display:none">
+              <div class="section-title">达标率详情</div>
+              <div class="achieve-cards" id="achieveCards"></div>
+            </div>
+            <div class="section-title">评分详情</div>
+            <div class="score-details" id="scoreDetails"></div>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 
@@ -2260,6 +2488,473 @@
 
   // ========== 结束：StorageManager ==========
 
+  // ========== 六维评分功能 ==========
+  const DIMENSION_NAMES = {
+    education: "学历背景匹配度",
+    experience: "实习经历匹配度",
+    skills: "基础技能匹配度",
+    projects: "项目经验匹配度",
+    soft_skills: "软素质匹配度",
+    stability: "职业稳定性",
+  };
+  const DIMENSION_KEYS = ["education", "experience", "skills", "projects", "soft_skills", "stability"];
+
+  let cachedResumeText = null;
+  let radarChartInstance = null;
+  let achieveChartInstance = null;
+  let currentRadarTab = "compare";
+  let lastScoreData = null;
+  let selectedJobCards = new Map(); // Map<cardElement, {title, company, city}>
+
+  // 省-市数据
+  const PROVINCE_CITY = {
+    "北京":["北京"],"天津":["天津"],"上海":["上海"],"重庆":["重庆"],
+    "河北":["石家庄","唐山","保定","秦皇岛","邯郸","邢台","张家口","承德","沧州","廊坊","衡水"],
+    "山西":["太原","大同","阳泉","长治","晋城","朔州","晋中","运城","忻州","临汾","吕梁"],
+    "辽宁":["沈阳","大连","鞍山","抚顺","本溪","丹东","锦州","营口","阜新","辽阳","盘锦","铁岭","朝阳","葫芦岛"],
+    "吉林":["长春","吉林","四平","辽源","通化","白山","松原","白城","延边"],
+    "黑龙江":["哈尔滨","齐齐哈尔","牡丹江","佳木斯","大庆","鸡西","双鸭山","伊春","七台河","鹤岗","绥化","黑河","大兴安岭"],
+    "江苏":["南京","苏州","无锡","常州","徐州","南通","扬州","镇江","盐城","淮安","连云港","泰州","宿迁"],
+    "浙江":["杭州","宁波","温州","绍兴","嘉兴","湖州","金华","台州","衢州","丽水","舟山"],
+    "安徽":["合肥","芜湖","蚌埠","淮南","马鞍山","淮北","铜陵","安庆","黄山","滁州","阜阳","宿州","六安","亳州","池州","宣城"],
+    "福建":["福州","厦门","泉州","漳州","莆田","龙岩","三明","南平","宁德"],
+    "江西":["南昌","赣州","九江","吉安","宜春","上饶","抚州","新余","景德镇","萍乡","鹰潭"],
+    "山东":["济南","青岛","烟台","潍坊","临沂","淄博","济宁","泰安","威海","日照","德州","聊城","滨州","菏泽","枣庄","东营"],
+    "河南":["郑州","洛阳","开封","南阳","安阳","新乡","许昌","平顶山","焦作","信阳","驻马店","商丘","周口","漯河","濮阳","鹤壁","三门峡","济源"],
+    "湖北":["武汉","宜昌","襄阳","荆州","十堰","黄冈","孝感","荆门","鄂州","黄石","咸宁","随州","恩施"],
+    "湖南":["长沙","株洲","湘潭","衡阳","岳阳","常德","郴州","邵阳","益阳","永州","怀化","娄底","张家界","湘西"],
+    "广东":["广州","深圳","东莞","佛山","珠海","惠州","中山","汕头","江门","茂名","湛江","肇庆","揭阳","清远","阳江","韶关","河源","梅州","潮州","云浮"],
+    "广西":["南宁","柳州","桂林","玉林","北海","钦州","百色","梧州","贵港","河池","防城港","来宾","崇左","贺州"],
+    "海南":["海口","三亚","儋州","琼海","文昌"],
+    "四川":["成都","绵阳","德阳","宜宾","南充","泸州","达州","乐山","眉山","自贡","内江","遂宁","广安","资阳","雅安","广元","攀枝花","巴中","凉山","阿坝","甘孜"],
+    "贵州":["贵阳","遵义","毕节","六盘水","铜仁","黔南","黔东南","黔西南","安顺"],
+    "云南":["昆明","曲靖","玉溪","大理","红河","楚雄","文山","保山","普洱","临沧","昭通","丽江","德宏","西双版纳","迪庆","怒江"],
+    "陕西":["西安","咸阳","宝鸡","渭南","汉中","榆林","延安","安康","商洛","铜川"],
+    "甘肃":["兰州","天水","白银","庆阳","平凉","酒泉","张掖","武威","定西","金昌","陇南","临夏","嘉峪关","甘南"],
+    "青海":["西宁","海东","海西","海北","海南","黄南","玉树","果洛"],
+    "内蒙古":["呼和浩特","包头","鄂尔多斯","赤峰","通辽","呼伦贝尔","巴彦淖尔","乌兰察布","兴安盟","锡林郭勒","阿拉善","乌海"],
+    "西藏":["拉萨","日喀则","昌都","林芝","山南","那曲","阿里"],
+    "宁夏":["银川","石嘴山","吴忠","固原","中卫"],
+    "新疆":["乌鲁木齐","昌吉","伊犁","喀什","阿克苏","哈密","克拉玛依","巴音郭楞","塔城","吐鲁番","和田","石河子","博尔塔拉","克孜勒苏","阿勒泰"]
+  };
+
+  // 多岗位数组
+  let selectedJobs = []; // [{ title, company, locations[] }]
+
+  // 初始化岗位添加区的省份下拉
+  (function initNewJobProvinceSelect() {
+    const sel = document.getElementById("newJobProvince");
+    if (!sel) return;
+    Object.keys(PROVINCE_CITY).forEach(p => {
+      const opt = document.createElement("option");
+      opt.value = p; opt.textContent = p;
+      sel.appendChild(opt);
+    });
+  })();
+
+  function onNewJobProvinceChange() {
+    const province = document.getElementById("newJobProvince").value;
+    const citySel = document.getElementById("newJobCity");
+    citySel.innerHTML = '<option value="">选择城市</option>';
+    citySel.disabled = !province;
+    if (province && PROVINCE_CITY[province]) {
+      PROVINCE_CITY[province].forEach(c => {
+        const opt = document.createElement("option");
+        opt.value = c; opt.textContent = c;
+        citySel.appendChild(opt);
+      });
+    }
+  }
+
+  function addNewJobCity() {
+    const citySel = document.getElementById("newJobCity");
+    const city = citySel.value;
+    if (!city) return;
+    const province = document.getElementById("newJobProvince").value;
+    const fullName = province + "·" + city;
+    const container = document.getElementById("newJobCities");
+    if (container.querySelector(`[data-city="${fullName}"]`)) { citySel.value = ""; return; }
+    const tag = document.createElement("span");
+    tag.className = "city-tag";
+    tag.dataset.city = fullName;
+    tag.innerHTML = `${city}<span class="city-tag-remove" onclick="removeNewJobCity(this)">&times;</span>`;
+    container.appendChild(tag);
+    citySel.value = "";
+  }
+
+  function removeNewJobCity(el) { el.parentElement.remove(); }
+
+  function getNewJobCities() {
+    return Array.from(document.querySelectorAll('#newJobCities .city-tag')).map(t => t.dataset.city);
+  }
+
+  // 添加岗位到已选列表
+  function addJobToScore() {
+    const title = document.getElementById("newJobTitle").value.trim();
+    if (!title) { alert("请输入目标岗位名称"); return; }
+    const company = document.getElementById("newJobCompany").value.trim();
+    const locations = getNewJobCities();
+    // 去重
+    if (selectedJobs.some(j => j.title === title)) {
+      alert("该岗位已在列表中");
+      return;
+    }
+    if (selectedJobs.length >= 5) { alert("最多支持5个岗位对比"); return; }
+    selectedJobs.push({ title, company, locations });
+    renderSelectedJobs();
+    // 清空表单
+    document.getElementById("newJobTitle").value = "";
+    document.getElementById("newJobCompany").value = "";
+    document.getElementById("newJobCities").innerHTML = "";
+    document.getElementById("newJobProvince").value = "";
+    document.getElementById("newJobCity").innerHTML = '<option value="">选择城市</option>';
+    document.getElementById("newJobCity").disabled = true;
+  }
+
+  // 移除岗位
+  function removeJobFromScore(idx) {
+    selectedJobs.splice(idx, 1);
+    renderSelectedJobs();
+  }
+
+  // 渲染已选岗位标签
+  function renderSelectedJobs() {
+    const wrap = document.getElementById("selectedJobsWrap");
+    wrap.innerHTML = "";
+    selectedJobs.forEach((job, idx) => {
+      const tag = document.createElement("div");
+      tag.className = "job-tag";
+      const meta = [job.company, ...job.locations].filter(Boolean).join(" · ");
+      tag.innerHTML = `
+        <div class="job-tag-info">
+          <div class="job-tag-title">${job.title}</div>
+          ${meta ? `<div class="job-tag-meta">${meta}</div>` : ""}
+        </div>
+        <span class="job-tag-remove" onclick="removeJobFromScore(${idx})">&times;</span>`;
+      wrap.appendChild(tag);
+    });
+  }
+
+  // 从岗位卡片快速添加
+function quickAddJob(title, company, city, doScroll = true) {
+    document.getElementById("newJobTitle").value = title;
+    if (company) document.getElementById("newJobCompany").value = company;
+    document.getElementById("newJobCities").innerHTML = "";
+
+    // 填充城市：先匹配省份，再延迟添加城市标签
+    if (city) {
+      let matchedProvince = '';
+      for (const [province, cities] of Object.entries(PROVINCE_CITY)) {
+        if (cities.includes(city)) {
+          matchedProvince = province;
+          break;
+        }
+      }
+      if (matchedProvince) {
+        document.getElementById("newJobProvince").value = matchedProvince;
+        // 延迟执行：等省份更新后直接添加城市标签，不触发select的change事件
+        setTimeout(() => {
+          const tag = document.createElement("span");
+          tag.className = "city-tag";
+          tag.dataset.city = matchedProvince + "·" + city;
+          tag.innerHTML = city + '<span class="city-tag-remove" onclick="removeNewJobCity(this)">&times;</span>';
+          document.getElementById("newJobCities").appendChild(tag);
+          document.getElementById("newJobCity").value = city;
+        }, 50);
+      }
+    }
+
+    // 自动添加到列表
+    const company_val = company || "";
+    const locations = city ? [city] : [];
+    if (selectedJobs.some(j => j.title === title)) {
+      if (doScroll) document.getElementById("scoreSection").scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
+    }
+    if (selectedJobs.length >= 5) { alert("最多支持5个岗位对比"); return; }
+    selectedJobs.push({ title, company: company_val, locations });
+    renderSelectedJobs();
+    if (doScroll) document.getElementById("scoreSection").scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function switchRadarTab(tab) {
+    currentRadarTab = tab;
+    document.querySelectorAll('.radar-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.radar-panel').forEach(p => p.classList.remove('active'));
+    if (tab === 'compare') {
+      document.querySelector('.radar-tab:first-child').classList.add('active');
+      document.getElementById('radarPanelCompare').classList.add('active');
+    } else {
+      document.querySelector('.radar-tab:last-child').classList.add('active');
+      document.getElementById('radarPanelAchieve').classList.add('active');
+    }
+    const achieveWrap = document.getElementById('achieveCardsWrap');
+    achieveWrap.style.display = (tab === 'achieve') ? 'block' : 'none';
+    if (tab === 'achieve' && lastScoreData && !achieveChartInstance) {
+      renderAchieveChart(lastScoreData);
+      renderAchieveCards(lastScoreData);
+    }
+  }
+
+  // 多岗位颜色配置
+  const POSITION_COLORS = [
+    { border: "#3B82F6", bg: "rgba(59,130,246,0.1)", dash: [5, 5] },
+    { border: "#10B981", bg: "rgba(16,185,129,0.1)", dash: [3, 3] },
+    { border: "#8B5CF6", bg: "rgba(139,92,246,0.1)", dash: [8, 4] },
+    { border: "#F59E0B", bg: "rgba(245,158,11,0.1)", dash: [4, 4] },
+    { border: "#EF4444", bg: "rgba(239,68,68,0.1)", dash: [2, 2] },
+  ];
+
+  function renderScoreResult(data) {
+    lastScoreData = data;
+    if (achieveChartInstance) { achieveChartInstance.destroy(); achieveChartInstance = null; }
+    switchRadarTab('compare');
+
+const isMulti = data.is_multi;
+    const results = isMulti ? data.score_data : [data];
+
+    // 综合匹配度（用第一个岗位的），本地计算备选
+    const first = results[0];
+    const candScores = DIMENSION_KEYS.map(k => (first.candidate || {})[k]?.score || 0);
+const reqScores = DIMENSION_KEYS.map(k => (first.position_requirements || {})[k]?.score || 0);
+    let overallMatch = parseFloat(first.overall_match);
+    if (isNaN(overallMatch) || overallMatch === 0) {
+      // 本地计算：如果任一维度要求为0，用3作默认值
+      let totalScore = 0, totalReq = 0;
+      DIMENSION_KEYS.forEach((_, i) => {
+        const cand = candScores[i] || 0;
+        const req = reqScores[i] || 0;
+        totalScore += cand;
+        totalReq += req > 0 ? req : 3;
+      });
+      overallMatch = totalReq > 0 ? Math.round((totalScore / totalReq) * 100) : 0;
+    }
+    document.getElementById("matchPercent").textContent = overallMatch + "%";
+    document.getElementById("matchSummary").textContent = first.match_summary || "";
+
+    // 警告
+    const warnings = first.validation_warnings || [];
+    const warningsEl = document.getElementById("scoreWarnings");
+    if (warnings.length > 0) {
+      warningsEl.innerHTML = warnings.map(w => "⚠ " + w).join("<br>");
+      warningsEl.style.display = "block";
+    } else {
+      warningsEl.style.display = "none";
+    }
+
+    // 候选人得分
+    const candidate = first.candidate || {};
+    const candidateScores = DIMENSION_KEYS.map(k => (candidate[k] || {}).score || 0);
+    const labels = DIMENSION_KEYS.map(k => DIMENSION_NAMES[k]);
+
+    // 构建 datasets：候选人 + 各岗位要求
+    const datasets = [{
+      label: "候选人得分",
+      data: candidateScores,
+      backgroundColor: "rgba(255, 183, 197, 0.3)",
+      borderColor: "#FFB7C5",
+      borderWidth: 2.5,
+      pointBackgroundColor: "#FFB7C5",
+      pointBorderColor: "#fff",
+      pointBorderWidth: 1,
+      pointRadius: 5,
+    }];
+
+    results.forEach((r, i) => {
+      const reqScores = DIMENSION_KEYS.map(k => (r.position_requirements || {})[k]?.score || 0);
+      const color = POSITION_COLORS[i % POSITION_COLORS.length];
+      datasets.push({
+        label: r.title || `岗位${i + 1}`,
+        data: reqScores,
+        backgroundColor: color.bg,
+        borderColor: color.border,
+        borderWidth: 2,
+        borderDash: color.dash,
+        pointBackgroundColor: color.border,
+        pointBorderColor: "#fff",
+        pointBorderWidth: 1,
+        pointRadius: 4,
+      });
+    });
+
+    if (radarChartInstance) radarChartInstance.destroy();
+    const ctx = document.getElementById("radarChart").getContext("2d");
+    radarChartInstance = new Chart(ctx, {
+      type: "radar",
+      data: { labels, datasets },
+      options: {
+        responsive: true, maintainAspectRatio: true,
+        scales: {
+          r: {
+            min: 0, max: 5,
+            ticks: { stepSize: 0.5, font: { size: 11 }, color: "#A3A3A3", backdropColor: "transparent" },
+            grid: { color: "#E5E5E5" },
+            angleLines: { color: "#E5E5E5" },
+            pointLabels: { font: { size: 12, weight: "600" }, color: "#525252" },
+          }
+        },
+        plugins: { legend: { display: false }, tooltip: { backgroundColor: "rgba(0,0,0,0.75)", cornerRadius: 8 } }
+      }
+    });
+
+    // 渲染图例
+    const legendEl = document.querySelector('#radarPanelCompare .radar-legend');
+    legendEl.innerHTML = datasets.map((ds, i) =>
+      `<div class="radar-legend-item">
+        <div class="legend-dot" style="background:${ds.borderColor};${i > 0 ? 'opacity:0.6;' : ''}"></div>
+        <span>${ds.label}</span>
+      </div>`
+    ).join('');
+
+    // 渲染详情（用第一个岗位的）
+    const detailsEl = document.getElementById("scoreDetails");
+    detailsEl.innerHTML = "";
+    DIMENSION_KEYS.forEach(key => {
+      const c = candidate[key] || {};
+      const r = (first.position_requirements || {})[key] || {};
+      const cScore = c.score || 0, rScore = r.score || 0, gap = cScore - rScore;
+      let gapClass = "neutral", gapText = "持平";
+      if (gap > 0) { gapClass = "positive"; gapText = "+" + gap; }
+      else if (gap < 0) { gapClass = "negative"; gapText = "" + gap; }
+      const card = document.createElement("div");
+      card.className = "score-detail-card";
+      card.innerHTML = `
+        <div class="score-detail-header">
+          <div class="score-detail-name">${DIMENSION_NAMES[key]}</div>
+          <div class="score-detail-scores">
+            <span class="score-badge-candidate">${cScore}分</span>
+            <span class="score-badge-require">${rScore}分</span>
+            <span class="score-gap ${gapClass}">${gapText}</span>
+          </div>
+        </div>
+        <div class="score-detail-reason">
+          <span>你：${c.reason || "—"}</span>
+          <span style="margin-top:4px;">岗位：${r.reason || "—"}</span>
+        </div>`;
+      detailsEl.appendChild(card);
+    });
+  }
+
+  function renderAchieveChart(data) {
+    // 达标率视图始终显示第一个岗位
+    const results = data.is_multi ? data.score_data : [data];
+    const first = results[0];
+    const candidate = first.candidate || {};
+    const requirements = first.position_requirements || {};
+    const labels = DIMENSION_KEYS.map(k => DIMENSION_NAMES[k]);
+    const achieveData = DIMENSION_KEYS.map(k => {
+      const cScore = (candidate[k] || {}).score || 0;
+      const rScore = (requirements[k] || {}).score || 0;
+      return rScore > 0 ? Math.round(cScore / rScore * 100) : 0;
+    });
+
+    if (achieveChartInstance) achieveChartInstance.destroy();
+    const ctx = document.getElementById("achieveChart").getContext("2d");
+    const baseline = DIMENSION_KEYS.map(() => 100);
+
+    achieveChartInstance = new Chart(ctx, {
+      type: "radar",
+      data: {
+        labels,
+        datasets: [{
+          label: "达标率", data: achieveData,
+          backgroundColor: "rgba(34, 197, 94, 0.15)", borderColor: "#22C55E", borderWidth: 2,
+          pointBackgroundColor: achieveData.map(v => v >= 100 ? "#22C55E" : v >= 80 ? "#EAB308" : "#EF4444"),
+          pointBorderColor: "#fff", pointBorderWidth: 1, pointRadius: 5,
+        }, {
+          label: "基准线", data: baseline,
+          backgroundColor: "transparent", borderColor: "#9CA3AF", borderWidth: 1.5, borderDash: [4, 4],
+          pointRadius: 0,
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: true,
+        scales: {
+          r: {
+            min: 0, max: 120,
+            ticks: { stepSize: 20, font: { size: 11 }, color: "#A3A3A3", backdropColor: "transparent",
+              callback: function(v) { return v + "%"; } },
+            grid: { color: "#E5E5E5" },
+            angleLines: { color: "#E5E5E5" },
+            pointLabels: { font: { size: 12, weight: "600" }, color: "#525252" },
+          }
+        },
+        plugins: { legend: { display: false }, tooltip: {
+          backgroundColor: "rgba(0,0,0,0.75)", cornerRadius: 8,
+          callbacks: { label: function(ctx) { return ctx.dataset.label + ": " + ctx.raw + "%"; } }
+        } }
+      }
+    });
+  }
+
+  function renderAchieveCards(data) {
+    const results = data.is_multi ? data.score_data : [data];
+    const first = results[0];
+    const candidate = first.candidate || {};
+    const requirements = first.position_requirements || {};
+    const container = document.getElementById("achieveCards");
+    container.innerHTML = "";
+
+    DIMENSION_KEYS.forEach(key => {
+      const cScore = (candidate[key] || {}).score || 0;
+      const rScore = (requirements[key] || {}).score || 0;
+      const pct = rScore > 0 ? Math.round(cScore / rScore * 100) : 0;
+      const color = pct >= 100 ? "green" : pct >= 80 ? "yellow" : "red";
+      const statusText = pct >= 100 ? "已达标" : pct >= 80 ? "接近达标" : "待提升";
+
+      const card = document.createElement("div");
+      card.className = "achieve-card";
+      card.innerHTML = `
+        <div class="achieve-ring ${color}">${pct}%</div>
+        <div class="achieve-info">
+          <div class="achieve-name">${DIMENSION_NAMES[key]}</div>
+          <div class="achieve-bar-wrap"><div class="achieve-bar ${color}" style="width: ${Math.min(pct, 100)}%"></div></div>
+          <div class="achieve-status ${color}">${statusText}</div>
+        </div>`;
+      container.appendChild(card);
+    });
+  }
+
+  async function requestScore() {
+    if (selectedJobs.length === 0) { alert("请先添加至少一个目标岗位"); return; }
+    if (!cachedResumeText) { alert("请先上传并解析简历"); return; }
+
+    const scoreBtn = document.getElementById("scoreBtn");
+    const scoreResult = document.getElementById("scoreResult");
+    const scoreLoading = document.getElementById("scoreLoading");
+    const scoreContent = document.getElementById("scoreContent");
+
+    scoreBtn.disabled = true;
+    scoreResult.classList.add("visible");
+    scoreLoading.style.display = "block";
+    scoreContent.style.display = "none";
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/score`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          resume_text: cachedResumeText,
+          positions: selectedJobs,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || "评分请求失败");
+
+      scoreLoading.style.display = "none";
+      scoreContent.style.display = "block";
+      renderScoreResult(data.score_data);
+    } catch (err) {
+      scoreLoading.style.display = "none";
+      scoreResult.classList.remove("visible");
+      alert("评分失败：" + err.message);
+    } finally {
+      scoreBtn.disabled = false;
+    }
+  }
+
+  // ========== 结束：六维评分功能 ==========
+
   // MBTI 中文名称映射
   const MBTI_NAMES = {
     INTJ: "建筑师", INTP: "逻辑学家", ENTJ: "指挥官", ENTP: "辩论家",
@@ -2395,6 +3090,7 @@
   // ========== 主页上传功能已移除，现在使用侧边栏上传 ==========
 
   function renderResult(data) {
+    cachedResumeText = data.raw_text || "";
     const d = data.parsed_data || {};
     const mbti = (d.inferred_mbti || "").toUpperCase();
 
@@ -2426,13 +3122,39 @@
 
     // 头像
     const avatarEl = document.getElementById("mbtiAvatar");
-    if (mbti && MBTI_IMAGES[mbti]) {
-      const img = document.createElement("img");
-      img.className = "mbti-avatar";
-      img.src = MBTI_IMAGES[mbti];
-      img.alt = mbti;
-      img.onerror = () => { avatarEl.parentNode.replaceChild(avatarEl, img); };
-      avatarEl.parentNode.replaceChild(img, avatarEl);
+    if (!avatarEl) {
+      console.warn('mbtiAvatar element not found');
+    } else if (mbti && MBTI_IMAGES[mbti]) {
+      // 如果当前是 div，替换为 img
+      if (avatarEl.tagName === "DIV") {
+        const img = document.createElement("img");
+        img.id = "mbtiAvatar";
+        img.className = "mbti-avatar";
+        img.src = MBTI_IMAGES[mbti];
+        img.alt = mbti;
+        img.onerror = () => {
+          // 加载失败，恢复为 div
+          const div = document.createElement("div");
+          div.id = "mbtiAvatar";
+          div.className = "mbti-avatar-placeholder";
+          div.textContent = "🧠";
+          img.replaceWith(div);
+        };
+        avatarEl.replaceWith(img);
+      } else if (avatarEl.tagName === "IMG") {
+        // 如果已经是 img，更新 src
+        avatarEl.src = MBTI_IMAGES[mbti];
+        avatarEl.alt = mbti;
+      }
+    } else {
+      // mbti 无效，确保显示 div
+      if (avatarEl.tagName === "IMG") {
+        const div = document.createElement("div");
+        div.id = "mbtiAvatar";
+        div.className = "mbti-avatar-placeholder";
+        div.textContent = "🧠";
+        avatarEl.replaceWith(div);
+      }
     }
 
     // 简介
@@ -2534,8 +3256,8 @@
             ${missingSkillsHTML}
             ${careerPathHTML}
           `;
-
-          // 只给岗位名称添加点击跳转事件
+          
+// 岗位名：鼠标悬浮变色+点击跳转boss.com
           const jobTitleEl = card.querySelector('.job-title');
           if (jobTitleEl) {
             jobTitleEl.addEventListener('mouseenter', () => {
@@ -2545,22 +3267,43 @@
               jobTitleEl.style.textDecorationColor = 'transparent';
             });
             jobTitleEl.addEventListener('click', (e) => {
-              e.stopPropagation(); // 防止事件冒泡
-              try {
-                const jobTitle = encodeURIComponent(job.title || '');
-                const city = job.salary_range?.city || d.city || '';
-                const cityParam = city && city !== '全国' ? `&city=${encodeURIComponent(city)}` : '';
-                const bossUrl = `https://www.zhipin.com/job_detail/?query=${jobTitle}${cityParam}`;
-                window.open(bossUrl, '_blank');
-              } catch (error) {
-                console.error('Failed to open job portal:', error);
-                // 降级：使用不带城市参数的URL
-                const fallbackUrl = `https://www.zhipin.com/job_detail/?query=${encodeURIComponent(job.title || '')}`;
-                window.open(fallbackUrl, '_blank');
-              }
+              e.stopPropagation();
+              const jobTitle = encodeURIComponent(job.title || '');
+              const city = job.salary_range?.city || d.city || '';
+              const cityParam = city && city !== '全国' ? `&city=${encodeURIComponent(city)}` : '';
+              window.open(`https://www.zhipin.com/job_detail/?query=${jobTitle}${cityParam}`, '_blank');
             });
           }
 
+          // 点击卡片：选中岗位（不滚动页面）
+          card.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const jobData = {
+              title: job.title,
+              company: null,
+              city: job.salary_range?.city || d.city || ''
+            };
+
+            // 如果已选中，取消选中
+            if (selectedJobCards.has(card)) {
+              card.classList.remove('selected');
+              selectedJobCards.delete(card);
+              // 从评分列表中移除
+              const idx = selectedJobs.findIndex(j => j.title === jobData.title);
+              if (idx !== -1) {
+                removeJobFromScore(idx);
+              }
+            } else {
+              // 未选中，添加到选中列表
+              card.classList.add('selected');
+              selectedJobCards.set(card, jobData);
+              // 添加到评分列表
+              quickAddJob(jobData.title, jobData.company, jobData.city, false);
+            }
+          });
+          
           jobsEl.appendChild(card);
         } catch (error) {
           console.error('Failed to render job card:', error, job);
@@ -3495,7 +4238,9 @@
 
       // 点击切换简历
       li.addEventListener('click', (e) => {
+        console.log('Resume item clicked, target:', e.target, 'closest btn-delete:', e.target.closest('.btn-delete'));
         if (!e.target.closest('.btn-delete')) {
+          console.log('Calling switchResume for:', resume.id);
           switchResume(resume.id);
         }
       });
@@ -3509,14 +4254,24 @@
    * @param {string} resumeId - 简历 ID
    */
   function switchResume(resumeId) {
+    console.log('switchResume called with resumeId:', resumeId);
     const resumes = StorageManager.load(StorageManager.KEYS.RESUMES) || [];
+    console.log('Loaded resumes:', resumes);
     const resume = resumes.find(r => r.id === resumeId);
+    console.log('Found resume:', resume);
 
-    if (!resume || !resume.parseResult) {
+    if (!resume) {
+      console.error('Resume not found in storage');
+      alert('简历不存在');
+      return;
+    }
+    if (!resume.parseResult) {
+      console.error('Resume parseResult is missing');
       alert('简历数据不存在');
       return;
     }
 
+    console.log('Rendering result from parseResult');
     // 更新活动简历
     StorageManager.save(StorageManager.KEYS.ACTIVE_RESUME, resumeId);
 

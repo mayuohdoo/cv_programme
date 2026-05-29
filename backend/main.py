@@ -48,11 +48,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-deepseek_api_key = os.getenv("DEEPSEEK_API_KEY", "").strip()
-if not deepseek_api_key:
-    raise RuntimeError("Missing DEEPSEEK_API_KEY. Add it to your environment or .env file.")
-client = OpenAI(api_key=deepseek_api_key, base_url="https://api.deepseek.com/v1")
-DEEPSEEK_MODEL = os.getenv("DEEPSEEK_MODEL", "deepseek-chat")
+zhipu_api_key = os.getenv("ZHIPU_API_KEY", "").strip()
+if not zhipu_api_key:
+    raise RuntimeError("Missing ZHIPU_API_KEY. Add it to your environment or .env file.")
+client = OpenAI(api_key=zhipu_api_key, base_url=os.getenv("ZHIPU_BASE_URL", "https://ark.cn-beijing.volces.com/api/v3"))
+ZHIPU_MODEL = os.getenv("ZHIPU_MODEL", "glm-4-flash")
 
 
 def _file_extension(filename: str) -> str:
@@ -154,17 +154,17 @@ def _to_json_with_fallback(response_text: str) -> dict[str, Any]:
 
     code_block_match = re.search(r"```json\s*(\{.*\})\s*```", cleaned, re.DOTALL)
     if code_block_match:
-        fragment = code_block_match.group(1)
-        result = _try_parse(fragment)
-        if result is not None:
-            return result
+        try:
+            return json.loads(code_block_match.group(1))
+        except json.JSONDecodeError:
+            pass
 
     object_match = re.search(r"(\{.*\})", cleaned, re.DOTALL)
     if object_match:
-        fragment = object_match.group(1)
-        result = _try_parse(fragment)
-        if result is not None:
-            return result
+        try:
+            return json.loads(object_match.group(1))
+        except json.JSONDecodeError:
+            pass
 
     raise ValueError("AI response is not valid JSON")
 
@@ -177,168 +177,36 @@ def _serialize_model(model) -> dict:
 
 
 def _parse_resume_with_ai(raw_text: str) -> dict[str, Any]:
-    # 清洗简历原文，防止其中的特殊字符污染 JSON 输出
-    # 替换会破坏 JSON 的字符，但保留内容可读性
-    safe_text = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]', '', raw_text)
-    safe_text = safe_text.replace('\\', '\\\\').replace('"', '\\"') if False else safe_text  # 不转义，只清洗控制字符
-    prompt = f"""
-你是一个资深 HR 分析师、职业人格专家和严格的简历审查专家。请将简历解析为严格 JSON（不要使用 markdown 代码块）。
+    prompt = f"""你是资深HR分析师。请将简历解析为纯JSON（无markdown），字段如下：
+{{
+  "inferred_mbti": "16型人格之一",
+  "mbti_description": "人格简短描述（≤60字）",
+  "candidate_summary": "候选人简介（≤80字）",
+  "city": "城市名称（如北京、上海），无则返回空字符串",
+  "job_recommendations": [{{
+    "title": "岗位名称",
+    "industry": "行业（如：科技、金融、互联网）",
+    "reason": "推荐理由（≤30字）",
+    "match_level": "高或中",
+    "match_score": 0-100整数,
+    "missing_skills": ["缺失技能1", "缺失技能2"],
+    "career_path": "成长路径（如：初级→中级→高级）",
+    "salary_range": {{"min_salary": 15, "max_salary": 25, "city": "城市"}}
+  }}],
+  "resume_diagnosis": {{
+    "typos": [{{"original": "原文片段", "suggestion": "正确写法"}}],
+    "grammar_issues": [{{"original": "原句", "suggestion": "改进表达"}}],
+    "redundancy": [{{"original": "冗余片段", "suggestion": "简化表达"}}],
+    "overall_score": 1-100整数,
+    "overall_comment": "一句话评价（≤30字）"
+  }}
+}}
 
-【重要】你必须以高标准检查简历质量，仔细审查每一处表达，不要遗漏任何问题。诚实的反馈比礼貌的赞美更有价值。
-
-输出字段要求：
-1) candidate_summary: 字符串，基于简历内容的候选人简介（80字以内）
-2) city: 字符串，从简历中提取的城市信息（如："北京"、"上海"、"深圳"、"杭州"等）
-   - 如果简历中明确提及城市（如："北京市朝阳区"、"工作地点：上海"），提取城市名称
-   - 如果简历中未明确提及城市，返回空字符串 ""
-   - 只返回城市名称，不要包含"市"、"省"等后缀（如：返回"北京"而不是"北京市"）
-
-3) inferred_mbti: 字符串，返回空字符串 ""（不再推断MBTI）
-4) mbti_description: 字符串，返回空字符串 ""
-4.5) extracted_phone: 字符串，从简历全文中提取的联系电话（如"188-4412-6785"）。如果没有找到电话，返回空字符串 ""。
-
-5) job_recommendations: 数组，推荐6个适合该候选人的岗位，覆盖不同行业，每项包含：
-   - title: 岗位名称
-   - industry: 所属行业（如：科技、金融、咨询、教育、创业、政府等）
-   - reason: 推荐理由（30字以内，结合简历技能和经验）
-   - match_level: 匹配度，"高" 或 "中"
-   
-   - match_score: 整数 0-100，精确匹配度分数（新增字段，与match_level配合使用）
-     【计算规则】：技能匹配45% + 经验匹配30% + 教育匹配25%
-     【示例】：高匹配岗位85-95分，中匹配岗位65-79分
-   
-   - missing_skills: 数组，候选人缺失的关键技能，0-5个（新增字段）
-     【规则】：只列出岗位重要但简历未体现的技能，完全匹配时返回空数组[]
-     【示例】：["Docker", "Kubernetes"]
-   
-   - career_path: 字符串，该岗位的职业成长路径，60-100字（新增字段）
-     【格式】：2-4个阶段，用箭头连接
-     【示例】："初级算法工程师 → 算法工程师 → 高级算法工程师 → 算法专家"
-   
-   - salary_range: 对象，该岗位的薪资范围，包含：
-     * min_salary: 整数，最低月薪（单位：千元，如 15 表示 15K）
-     * max_salary: 整数，最高月薪（单位：千元，如 25 表示 25K）
-     * city: 字符串，薪资对应的城市（使用上面提取的城市信息；如果城市为空，使用"全国"）
-   
-   【薪资推断规则】：
-   - 根据岗位名称、行业、城市和候选人背景推断2024-2025年的合理薪资范围
-   - 一线城市（北京、上海、深圳、杭州）薪资通常比二三线城市高 20-40%
-   - 技术岗位（算法工程师、后端开发、前端开发）通常高于运营、市场岗位
-   - 金融、互联网、AI行业通常高于传统行业
-   - 考虑候选人的教育背景和工作经验（应届生、1-3年、3-5年、5年以上）
-   - 薪资范围应该合理且符合市场行情，不要过高或过低
-   - 示例：
-     * 北京的算法工程师（3年经验）：25-40K
-     * 成都的算法工程师（3年经验）：18-30K
-     * 上海的产品经理（应届生）：12-18K
-     * 全国的市场专员（1年经验）：8-12K
-
-6) extracted_skills: 数组，从简历中提取的关键技能标签（如：["Python", "机器学习", "项目管理", "团队管理"]），不超过15个
-    【要求】：
-    - 从简历全文提取，包括硬技能（编程语言、工具、框架）和软技能（沟通、管理、领导力）
-    - 优先提取简历中明确写出的技能关键词
-    - 如果简历中没有明确技能，可以从工作描述中推断合理的关键技能
-    - 按重要性排序，最重要的在前
-
-7) resume_diagnosis: 对象，对简历文本进行严格的质量诊断，包含：
-
-   - typos: 数组，发现的错别字。【检测标准】：
-     * 同音字错误（如："测式"应为"测试"，"沟通能里"应为"沟通能力"）
-     * 形近字错误（如："项日"应为"项目"）
-     * 多字/少字（如："的的项目"应为"的项目"）
-     【重要排除】：绝对不要把中英文冒号混用（如"民族:汉族"）、或正常的文字间空格（如"共 第一作者"）当作错别字或格式错误。
-     【要求】：仔细检查整个简历，每个错别字必须返回 {{"original": "原文片段(5-30字)", "suggestion": "正确写法", "deduction": 扣除的分数(1-3分)}}
-     【示例】：{{"original": "负责产品的测式工作", "suggestion": "负责产品的测试工作", "deduction": 2}}
-
-   - grammar_issues: 数组，病句或语法问题。【检测标准】：
-     * 语序不当（如："使用了熟练Python"应为"熟练使用Python"）
-     * 成分残缺（如："负责开发"缺少宾语，应为"负责XX系统的开发"）
-     * 搭配不当（如："提高效率的增长"应为"提高效率"或"促进增长"）
-     * 表意不明（如："通过使用工具进行了工作"过于模糊）
-     * 冗长啰嗦（如："通过使用Python和数据分析工具进行了数据的分析"应为"使用Python进行数据分析"）
-     【要求】：关注动词搭配、介词使用、句子简洁性，每个问题必须返回 {{"original": "原句(10-40字)", "suggestion": "改进后的表达", "deduction": 扣除的分数(1-3分)}}
-     【示例】：{{"original": "通过使用Python进行了数据的分析", "suggestion": "使用Python进行数据分析", "deduction": 2}}
-
-   - redundancy: 数组，语意冗杂或表达重复。【检测标准】：
-     * 重复词语（如："主要负责主要的项目"应为"负责主要的项目"）
-     * 重复表达（如："进行了优化和改进"可简化为"进行了优化"）
-     * 无意义修饰（如："非常很重要"应为"非常重要"）
-     * 可合并句子（如："负责开发。负责测试。"应为"负责开发和测试"）
-     【要求】：追求简洁有力的表达，每个冗余必须返回 {{"original": "冗余片段(10-40字)", "suggestion": "简化后的表达", "deduction": 扣除的分数(1-2分)}}
-     【示例】：{{"original": "主要负责主要的项目开发", "suggestion": "负责主要的项目开发", "deduction": 1}}
-
-   - timeline_issues: 数组，时间线重合或逻辑错误问题。【检测标准】：
-     * 检查教育经历或工作经历中列出的时间段（如2019.09-2023.06）。
-     * 判断时间段是否有不合理的重合（例如两段全职工作时间重叠，或者本科与硕士时间重叠）。如果是双学位等合理重叠可忽略。
-     * 如果存在冲突，必须指出。
-     【要求】：指出具体冲突的时间段并给出建议，返回 {{"original": "冲突的时间段文本", "suggestion": "指出重叠问题，建议核对时间", "deduction": 扣除的分数(3-5分)}}
-     【示例】：{{"original": "2020.09-2024.06 本科, 2023.09-2026.06 硕士", "suggestion": "本科与硕士时间存在重合，请核对时间是否填写错误", "deduction": 4}}
-
-   - star_issues: 数组，缺乏成果量化或数据支撑的问题（STAR法则检查）。【检测标准】：
-     * 扫视工作经历和项目经验中的描述，找出那些"只有动作，没有结果和数据支撑"的句子。
-     * 例如："负责了公司主要系统的开发，提高了效率" -> 缺乏具体指标和数据。
-     * 例如："参与了营销活动，吸引了大量新用户" -> 缺乏活动的规模数据和具体的新增用户数。
-     【要求】：指出缺乏数据支撑的句子，并给出带占位符的修改建议，返回 {{"original": "原句", "suggestion": "指出缺乏数据，建议修改为带数据的表达，如：负责XX核心系统开发，将并发处理效率提升了X%", "deduction": 扣除的分数(1-3分)}}
-     【示例】：{{"original": "参与了营销活动，吸引了大量新用户", "suggestion": "缺乏具体数据支撑，建议修改为：参与XX营销活动，吸引了约X万名新用户，转化率提升了X%", "deduction": 2}}
-
-   - overall_score: 整数 1-100，简历整体质量评分。【评分标准】：
-     【要求】：基础分100分，必须严格等于 100 减去以上所有问题中扣除的分数（deduction）的总和。
-     比如一共发现3个问题，分别扣了2分、3分、4分，那么总扣分为9分，overall_score 必须是 91。
-
-   - overall_comment: 字符串，一句话总体评价（30字以内）。
-     【要求】：如果有问题，必须明确指出（如："发现3处错别字和2处病句，建议仔细校对"）；如果质量优秀，可以正面评价（如："表达专业简洁，未发现明显问题"）
-
-8) education: 数组，教育背景信息。每项包含：
-   - school: 字符串，学校名称
-   - major: 字符串，专业名称
-   - degree: 字符串，学历（本科/硕士/博士/大专）
-   - period: 字符串，就读时间段（如 "2019.09-2023.06"）
-   【要求】：按时间倒序排列；如果简历中有教育经历段，必须完整提取所有条目；
-            没有教育经历则返回空数组[]
-
-9) experience: 数组，实习/工作经历。每项包含：
-   - company: 字符串，公司名称
-   - position: 字符串，岗位名称
-   - period: 字符串，工作时间段（如 "2022.06-2022.09"）
-   - description: 字符串，经历描述原文。如果简历中只写了岗位名称没有展开描述，返回空字符串 ""
-   【要求】：按时间倒序排列；没有经历则返回空数组[]
-   【重要】description 必须严格来自简历原文，**绝对禁止**根据公司名或岗位名自行编造内容。
-
-10) projects: 数组，项目经历。每项包含：
-    - name: 字符串，项目名称
-    - period: 字符串，项目时间（如 "2023.01-2023.06"）
-    - tech_stack: 字符串，使用的技术栈
-    - contribution: 字符串，个人贡献描述原文
-    - result: 字符串，数据成果描述原文
-    【要求】：按时间倒序排列；没有项目则返回空数组[]
-    【重要】所有字段必须严格来自简历原文，**绝对禁止**根据项目名称自行编造技术栈或成果。
-
-11) competitions: 数组，竞赛/获奖经历。每项包含：
-    - name: 字符串，竞赛名称或奖项名称
-    - level: 字符串，级别（校级/省级/国家级/国际级）
-    - ranking: 字符串，名次或奖项（如 "一等奖" / "金奖" / "前10%"）
-    - description: 字符串，经历描述原文。如果简历中只写了奖项名称没有展开，返回空字符串 ""
-    【要求】：没有则返回空数组[]
-    【重要】description **绝对禁止**编造，没有写就返回 ""
-
-12) campus_experience: 数组，校园经历/社团/学生会/组织活动等。每项包含：
-    - organization: 字符串，组织名称
-    - role: 字符串，担任职务
-    - period: 字符串，时间段
-    - description: 字符串，经历描述原文
-    【要求】：没有则返回空数组[]
-    【重要】description 必须来自简历原文，**绝对禁止**编造。
-
-13) self_evaluation: 字符串，简历中的自我评价/个人总结原文。如果没有则返回空字符串 ""。
-    【重要】必须来自简历原文，**绝对禁止**自行撰写或推断。
-
-【重要提示】：
-- 如果简历质量确实很好，typos/grammar_issues/redundancy/timeline_issues/star_issues 可以为空数组，overall_score 可以给 85-100 分
-- 但如果发现了问题，必须如实指出，不要遗漏，不要因为礼貌而隐瞒
-- original 字段必须是简历中的原文片段，不要编造
-- suggestion 必须是具体可行的修改建议，不要模糊表达
-
-如果信息缺失，请使用空字符串或空数组，不要省略字段。
+【推断MBTI规则】软技能权重>技术栈：
+- E判断：简历出现团队、领导、公开演讲、跨部门、协调等 → E；无以上信号且明确描述独立工作 → I
+- N判断：战略、创新、系统设计、跨领域 → N；注重细节、流程执行 → S
+- T判断：数据驱动、逻辑分析 → T；关注团队氛围、用户体验 → F
+- J判断：项目管理、按时交付、结构化 → J；灵活应变、创意发散 → P
 
 简历文本如下：
 {safe_text}
@@ -346,7 +214,45 @@ def _parse_resume_with_ai(raw_text: str) -> dict[str, Any]:
     response = client.chat.completions.create(
         model=DEEPSEEK_MODEL,
         messages=[{"role": "user", "content": prompt}],
-        temperature=0.0,
+        temperature=0.3,
+    )
+    return _to_json_with_fallback(response.choices[0].message.content)
+
+
+def _score_resume_with_ai(raw_text: str, target_position: str, target_company: str = "", preferred_locations: list[str] | None = None) -> dict[str, Any]:
+    company_context = f"\n【目标公司】{target_company}" if target_company.strip() else ""
+    location_context = f"\n【期望工作地】{', '.join(preferred_locations)}" if preferred_locations else ""
+    prompt = f"""你是一个资深 HR 分析师。请根据简历和目标岗位，对候选人进行六维度评分。
+{company_context}{location_context}
+【目标岗位】{target_position}
+
+六维度评分标准（每项 1-5 分，步进 0.5）：
+
+1. 学历背景匹配度：5分=硕士+985/211+专业对口；4分=普通本科+专业对口；3分=本科+专业不符；2分=大专；1分=学历明显不足
+2. 实习经历匹配度：5分=同行业同岗≥2段或单段≥6月+有成果；4分=同行业相关岗或不同行业同岗；3分=有实习但关联一般；2分=无关实习；1分=无实习
+3. 基础技能匹配度：5分=满足90%+核心技能+有精通项；4分=满足70%+核心技能；3分=满足约一半；2分=少量基础技能；1分=几乎无相关技能
+4. 项目经验匹配度：5分=同类项目+可量化成果；4分=同类项目+有成果；3分=相关但成果一般；2分=项目少且不相关；1分=几乎无项目
+5. 软素质匹配度：5分=多处具体事例体现高度匹配；4分=有明确事例；3分=体现一般；2分=较弱；1分=完全不匹配
+6. 职业稳定性：5分=路径清晰连贯+每段≥6月+城市一致；4分=稳定+城市一致；3分=基本稳定；2分=多段短期或需跨省搬迁；1分=极度不稳定
+
+【输出】严格纯 JSON（无 markdown），必须包含字段：validation_warnings[], candidate/education|experience|skills|projects|soft_skills|stability 各含score(0.5-5)和reason，position_requirements 同上结构，overall_match(0-100)，match_summary。
+
+规则：
+- score 只允许 0.5 步进（如 3.5、4.5），不要只给整数
+- validation_warnings：检查岗位/公司/城市的逻辑一致性，不合理才警告，合理返回[]
+- overall_match：基于候选人得分与岗位要求差距加权计算 0-100
+- match_summary：一句话总结优势与不足
+- 应届生无工作经验：stability 给 3 分
+- 如指定目标公司（字节/腾讯/阿里/华为等头部大厂），岗位要求分数通常更高
+- 严格 JSON 格式，不要 markdown 代码块
+
+简历文本如下：
+{raw_text}
+"""
+    response = client.chat.completions.create(
+        model=ZHIPU_MODEL,
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0.3,
     )
     raw = response.choices[0].message.content
     try:
@@ -905,66 +811,15 @@ class ChatMessage(BaseModel):
     content: str
 
 
-class ResumeContext(BaseModel):
-    has_resume: bool = False
-    resume_id: str = ""
-    candidate_summary: str = ""
-    inferred_mbti: str = ""
-    mbti_description: str = ""
-    city: str = ""
-    resume_diagnosis: dict | None = None
-    extracted_skills: list = []
-    resume_text: str = ""
-    job_recommendations: list = []
-    education: list = []
-    experience: list = []
-    projects: list = []
-    competitions: list = []
-    campus_experience: list = []
-    self_evaluation: str = ""
+class ScorePosition(BaseModel):
+    title: str
+    company: str = ""
+    locations: list[str] = []
 
 
-class InterviewState(BaseModel):
-    """面试模拟状态"""
-    is_active: bool = False
-    target_position: str = ""
-    interview_type: str = ""  # (deprecated) "technical", "behavioral", "comprehensive"
-    interview_stage: str = ""  # "hr" | "first" | "second"
-    identity: str = ""  # "intern" | "fresh" | "experienced" — 用户身份
-    gender: str = ""  # "male" | "female" — 用户性别
-    jd_text: str = ""  # 用户粘贴的岗位 JD
-    current_question_index: int = 0
-    total_questions: int = 8
-    scores: list[int] = []  # 每个问题的得分
-    feedbacks: list[str] = []  # 每个问题的反馈
-
-
-def _parse_interview_feedback(reply: str) -> dict:
-    """从 AI 回复中解析评分和反馈，支持多种自然语言格式"""
-    result: dict[str, Any] = {"score": None, "feedback": None}
-
-    # 匹配各种评分格式
-    # "评分：8/10", "得分 8", "8分（满分10分）", "评分: 8"
-    score_patterns = [
-        r'(?:评分|得分|分数)[：:]\s*(\d{1,2})(?:/10)?',
-        r'(\d{1,2})\s*分\s*(?:[/|/]\s*10|\(满分10分\))?',
-        r'得分[：:]\s*(\d{1,2})\s*分',
-    ]
-    for pat in score_patterns:
-        m = re.search(pat, reply)
-        if m:
-            result["score"] = max(0, min(10, int(m.group(1))))
-            break
-
-    # 匹配反馈建议部分（"反馈建议：" / "建议：" / "改进建议：" 之后的内容，直到下一个双换行或末尾）
-    fb_match = re.search(
-        r'(?:反馈建议?|改进建议?|建议)[：:]\s*([\s\S]+?)(?=\n\n［|\n\n【|\n\n\d+[.、]|\Z)',
-        reply
-    )
-    if fb_match:
-        result["feedback"] = fb_match.group(1).strip()
-
-    return result
+class ScoreRequest(BaseModel):
+    resume_text: str
+    positions: list[ScorePosition] = []  # 支持多岗位对比
 
 
 class ChatRequest(BaseModel):
@@ -1439,7 +1294,7 @@ async def upload_resume(file: UploadFile = File(...)) -> dict[str, Any]:
             "filename": filename,
             "parse_status": "success",
             "parsed_data": parsed,
-            "raw_text": raw_text[:3000],  # 返回简历原文（前3000字），供 Agent 聊天使用
+            "raw_text": raw_text,
             "message": "Resume parsed and structured successfully.",
         }
     except HTTPException:
@@ -1448,106 +1303,34 @@ async def upload_resume(file: UploadFile = File(...)) -> dict[str, Any]:
         raise HTTPException(status_code=500, detail=f"Parsing failed: {exc}") from exc
 
 
-def _ensure_user_service() -> UserService:
-    if user_service is None:
-        raise HTTPException(status_code=503, detail="UserService 未初始化（检查 SUPABASE 配置）")
-    return user_service
-
-
-# ========== 用户 API ==========
-class UserCreate(BaseModel):
-    nickname: str = ""
-    avatar: str = ""
-    gender: str = ""
-    identity: str = ""
-    mbti: str = ""
-
-
-@app.post("/users")
-async def api_create_user(payload: UserCreate) -> dict:
-    svc = _ensure_user_service()
-    return await svc.create_user(payload.dict())
-
-
-@app.get("/users/{user_id}")
-async def api_get_user(user_id: str) -> dict:
-    svc = _ensure_user_service()
-    user = await svc.get_user(user_id)
-    if not user:
-        raise HTTPException(status_code=404, detail="用户不存在")
-    return user
-
-
-@app.put("/users/{user_id}")
-async def api_update_user(user_id: str, payload: UserCreate) -> dict:
-    svc = _ensure_user_service()
-    return await svc.update_user(user_id, payload.dict())
-
-
-# ========== 简历 API ==========
-class ResumeCreate(BaseModel):
-    user_id: str
-    file_name: str
-    file_size: int = 0
-    raw_text: str = ""
-    parsed_data: dict = {}
-    parse_status: str = "parsed"
-    is_active: bool = False
-
-
-@app.post("/resumes")
-async def api_create_resume(payload: ResumeCreate) -> dict:
-    """保存一份解析后的简历"""
-    svc = _ensure_user_service()
-    data = payload.dict()
-    # 如果用户当前没有 active 简历，新建的这份默认设为 active
-    existing = await svc.list_resumes(payload.user_id)
-    has_active = any(r.get("is_active") for r in existing)
-    if not has_active:
-        data["is_active"] = True
-    created = await svc.create_resume(data)
-    if data.get("is_active"):
-        await svc.set_active_resume(payload.user_id, created["id"])
-    return created
-
-
-@app.get("/resumes")
-async def api_list_resumes(user_id: str) -> list:
-    """列出用户的所有简历"""
-    svc = _ensure_user_service()
-    return await svc.list_resumes(user_id)
-
-
-@app.get("/resumes/{resume_id}")
-async def api_get_resume(resume_id: str) -> dict:
-    """获取单份简历完整数据"""
-    svc = _ensure_user_service()
-    resume = await svc.get_resume(resume_id)
-    if not resume:
-        raise HTTPException(status_code=404, detail="简历不存在")
-    return resume
-
-
-class ResumeActivate(BaseModel):
-    user_id: str
-
-
-@app.put("/resumes/{resume_id}/active")
-async def api_set_active_resume(resume_id: str, payload: ResumeActivate) -> dict:
-    """切换为活跃简历"""
-    svc = _ensure_user_service()
-    result = await svc.set_active_resume(payload.user_id, resume_id)
-    if not result:
-        raise HTTPException(status_code=404, detail="简历不存在或不属于该用户")
-    return result
-
-
-@app.delete("/resumes/{resume_id}")
-async def api_delete_resume(resume_id: str) -> dict:
-    """删除简历"""
-    svc = _ensure_user_service()
-    ok = await svc.delete_resume(resume_id)
-    return {"deleted": ok}
+@app.post("/score")
+async def score_resume(request: ScoreRequest) -> dict[str, Any]:
+    if not request.resume_text.strip():
+        raise HTTPException(status_code=400, detail="Resume text is required.")
+    if not request.positions:
+        raise HTTPException(status_code=400, detail="At least one position is required.")
+    try:
+        results = []
+        for pos in request.positions:
+            score_data = _score_resume_with_ai(
+                request.resume_text,
+                pos.title,
+                pos.company,
+                pos.locations if pos.locations else None,
+            )
+            results.append({
+                "title": pos.title,
+                "company": pos.company,
+                "locations": pos.locations,
+                **score_data,
+            })
+        return {
+            "score_status": "success",
+            "score_data": results if len(results) > 1 else results[0],
+            "is_multi": len(results) > 1,
+        }
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Scoring failed: {exc}") from exc
 
 
 if __name__ == "__main__":
