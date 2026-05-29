@@ -1,0 +1,38 @@
+{
+  "name": "Resume",
+  "type": "object",
+  "properties": {
+    "title": { "type": "string", "description": "简历标题" },
+    "file_url": { "type": "string", "description": "上传的文件URL" },
+    "is_active": { "type": "boolean", "default": false, "description": "当前使用中" },
+    "status": {
+      "type": "string",
+      "enum": ["uploaded", "parsing", "parsed", "error"],
+      "default": "uploaded"
+    },
+    "parsed_data": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "school": { "type": "string" },
+        "major": { "type": "string" },
+        "degree": { "type": "string" },
+        "skills": { "type": "array", "items": { "type": "string" } },
+        "experience": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "company": { "type": "string" },
+              "role": { "type": "string" },
+              "duration": { "type": "string" },
+              "description": { "type": "string" }
+            }
+          }
+        },
+        "summary": { "type": "string" }
+      }
+    }
+  },
+  "required": ["title", "status"]
+}

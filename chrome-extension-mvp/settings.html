@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>扩展设置</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      width: 500px;
+      min-height: 400px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: linear-gradient(135deg, #FFB6C1 0%, #FFC0CB 100%);
+      padding: 20px;
+    }
+    
+    .container {
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    
+    h1 {
+      color: #FF69B4;
+      font-size: 24px;
+      margin-bottom: 10px;
+    }
+    
+    .subtitle {
+      color: #666;
+      font-size: 14px;
+      margin-bottom: 30px;
+    }
+    
+    .form-group {
+      margin-bottom: 20px;
+    }
+    
+    label {
+      display: block;
+      color: #333;
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 8px;
+    }
+    
+    input {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #FFB6C1;
+      border-radius: 6px;
+      font-size: 14px;
+      transition: border-color 0.3s;
+    }
+    
+    input:focus {
+      outline: none;
+      border-color: #FF69B4;
+    }
+    
+    .help-text {
+      font-size: 12px;
+      color: #666;
+      margin-top: 5px;
+    }
+    
+    .help-text a {
+      color: #FF69B4;
+      text-decoration: none;
+    }
+    
+    .help-text a:hover {
+      text-decoration: underline;
+    }
+    
+    .button-group {
+      display: flex;
+      gap: 10px;
+      margin-top: 30px;
+    }
+    
+    button {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    
+    .btn-primary {
+      background: #FF69B4;
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      background: #FF1493;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(255,105,180,0.3);
+    }
+    
+    .btn-secondary {
+      background: #f0f0f0;
+      color: #666;
+    }
+    
+    .btn-secondary:hover {
+      background: #e0e0e0;
+    }
+    
+    .status {
+      margin-top: 15px;
+      padding: 10px;
+      border-radius: 6px;
+      text-align: center;
+      font-size: 13px;
+      display: none;
+    }
+    
+    .status.success {
+      background: #d4edda;
+      color: #155724;
+      display: block;
+    }
+    
+    .status.error {
+      background: #f8d7da;
+      color: #721c24;
+      display: block;
+    }
+    
+    .info-box {
+      background: #e7f3ff;
+      border-left: 4px solid #2196F3;
+      padding: 15px;
+      border-radius: 4px;
+      margin-bottom: 20px;
+      font-size: 13px;
+      color: #0c5460;
+    }
+    
+    .info-box strong {
+      display: block;
+      margin-bottom: 5px;
+      color: #2196F3;
+    }
+    
+    .cost-info {
+      background: #fff3cd;
+      border-left: 4px solid #ffc107;
+      padding: 15px;
+      border-radius: 4px;
+      margin-top: 20px;
+      font-size: 12px;
+      color: #856404;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>⚙️ 扩展设置</h1>
+    <p class="subtitle">配置 DeepSeek API 以启用智能简历解析</p>
+    
+    <div class="info-box">
+      <strong>💡 为什么需要 API Key？</strong>
+      使用 AI 智能解析简历，准确率高达 95%+，支持各种简历格式。
+      API Key 仅存储在本地，不会上传到任何服务器。
+    </div>
+    
+    <form id="settingsForm">
+      <div class="form-group">
+        <label for="apiKey">DeepSeek API Key *</label>
+        <input 
+          type="password" 
+          id="apiKey" 
+          placeholder="sk-xxxxxxxxxxxxxxxxxxxxxxxx" 
+          required
+        >
+        <div class="help-text">
+          还没有 API Key？
+          <a href="https://platform.deepseek.com/api_keys" target="_blank">
+            点击这里注册获取
+          </a>
+        </div>
+      </div>
+      
+      <div class="button-group">
+        <button type="submit" class="btn-primary">💾 保存设置</button>
+        <button type="button" id="testBtn" class="btn-secondary">🧪 测试连接</button>
+      </div>
+    </form>
+    
+    <div id="status" class="status"></div>
+    
+    <div class="cost-info">
+      <strong>💰 成本说明</strong>
+      DeepSeek 非常便宜：
+      <ul style="margin: 10px 0 0 20px;">
+        <li>每次解析成本：约 ¥0.001（不到 1 分钱）</li>
+        <li>每天解析 10 次：约 ¥0.01</li>
+        <li>每月成本：约 ¥0.3</li>
+      </ul>
+      新用户通常有免费额度，足够使用很长时间！
+    </div>
+  </div>
+  
+  <script src="settings.js"></script>
+</body>
+</html>

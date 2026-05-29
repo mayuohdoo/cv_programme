@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>生成扩展图标</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background: #f5f5f5;
+      padding: 20px;
+    }
+    
+    canvas {
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      margin: 20px 0;
+    }
+    
+    button {
+      background: #FF69B4;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      font-size: 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      margin: 10px;
+    }
+    
+    button:hover {
+      background: #FF1493;
+    }
+    
+    .instructions {
+      max-width: 600px;
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      margin-top: 20px;
+    }
+    
+    h1 {
+      color: #FF69B4;
+    }
+  </style>
+</head>
+<body>
+  <h1>🌸 生成扩展图标</h1>
+  
+  <canvas id="iconCanvas" width="128" height="128"></canvas>
+  
+  <button onclick="downloadIcon()">下载图标 (icon128.png)</button>
+  
+  <div class="instructions">
+    <h3>使用说明：</h3>
+    <ol>
+      <li>点击"下载图标"按钮</li>
+      <li>将下载的文件保存为 <code>icon128.png</code></li>
+      <li>将文件放到 <code>chrome-extension-mvp/icons/</code> 目录下</li>
+      <li>重新加载扩展即可看到图标</li>
+    </ol>
+    
+    <p><strong>提示：</strong>这是一个简单的占位符图标。你可以使用 Canva、Figma 等工具设计更精美的图标。</p>
+  </div>
+  
+  <script>
+    // 绘制图标
+    const canvas = document.getElementById('iconCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    // 樱花粉渐变背景
+    const gradient = ctx.createLinearGradient(0, 0, 128, 128);
+    gradient.addColorStop(0, '#FFB6C1');
+    gradient.addColorStop(1, '#FFC0CB');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, 128, 128);
+    
+    // 绘制圆角
+    ctx.globalCompositeOperation = 'destination-in';
+    ctx.beginPath();
+    ctx.roundRect(0, 0, 128, 128, 20);
+    ctx.fill();
+    ctx.globalCompositeOperation = 'source-over';
+    
+    // 绘制文档图标（白色）
+    ctx.fillStyle = 'white';
+    ctx.strokeStyle = 'white';
+    ctx.lineWidth = 3;
+    
+    // 文档外框
+    ctx.beginPath();
+    ctx.roundRect(35, 25, 58, 78, 5);
+    ctx.fill();
+    
+    // 文档折角
+    ctx.fillStyle = '#FFB6C1';
+    ctx.beginPath();
+    ctx.moveTo(93, 25);
+    ctx.lineTo(93, 40);
+    ctx.lineTo(78, 25);
+    ctx.closePath();
+    ctx.fill();
+    
+    // 文档内容线条
+    ctx.strokeStyle = '#FFB6C1';
+    ctx.lineWidth = 2;
+    
+    // 第一行
+    ctx.beginPath();
+    ctx.moveTo(45, 45);
+    ctx.lineTo(75, 45);
+    ctx.stroke();
+    
+    // 第二行
+    ctx.beginPath();
+    ctx.moveTo(45, 55);
+    ctx.lineTo(83, 55);
+    ctx.stroke();
+    
+    // 第三行
+    ctx.beginPath();
+    ctx.moveTo(45, 65);
+    ctx.lineTo(83, 65);
+    ctx.stroke();
+    
+    // 第四行
+    ctx.beginPath();
+    ctx.moveTo(45, 75);
+    ctx.lineTo(70, 75);
+    ctx.stroke();
+    
+    // 下载图标
+    function downloadIcon() {
+      const link = document.createElement('a');
+      link.download = 'icon128.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    }
+  </script>
+</body>
+</html>

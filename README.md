@@ -1,116 +1,163 @@
-# 小小求职拿下 ✦ AI 简历解析
+# 小小求职拿下 ✨
 
-> 🎯 上传简历，AI 智能分析你的人格特质、推荐匹配岗位、诊断简历质量
+> AI 驱动的一站式求职助手，帮你优化简历、匹配岗位、模拟面试、追踪投递进度。
 
-🔗 **立即体验：[https://catarina-xxxcc.github.io/cv_programme/](https://catarina-xxxcc.github.io/cv_programme/)**
-
----
-
-## ✨ 核心功能
-
-### 🧠 MBTI 人格分析
-- **智能推断**：AI 根据你的简历内容分析你的 MBTI 人格类型
-- **深度解读**：提供详细的人格特质标签和职业倾向分析
-- **视觉呈现**：精美的人格卡片设计，一目了然
-
-### 💼 智能岗位推荐
-- **精准匹配**：结合你的技能、经验和人格特质，推荐最适合的 5 个岗位
-- **匹配度评分**：每个岗位都有清晰的匹配度百分比（高/中/低）
-- **详细说明**：包含行业标签、薪资范围、城市信息和推荐理由
-- **一键跳转**：点击岗位名称即可查看详细信息
-
-### 📋 简历质量诊断
-- **全面检查**：自动检测错别字、病句和语意冗杂问题
-- **智能评分**：给出 0-100 分的综合评分
-- **修改建议**：针对每个问题提供具体的修改建议
-- **对比展示**：原文和建议修改对照显示，方便优化
-
-### 📁 简历管理中心
-- **侧边栏管理**：左侧可折叠的简历管理面板
-- **多简历支持**：上传并保存多份简历，随时切换查看
-- **本地存储**：简历数据保存在浏览器本地，保护隐私
-- **快速上传**：支持点击上传和拖拽上传两种方式
+🔗 **在线体验**：[https://catarina-xxxcc.github.io/cv_programme/](https://catarina-xxxcc.github.io/cv_programme/)
 
 ---
 
-## 🚀 使用指南
+## 🎯 核心功能
 
-### 第一步：上传简历
-1. 点击左侧侧边栏的上传区域
-2. 选择你的简历文件（支持 PDF 或 DOCX 格式）
-3. 文件大小不超过 5MB
-4. 支持拖拽上传，更加便捷
+### 📋 简历诊断
+- 上传简历（PDF/DOCX/TXT），AI 自动检测错别字、语法问题
+- 给出优化建议和综合评分
+- 支持 Chrome 扩展一键填充招聘网站表单
 
-### 第二步：等待解析
-- AI 正在分析你的简历内容
-- 通常需要 5-10 秒
-- 首次使用可能需要约 30 秒（服务器冷启动）
+### 🧠 岗位推荐
+- 基于简历内容智能匹配最适合的职业方向
+- MBTI 性格辅助分析（选填）
+- 展示匹配度、薪资范围、成长路径
 
-### 第三步：查看结果
-- **右上方**：MBTI 人格分析和特质标签
-- **右下方**：5 个精准匹配的岗位推荐
-- **左侧**：简历质量诊断和修改建议
+### 💬 面试辅导（RAG 增强）
+- AI 模拟面试官，练习回答技巧
+- **知识库增强**：基于真实面经数据（牛客网 84+ 条面经），AI 回答更专业
+- 支持多种模式：换赛道、修改简历、职业规划、模拟面试
 
-### 第四步：管理简历
-- 上传多份简历后，可在左侧侧边栏切换查看
-- 点击简历名称即可切换到该简历的分析结果
-- 点击删除按钮可移除不需要的简历
-
----
-
-## 🎨 设计特色
-
-- **樱花粉配色**：温柔优雅的视觉风格
-- **响应式布局**：适配桌面、平板和移动设备
-- **流畅动画**：精心设计的过渡效果和交互反馈
-- **清晰层级**：信息层次分明，重点突出
+### 📊 投递追踪
+- 记录每次投递，可视化追踪进度
+- 智能提醒：超时未回复、转化率分析
+- Chrome 扩展自动记录投递
 
 ---
 
-## 🔒 隐私保护
+## 🖥️ 界面预览
 
-- ✅ 简历内容仅用于本次 AI 分析
-- ✅ 数据保存在浏览器本地存储（localStorage）
-- ✅ 不会上传到第三方服务器永久存储
-- ✅ 清除浏览器数据即可删除所有记录
-
----
-
-## 💡 使用建议
-
-- **MBTI 结果**：基于简历文本推断，仅供参考，不代表专业测评结果
-- **岗位推荐**：结合市场需求和你的背景，建议作为求职方向参考
-- **简历诊断**：AI 检测可能存在误判，请结合实际情况采纳建议
-- **最佳体验**：建议使用 Chrome、Safari 或 Edge 浏览器
+- **冷启动欢迎页**：产品功能预览 + 个人信息设置
+- **主页面**：3D 旋转木马卡片轮播，四大功能一目了然
+- **侧边栏**：用户头像 + 简历管理
 
 ---
 
-## 🛠️ 技术栈
+## 🛠️ 技术架构
 
-**后端**
-- Python + FastAPI
-- 智谱 AI GLM-4-Flash 大语言模型
-- 部署在 Render
-
-**前端**
-- 原生 HTML / CSS / JavaScript
-- localStorage 本地存储
-- 部署在 GitHub Pages
-
----
-
-## 📞 反馈与支持
-
-如有问题或建议，欢迎通过以下方式联系：
-- 提交 GitHub Issue
-- 发送邮件反馈
+| 层级 | 技术栈 |
+|------|--------|
+| 前端 | HTML/CSS/JS + Tailwind（冷启动页）|
+| 后端 | Python FastAPI |
+| AI | DeepSeek Chat + DeepSeek Embedding |
+| 数据库 | Supabase PostgreSQL + pgvector |
+| 知识库 | RAG（检索增强生成）|
+| 扩展 | Chrome Extension（简历解析 + 自动填充）|
+| 部署 | GitHub Pages（前端）|
 
 ---
 
-## 📄 开源协议
+## 📁 项目结构
 
-本项目采用 MIT 协议开源
+```
+├── index.html              # 主网站
+├── dashboard.js            # 仪表盘（3D 旋转木马）
+├── onboarding.js           # 冷启动引导
+├── landing.html            # React 欢迎页（SVG 图表）
+├── tracking.js             # 投递追踪
+├── backend/
+│   ├── main.py             # FastAPI 后端
+│   └── rag/                # RAG 知识库模块
+│       ├── config.py       # 配置管理
+│       ├── embedding.py    # DeepSeek Embedding
+│       ├── chunking.py     # 文档分块引擎
+│       ├── pipeline.py     # RAG 检索管道
+│       ├── context_builder.py  # 上下文构建
+│       └── knowledge_base.py   # 知识库管理
+├── chrome-extension-mvp/   # Chrome 扩展
+├── scripts/
+│   ├── crawl_nowcoder.py   # 牛客网面经爬虫
+│   ├── clean_data.py       # 数据清理
+│   └── ingest_data.py      # 知识库数据导入
+└── data/                   # 面经数据（不上传）
+```
 
 ---
 
-**小小求职拿下 ✦** — 让 AI 成为你的求职助手 🚀
+## 🚀 快速开始
+
+### 前端（GitHub Pages 已部署）
+直接访问：[https://catarina-xxxcc.github.io/cv_programme/](https://catarina-xxxcc.github.io/cv_programme/)
+
+### 后端本地运行
+
+```bash
+# 1. 安装依赖
+cd backend
+pip install fastapi uvicorn openai python-dotenv supabase httpx PyMuPDF python-docx
+
+# 2. 配置环境变量
+# 编辑 .env 文件，填入 DeepSeek API Key 和 Supabase Key
+
+# 3. 启动服务
+python main.py
+# 或
+uvicorn main:app --reload --port 8000
+```
+
+### 知识库数据导入
+
+```bash
+# 1. 爬取牛客网面经
+pip install playwright && playwright install chromium
+python scripts/crawl_nowcoder.py
+
+# 2. 清理数据
+python scripts/clean_data.py
+
+# 3. 导入 Supabase
+python scripts/ingest_data.py
+```
+
+### Chrome 扩展安装
+
+1. 打开 `chrome://extensions`
+2. 开启开发者模式
+3. 加载已解压的扩展程序 → 选择 `chrome-extension-mvp/` 文件夹
+
+---
+
+## 🔑 环境变量
+
+```env
+# DeepSeek API
+DEEPSEEK_API_KEY=your-key
+DEEPSEEK_BASE_URL=https://api.deepseek.com
+
+# Supabase
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_SERVICE_KEY=your-service-role-key
+
+# RAG 参数
+RAG_TOP_K=3
+RAG_SIMILARITY_THRESHOLD=0.7
+```
+
+---
+
+## 📝 开发计划
+
+- [x] 简历诊断（AI 评分 + 优化建议）
+- [x] 岗位推荐（MBTI + 技能匹配）
+- [x] 面试辅导（AI 对话 + RAG 知识库）
+- [x] 投递追踪（Chrome 扩展 + 可视化）
+- [x] 冷启动引导（欢迎页 + 个人信息设置）
+- [x] RAG 知识库（牛客面经 84 条 + DeepSeek Embedding）
+- [ ] 更多面经数据源（BOSS直聘、脉脉等）
+- [ ] 面试模拟评分系统完善
+- [ ] 移动端适配优化
+
+---
+
+## 👩‍💻 作者
+
+**catarina-xxxcc**
+
+---
+
+*让求职更高效，更有方向。*

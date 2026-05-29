@@ -25,7 +25,14 @@
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["content.js"],
+      "js": [
+        "field-matcher.js",
+        "autofill-engine.js",
+        "application-storage.js",
+        "info-extractor.js",
+        "floating-ui.js",
+        "content.js"
+      ],
       "run_at": "document_idle"
     }
   ],

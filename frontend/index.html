@@ -19,7 +19,7 @@
       --sakura-dark: #FF9DB3;
       --sakura-gradient: linear-gradient(135deg, #FFE4E9 0%, #FFF5F7 100%);
       --sakura-gradient-hover: linear-gradient(135deg, #FFD4DC 0%, #FFE4E9 100%);
-      
+
       /* 中性色 */
       --white: #FFFFFF;
       --gray-50: #FAFAFA;
@@ -32,27 +32,27 @@
       --gray-700: #404040;
       --gray-800: #262626;
       --gray-900: #171717;
-      
+
       /* 功能色 */
       --success: #10B981;
       --error: #EF4444;
       --warning: #F59E0B;
       --info: #3B82F6;
-      
+
       /* 阴影系统 */
       --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
       --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
       --shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
       --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
       --shadow-sakura: 0 10px 30px -5px rgba(255, 183, 197, 0.3);
-      
+
       /* 圆角系统 */
       --radius-sm: 8px;
       --radius: 12px;
       --radius-lg: 16px;
       --radius-xl: 20px;
       --radius-full: 9999px;
-      
+
       /* 间距系统 */
       --space-xs: 4px;
       --space-sm: 8px;
@@ -76,6 +76,8 @@
       min-height: 100vh;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
+      overflow-y: scroll;
+      scrollbar-gutter: stable;
       position: relative;
     }
 
@@ -162,19 +164,25 @@
       letter-spacing: 0.5px;
     }
 
+    /* 主区域（包裹 layout 和 Agent，统一对齐） */
+    .main-area {
+      margin-left: calc(20% + 48px);
+      margin-right: auto;
+      max-width: 1800px;
+      padding: 0 32px;
+      transition: margin-left 300ms cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
     /* 主布局 */
     .layout {
       display: grid;
       grid-template-columns: 420px 1fr;
       gap: 32px;
-      max-width: 1800px;
-      margin: 32px auto;
-      padding: 0 32px;
+      margin: 32px 0;
+      padding: 0;
       align-items: stretch;
       position: relative;
       z-index: 1;
-      margin-left: calc(20% + 48px);
-      transition: margin-left 300ms cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     .left-col {
@@ -212,7 +220,7 @@
       flex-direction: column;
     }
 
-    .result-content { 
+    .result-content {
       display: block;
       flex: 1;
     }
@@ -243,8 +251,8 @@
       font-size: 36px; flex-shrink: 0;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
     }
-    .mbti-info { 
-      flex: 1; 
+    .mbti-info {
+      flex: 1;
       display: grid;
       grid-template-columns: auto 1fr;
       gap: 16px;
@@ -281,16 +289,16 @@
       letter-spacing: 0.3px;
       line-height: 1.2;
     }
-    .mbti-desc { 
-      font-size: 13px; 
-      color: var(--gray-600); 
+    .mbti-desc {
+      font-size: 13px;
+      color: var(--gray-600);
       line-height: 1.6;
       font-weight: 500;
     }
 
-    .mbti-traits { 
-      display: flex; 
-      flex-wrap: wrap; 
+    .mbti-traits {
+      display: flex;
+      flex-wrap: wrap;
       gap: 5px;
     }
     .mbti-trait {
@@ -309,11 +317,11 @@
     .insight-title {
       font-size: 10px; font-weight: 700;
       letter-spacing: 0.5px; text-transform: uppercase;
-      margin-bottom: 6px; 
+      margin-bottom: 6px;
       color: var(--sakura-dark);
     }
-    .insight-text { 
-      font-size: 12px; 
+    .insight-text {
+      font-size: 12px;
       line-height: 1.6;
       color: var(--gray-700);
       font-weight: 500;
@@ -328,13 +336,13 @@
     .section-title {
       font-size: 14px; font-weight: 800;
       text-transform: uppercase; letter-spacing: 0.8px;
-      color: var(--gray-800); 
+      color: var(--gray-800);
       margin-bottom: 12px;
       display: flex;
       align-items: center;
       gap: 12px;
     }
-    
+
     .section-title-hint {
       font-size: 12px;
       font-weight: 500;
@@ -362,7 +370,7 @@
       position: relative;
       overflow: visible;
     }
-    
+
     /* 匹配度渐变背景 - 顶部装饰条 */
     .job-card[data-match-level="high"]::before {
       content: '';
@@ -375,7 +383,7 @@
       border-radius: 10px 10px 0 0;
       z-index: 1;
     }
-    
+
     .job-card[data-match-level="mid"]::before {
       content: '';
       position: absolute;
@@ -387,7 +395,7 @@
       border-radius: 10px 10px 0 0;
       z-index: 1;
     }
-    
+
     .job-card[data-match-level="low"]::before {
       content: '';
       position: absolute;
@@ -399,7 +407,7 @@
       border-radius: 10px 10px 0 0;
       z-index: 1;
     }
-    
+
     .job-card:hover {
       border-color: var(--sakura-primary);
       box-shadow: 0 8px 24px rgba(255,183,197,0.2);
@@ -417,9 +425,9 @@
       transform: translateY(-4px);
     }
     .job-card .job-header {
-      display: flex; 
+      display: flex;
       justify-content: space-between;
-      align-items: flex-start; 
+      align-items: flex-start;
       margin-bottom: 12px;
       min-height: 56px;
     }
@@ -433,51 +441,51 @@
       font-family: 'Noto Serif SC', serif;
     }
     .job-card .match-badge {
-      font-size: 11px; 
-      font-weight: 800; 
+      font-size: 11px;
+      font-weight: 800;
       padding: 4px 10px;
-      border-radius: 999px; 
-      flex-shrink: 0; 
+      border-radius: 999px;
+      flex-shrink: 0;
       margin-left: 8px;
       text-transform: uppercase;
       letter-spacing: 0.3px;
     }
-    .match-high { 
-      background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%); 
+    .match-high {
+      background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
       color: #15803d;
       box-shadow: 0 2px 8px rgba(21, 128, 61, 0.15);
     }
-    .match-mid { 
-      background: linear-gradient(135deg, #fef9c3 0%, #fef08a 100%); 
+    .match-mid {
+      background: linear-gradient(135deg, #fef9c3 0%, #fef08a 100%);
       color: #a16207;
       box-shadow: 0 2px 8px rgba(161, 98, 7, 0.15);
     }
-    .match-low { 
-      background: linear-gradient(135deg, #f5f5f5 0%, #e5e5e5 100%); 
+    .match-low {
+      background: linear-gradient(135deg, #f5f5f5 0%, #e5e5e5 100%);
       color: var(--gray-600);
     }
 
     .job-card .industry-tag {
-      display: inline-block; 
-      font-size: 12px; 
+      display: inline-block;
+      font-size: 12px;
       font-weight: 600;
-      background: var(--sakura-lighter); 
+      background: var(--sakura-lighter);
       color: var(--sakura-dark);
       border: 1.5px solid var(--sakura-primary);
-      border-radius: 6px; 
+      border-radius: 6px;
       padding: 4px 10px;
       margin-bottom: 12px;
     }
-    .job-card .job-reason { 
-      font-size: 13px; 
-      color: var(--gray-600); 
+    .job-card .job-reason {
+      font-size: 13px;
+      color: var(--gray-600);
       line-height: 1.7;
       min-height: 44px;
       font-weight: 500;
     }
 
     /* ========== 新增功能样式 ========== */
-    
+
     /* 匹配度徽章 - 大号设计 */
     .match-badge-wrapper {
       display: flex;
@@ -493,7 +501,7 @@
       line-height: 1;
       letter-spacing: -0.5px;
     }
-    
+
     /* 匹配度颜色渐变 */
     .match-percentage[data-score="high"] {
       background: linear-gradient(135deg, #15803d 0%, #22c55e 100%);
@@ -582,7 +590,7 @@
       color: var(--sakura-primary);
       font-weight: 700;
     }
-    
+
     /* ========== 结束：新增功能样式 ========== */
 
     /* 薪资信息样式 */
@@ -622,7 +630,7 @@
       height: 100%;
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
-    
+
     .diagnosis-panel:hover {
       box-shadow: var(--shadow-sakura);
       transform: translateY(-2px);
@@ -630,31 +638,31 @@
     }
 
     .diag-header {
-      display: flex; 
+      display: flex;
       justify-content: space-between;
-      align-items: center; 
+      align-items: center;
       margin-bottom: 24px;
       padding-bottom: 20px;
       border-bottom: 2px solid var(--sakura-lighter);
     }
     .diag-title {
-      font-size: 22px; 
+      font-size: 22px;
       font-weight: 800;
-      color: var(--gray-900); 
+      color: var(--gray-900);
       letter-spacing: 0.3px;
       font-family: 'Noto Serif SC', serif;
     }
     .score-wrap { text-align: right; }
     .score-badge {
-      font-size: 40px; 
+      font-size: 40px;
       font-weight: 900;
-      color: var(--sakura-primary); 
+      color: var(--sakura-primary);
       line-height: 1;
       font-family: 'Inter', sans-serif;
     }
-    .score-label { 
-      font-size: 12px; 
-      color: var(--gray-500); 
+    .score-label {
+      font-size: 12px;
+      color: var(--gray-500);
       margin-top: 6px;
       font-weight: 600;
       text-transform: uppercase;
@@ -662,31 +670,31 @@
     }
 
     .diag-comment {
-      font-size: 14px; 
+      font-size: 14px;
       color: var(--gray-700);
-      background: var(--sakura-lighter); 
+      background: var(--sakura-lighter);
       border: 1.5px solid var(--sakura-primary);
-      border-radius: var(--radius); 
-      padding: 16px 18px; 
+      border-radius: var(--radius);
+      padding: 16px 18px;
       margin-bottom: 24px;
       line-height: 1.8;
       font-weight: 500;
     }
     .diag-section { margin-bottom: 20px; }
     .diag-section-title {
-      font-size: 12px; 
+      font-size: 12px;
       font-weight: 800;
-      text-transform: uppercase; 
+      text-transform: uppercase;
       letter-spacing: 0.8px;
-      color: var(--gray-700); 
+      color: var(--gray-700);
       margin-bottom: 12px;
     }
     .diag-item {
-      background: var(--gray-50); 
+      background: var(--gray-50);
       border: 1.5px solid var(--gray-200);
-      border-radius: var(--radius); 
+      border-radius: var(--radius);
       padding: 12px 14px;
-      margin-bottom: 8px; 
+      margin-bottom: 8px;
       font-size: 14px;
       transition: all 0.2s ease;
       line-height: 1.6;
@@ -696,18 +704,18 @@
       border-color: var(--sakura-primary);
       transform: translateX(4px);
     }
-    .diag-original { 
-      color: var(--error); 
-      text-decoration: line-through; 
+    .diag-original {
+      color: var(--gray-500);
+      font-style: italic;
       margin-bottom: 6px;
       font-weight: 500;
     }
-    .diag-suggestion { 
-      color: var(--success);
+    .diag-suggestion {
+      color: var(--error);
       font-weight: 600;
     }
-    .diag-empty { 
-      font-size: 14px; 
+    .diag-empty {
+      font-size: 14px;
       color: var(--gray-400);
       text-align: center;
       padding: 24px;
@@ -722,7 +730,7 @@
     }
     @media (max-width: 560px) {
       .jobs-grid { grid-template-columns: 1fr; }
-      .mbti-section { 
+      .mbti-section {
         grid-template-columns: 1fr;
         gap: 16px;
       }
@@ -731,67 +739,168 @@
       }
     }
 
-    /* ── 聊天区域 ── */
-    .chat-section {
-      max-width: calc(1800px - 20% - 48px);
-      margin: 0 auto 40px;
-      margin-left: calc(20% + 48px + 32px);
-      margin-right: 32px;
+    /* ========== Agent 求职面板 ========== */
+    .agent-section {
+      grid-column: 1 / -1;
+      margin: 8px 0 40px;
+      padding: 0;
     }
-    .chat-panel {
+
+    .agent-panel {
       background: var(--white);
-      border-radius: var(--radius);
-      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      border: 2px solid var(--gray-200);
       box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
       overflow: hidden;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
-    .chat-header {
+
+    .agent-panel:hover {
+      box-shadow: var(--shadow-sakura);
+      border-color: var(--sakura-primary);
+    }
+
+    /* --- Header --- */
+    .agent-header {
       padding: 18px 24px;
-      border-bottom: 1px solid var(--border);
-      display: flex; align-items: center; gap: 10px;
+      background: linear-gradient(135deg, #FFE4E9 0%, #FFF5F7 100%);
+      border-bottom: 1px solid rgba(255, 183, 197, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
     }
-    .chat-header-icon {
-      width: 32px; height: 32px;
-      background: var(--brand-light);
-      border-radius: 8px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 16px;
+
+    .agent-header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
     }
-    .chat-header-text h3 {
-      font-size: 18px; font-weight: 800; color: var(--gray-900);
-      letter-spacing: 0.2px;
+
+    .agent-icon {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, #FFB7C5 0%, #FF9DB3 100%);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      box-shadow: 0 4px 12px rgba(255, 183, 197, 0.3);
+    }
+
+    .agent-header-text h3 {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--gray-900);
       font-family: 'Noto Serif SC', serif;
     }
-    .chat-header-text p { 
-      font-size: 14px; 
-      color: var(--gray-600); 
-      margin-top: 4px;
+
+    .agent-header-text p {
+      font-size: 13px;
+      color: var(--gray-500);
+      font-weight: 500;
+      margin-top: 2px;
+    }
+
+    .btn-clear-chat {
+      background: var(--sakura-dark);
+      border: none;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--white);
+      cursor: pointer;
+      padding: 8px 18px;
+      border-radius: var(--radius-full);
+      transition: all 0.25s ease;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+      box-shadow: 0 4px 12px rgba(255, 157, 179, 0.25);
+    }
+
+    .btn-clear-chat:hover {
+      background: #e88a9e;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(255, 157, 179, 0.4);
+    }
+
+    /* --- Welcome message has been moved to header subtitle --- */
+
+    /* --- Function cards --- */
+    .agent-cards {
+      padding: 16px 24px;
+      display: flex;
+      flex-direction: row;
+      gap: 12px;
+      flex-shrink: 0;
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .agent-card {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      background: var(--white);
+      border: 2px solid var(--gray-200);
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .agent-card:hover {
+      background: var(--sakura-lighter);
+      border-color: var(--sakura-primary);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-sakura);
+    }
+
+    .agent-card.active {
+      background: linear-gradient(135deg, #FFB7C5 0%, #FF9DB3 100%);
+      border-color: #FF9DB3;
+      color: var(--white);
+      box-shadow: 0 6px 20px rgba(255, 183, 197, 0.4);
+    }
+
+    .agent-card.active .card-icon {
+      color: var(--white);
+    }
+
+    .agent-card.active .card-title {
+      color: var(--white);
+    }
+
+    .agent-card.active .card-desc {
+      color: rgba(255, 255, 255, 0.85);
+    }
+
+    .card-icon {
+      font-size: 28px;
+      flex-shrink: 0;
+    }
+
+    .card-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .card-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--gray-800);
+    }
+
+    .card-desc {
+      font-size: 12px;
+      color: var(--gray-500);
       font-weight: 500;
     }
 
-    /* 快捷提示词 */
-    .chat-prompts {
-      padding: 16px 24px 0;
-      display: flex; flex-wrap: wrap; gap: 8px;
-    }
-    .prompt-chip {
-      font-size: 12px; font-weight: 500;
-      color: var(--brand-dark);
-      background: var(--brand-light);
-      border: 1px solid #a7f0e4;
-      border-radius: 999px;
-      padding: 6px 14px;
-      cursor: pointer;
-      transition: all 0.15s;
-      white-space: nowrap;
-    }
-    .prompt-chip:hover {
-      background: var(--brand);
-      color: #fff; border-color: var(--brand);
-    }
-
-    /* 消息列表 */
-    .chat-messages {
+    /* --- Messages area --- */
+    .agent-messages {
       padding: 16px 24px;
       min-height: 200px;
       max-height: 420px;
@@ -800,52 +909,85 @@
       flex-direction: column;
       gap: 12px;
     }
-    .chat-welcome {
-      text-align: center;
-      padding: 32px 0;
-      color: var(--ink-4);
-      font-size: 13px;
-    }
-    .chat-welcome .welcome-icon { font-size: 32px; margin-bottom: 8px; }
 
-    .msg { display: flex; gap: 8px; align-items: flex-start; }
+    /* Preset questions */
+    .preset-questions {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 8px 0;
+      align-items: center;
+    }
+
+    .preset-question {
+      width: 100%;
+      max-width: 420px;
+      text-align: center;
+      padding: 12px 16px;
+      background: var(--sakura-lighter);
+      border: 1.5px solid var(--sakura-primary);
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--gray-700);
+      line-height: 1.5;
+    }
+
+    .preset-question:hover {
+      background: var(--sakura-light);
+      transform: translateX(4px);
+      box-shadow: var(--shadow-sm);
+    }
+
+    /* Chat messages inside agent */
+    .msg { display: flex; gap: 10px; align-items: flex-start; }
     .msg.user { flex-direction: row-reverse; }
 
     .msg-avatar {
-      width: 28px; height: 28px; border-radius: 50%;
+      width: 32px; height: 32px; border-radius: 50%;
       display: flex; align-items: center; justify-content: center;
-      font-size: 13px; flex-shrink: 0;
+      font-size: 16px; flex-shrink: 0;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
     }
-    .msg.ai .msg-avatar { background: var(--brand-light); }
-    .msg.user .msg-avatar { background: #e0e7ff; }
+    .msg.ai .msg-avatar {
+      background: linear-gradient(135deg, #FFE4E9 0%, #FFB7C5 100%);
+    }
+    .msg.user .msg-avatar {
+      background: linear-gradient(135deg, #E8E0F0 0%, #D4C8E0 100%);
+    }
 
     .msg-bubble {
       max-width: 75%;
-      padding: 10px 14px;
+      padding: 12px 16px;
       border-radius: 12px;
-      font-size: 13px; line-height: 1.65;
+      font-size: 13px;
+      line-height: 1.7;
+      font-weight: 500;
+      white-space: pre-wrap;
     }
     .msg.ai .msg-bubble {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      color: var(--ink-2);
+      background: var(--sakura-lighter);
+      border: 1.5px solid var(--gray-200);
+      color: var(--gray-700);
       border-top-left-radius: 4px;
     }
     .msg.user .msg-bubble {
-      background: var(--brand);
+      background: linear-gradient(135deg, #FFB7C5 0%, #FF9DB3 100%);
       color: #fff;
       border-top-right-radius: 4px;
     }
 
-    /* 简历模板气泡 */
+    /* Resume template bubble */
     .resume-bubble {
-      background: var(--surface);
-      border: 1.5px solid var(--brand);
+      background: var(--sakura-lighter);
+      border: 1.5px solid var(--sakura-primary);
       border-radius: 12px;
       padding: 16px 18px;
       font-size: 12px;
       line-height: 1.7;
-      color: var(--ink-2);
+      color: var(--gray-700);
       white-space: pre-wrap;
       font-family: 'SF Mono', 'Fira Code', monospace;
       position: relative;
@@ -856,58 +998,38 @@
     }
     .resume-label {
       font-size: 11px; font-weight: 700;
-      color: var(--brand); text-transform: uppercase; letter-spacing: 0.5px;
+      color: var(--sakura-dark);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
     .btn-copy {
       font-size: 11px; font-weight: 600;
-      color: var(--brand-dark);
-      background: var(--brand-light);
-      border: 1px solid #a7f0e4;
-      border-radius: 6px; padding: 3px 10px;
-      cursor: pointer; transition: all 0.15s;
+      color: var(--sakura-dark);
+      background: var(--white);
+      border: 1.5px solid var(--sakura-primary);
+      border-radius: 6px;
+      padding: 4px 10px;
+      cursor: pointer;
+      transition: all 0.15s;
     }
-    .btn-copy:hover { background: var(--brand); color: #fff; border-color: var(--brand); }
+    .btn-copy:hover {
+      background: var(--sakura-primary);
+      color: var(--white);
+      border-color: var(--sakura-primary);
+    }
 
-    /* 输入区 */
-    .chat-input-area {
-      padding: 12px 16px;
-      border-top: 1px solid var(--border);
-      display: flex; gap: 8px; align-items: flex-end;
-    }
-    .chat-input {
-      flex: 1;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 10px 14px;
-      font-size: 13px;
-      font-family: inherit;
-      color: var(--ink);
-      background: var(--surface);
-      resize: none;
-      outline: none;
-      transition: border-color 0.15s;
-      min-height: 40px; max-height: 120px;
-      line-height: 1.5;
-    }
-    .chat-input:focus { border-color: var(--brand); background: var(--white); }
-    .chat-input::placeholder { color: var(--ink-4); }
-    .btn-send {
-      width: 38px; height: 38px;
-      background: var(--brand); color: #fff;
-      border: none; border-radius: 9px;
-      cursor: pointer; font-size: 16px;
-      display: flex; align-items: center; justify-content: center;
-      transition: background 0.15s; flex-shrink: 0;
-    }
-    .btn-send:hover { background: var(--brand-dark); }
-    .btn-send:disabled { background: #c0cdd8; cursor: not-allowed; }
-
+    /* Typing indicator */
     .typing-indicator {
-      display: flex; gap: 4px; align-items: center; padding: 4px 0;
+      display: flex;
+      gap: 5px;
+      align-items: center;
+      padding: 6px 0;
     }
     .typing-dot {
-      width: 6px; height: 6px; border-radius: 50%;
-      background: var(--ink-4);
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--gray-400);
       animation: typing 1.2s infinite;
     }
     .typing-dot:nth-child(2) { animation-delay: 0.2s; }
@@ -917,8 +1039,148 @@
       30% { opacity: 1; transform: scale(1.2); }
     }
 
+    /* --- Input area --- */
+    .agent-input-area {
+      padding: 12px 16px;
+      border-top: 2px solid var(--gray-200);
+      display: flex;
+      gap: 10px;
+      align-items: flex-end;
+      background: var(--gray-50);
+    }
+
+    .agent-input {
+      flex: 1;
+      border: 2px solid var(--gray-200);
+      border-radius: var(--radius);
+      padding: 10px 14px;
+      font-size: 14px;
+      font-family: inherit;
+      color: var(--gray-800);
+      background: var(--white);
+      resize: none;
+      outline: none;
+      transition: border-color 0.2s ease;
+      min-height: 42px;
+      max-height: 120px;
+      line-height: 1.5;
+    }
+
+    .agent-input:focus {
+      border-color: var(--sakura-primary);
+      box-shadow: 0 0 0 3px rgba(255, 183, 197, 0.15);
+    }
+
+    .agent-input::placeholder {
+      color: var(--gray-400);
+    }
+
+    .agent-send-btn {
+      width: 42px;
+      height: 42px;
+      background: linear-gradient(135deg, #FFB7C5 0%, #FF9DB3 100%);
+      color: var(--white);
+      border: none;
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+      box-shadow: 0 4px 12px rgba(255, 183, 197, 0.3);
+    }
+
+    .agent-send-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(255, 183, 197, 0.4);
+    }
+
+    .agent-send-btn:disabled {
+      background: var(--gray-300);
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    /* --- Clear chat confirmation modal --- */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+    }
+
+    .modal-box {
+      background: var(--white);
+      border-radius: var(--radius-xl);
+      padding: 32px;
+      max-width: 400px;
+      width: 90%;
+      text-align: center;
+      box-shadow: var(--shadow-lg);
+    }
+
+    .modal-box h3 {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--gray-800);
+      margin-bottom: 12px;
+    }
+
+    .modal-box p {
+      font-size: 14px;
+      color: var(--gray-600);
+      line-height: 1.6;
+      margin-bottom: 24px;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+    }
+
+    .modal-btn {
+      padding: 10px 24px;
+      border-radius: var(--radius);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      border: none;
+    }
+
+    .modal-btn-cancel {
+      background: var(--gray-200);
+      color: var(--gray-700);
+    }
+
+    .modal-btn-cancel:hover {
+      background: var(--gray-300);
+    }
+
+    .modal-btn-confirm {
+      background: linear-gradient(135deg, #FFB7C5 0%, #FF9DB3 100%);
+      color: var(--white);
+      box-shadow: 0 4px 12px rgba(255, 183, 197, 0.3);
+    }
+
+    .modal-btn-confirm:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(255, 183, 197, 0.4);
+    }
+
     /* ========== 用户侧边栏样式 ========== */
-    
+
     /* 侧边栏容器 */
     .profile-sidebar {
       position: fixed;
@@ -938,11 +1200,11 @@
       overflow-y: auto;
       padding-top: 72px;
     }
-    
+
     .profile-sidebar[data-state="collapsed"] {
       transform: translateX(calc(-100% + 60px));
     }
-    
+
     /* 切换按钮 */
     .sidebar-toggle {
       position: absolute;
@@ -961,22 +1223,22 @@
       transition: all 0.2s ease;
       z-index: 10;
     }
-    
+
     .sidebar-toggle:hover {
       background: var(--sakura-light);
       transform: scale(1.1);
     }
-    
+
     .toggle-icon {
       font-size: 14px;
       color: var(--sakura-dark);
       transition: transform 0.3s ease;
     }
-    
+
     .profile-sidebar[data-state="collapsed"] .toggle-icon {
       transform: rotate(180deg);
     }
-    
+
     /* 用户信息区域 */
     .user-info-section {
       padding: 24px 20px;
@@ -986,7 +1248,7 @@
       align-items: center;
       gap: 12px;
     }
-    
+
     .user-avatar-wrapper {
       width: 80px;
       height: 80px;
@@ -996,12 +1258,12 @@
       transition: all 0.2s ease;
       border: 3px solid var(--sakura-light);
     }
-    
+
     .user-avatar-wrapper:hover {
       transform: scale(1.05);
       border-color: var(--sakura-primary);
     }
-    
+
     .user-avatar-placeholder {
       width: 100%;
       height: 100%;
@@ -1011,13 +1273,13 @@
       justify-content: center;
       font-size: 36px;
     }
-    
+
     .user-avatar {
       width: 100%;
       height: 100%;
       object-fit: cover;
     }
-    
+
     .user-name {
       font-size: 16px;
       font-weight: 600;
@@ -1031,22 +1293,22 @@
       min-width: 80px;
       outline: none;
     }
-    
+
     .user-name:hover {
       border-color: var(--gray-300);
       background: var(--gray-50);
     }
-    
+
     .user-name:focus {
       border-color: var(--sakura-primary);
       background: var(--white);
     }
-    
+
     .user-name:empty::before {
       content: attr(data-placeholder);
       color: var(--gray-400);
     }
-    
+
     /* 简历列表区域 */
     .resume-list-section {
       flex: 0 1 auto;
@@ -1056,7 +1318,7 @@
       flex-direction: column;
       max-height: calc(100vh - 72px - 200px - 250px);
     }
-    
+
     .resume-list-section .section-title {
       font-size: 12px;
       font-weight: 700;
@@ -1065,7 +1327,7 @@
       color: var(--gray-600);
       margin-bottom: 12px;
     }
-    
+
     .resume-list {
       list-style: none;
       display: flex;
@@ -1074,7 +1336,7 @@
       overflow-y: auto;
       flex: 1;
     }
-    
+
     .resume-item {
       background: var(--gray-50);
       border: 1.5px solid var(--gray-200);
@@ -1084,35 +1346,35 @@
       transition: all 0.2s ease;
       position: relative;
     }
-    
+
     .resume-item:hover {
       background: var(--sakura-lighter);
       border-color: var(--sakura-primary);
       transform: translateX(4px);
     }
-    
+
     .resume-item[data-active="true"] {
       background: var(--sakura-light);
       border-color: var(--sakura-primary);
       box-shadow: 0 2px 8px rgba(255, 183, 197, 0.2);
     }
-    
+
     .resume-item-content {
       display: flex;
       gap: 10px;
       align-items: flex-start;
     }
-    
+
     .resume-icon {
       font-size: 20px;
       flex-shrink: 0;
     }
-    
+
     .resume-info {
       flex: 1;
       min-width: 0;
     }
-    
+
     .resume-name {
       font-size: 13px;
       font-weight: 600;
@@ -1122,25 +1384,25 @@
       text-overflow: ellipsis;
       white-space: nowrap;
     }
-    
+
     .resume-meta {
       font-size: 11px;
       color: var(--gray-500);
       display: flex;
       gap: 8px;
     }
-    
+
     .resume-actions {
       display: flex;
       align-items: center;
       gap: 8px;
     }
-    
+
     .active-indicator {
       font-size: 16px;
       color: var(--sakura-primary);
     }
-    
+
     .btn-delete {
       background: none;
       border: none;
@@ -1150,33 +1412,33 @@
       transition: opacity 0.2s ease;
       padding: 4px;
     }
-    
+
     .resume-item:hover .btn-delete {
       opacity: 1;
     }
-    
+
     .btn-delete:hover {
       transform: scale(1.2);
     }
-    
+
     .empty-state {
       text-align: center;
       padding: 40px 20px;
       color: var(--gray-400);
       font-size: 13px;
     }
-    
+
     .resume-list:not(:empty) + .empty-state {
       display: none;
     }
-    
+
     /* 上传区域 */
     .upload-area-section {
       padding: 20px;
       border-top: 1px solid var(--gray-200);
       background: var(--gray-50);
     }
-    
+
     .upload-dropzone-sidebar {
       border: 2px dashed var(--sakura-primary);
       border-radius: var(--radius);
@@ -1190,29 +1452,29 @@
       z-index: 1;
       pointer-events: auto;
     }
-    
+
     .upload-dropzone-sidebar:hover {
       background: var(--sakura-light);
       transform: scale(1.02);
     }
-    
+
     .dropzone-content {
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: 6px;
     }
-    
+
     .upload-icon {
       font-size: 28px;
     }
-    
+
     .upload-text {
       font-size: 13px;
       font-weight: 600;
       color: var(--gray-700);
     }
-    
+
     .btn-parse-sidebar {
       width: 100%;
       padding: 10px;
@@ -1226,23 +1488,23 @@
       transition: all 0.3s ease;
       box-shadow: 0 4px 12px rgba(255, 183, 197, 0.3);
     }
-    
+
     .btn-parse-sidebar:hover:not(:disabled) {
       transform: translateY(-2px);
       box-shadow: 0 6px 20px rgba(255, 183, 197, 0.4);
     }
-    
+
     .btn-parse-sidebar:disabled {
       background: var(--gray-300);
       cursor: not-allowed;
       box-shadow: none;
     }
-    
+
     .upload-progress-sidebar {
       margin-top: 12px;
       text-align: center;
     }
-    
+
     .progress-bar-sidebar {
       height: 4px;
       background: linear-gradient(90deg, #FFB7C5, #FF9DB3);
@@ -1250,46 +1512,69 @@
       transition: width 0.3s ease;
       margin-bottom: 6px;
     }
-    
+
     .progress-text-sidebar {
       font-size: 11px;
       color: var(--gray-600);
       font-weight: 600;
     }
-    
+
     /* 主布局调整 - 为侧边栏留出空间 */
     body {
       padding-left: 0;
     }
-    
+
     /* 响应式设计 */
     @media (max-width: 1024px) {
       .profile-sidebar {
         width: 25%;
         min-width: 280px;
       }
-      
-      .layout {
+
+      .main-area {
         margin-left: calc(25% + 24px);
       }
+
+      .agent-card {
+        padding: 10px 12px;
+      }
+
+      .card-desc {
+        display: none;
+      }
     }
-    
+
     @media (max-width: 768px) {
       .profile-sidebar {
         width: 100%;
         max-width: 100%;
         transform: translateX(-100%);
       }
-      
+
       .profile-sidebar[data-state="expanded"] {
         transform: translateX(0);
       }
-      
-      .layout {
+
+      .main-area {
         margin-left: 24px !important;
       }
+
+      .agent-cards {
+        overflow-x: auto;
+        gap: 8px;
+        padding: 12px 16px;
+      }
+
+      .agent-card {
+        flex: 0 0 auto;
+        min-width: 120px;
+      }
+
+      .card-desc {
+        display: none;
+      }
     }
-    
+
     /* ========== 结束：用户侧边栏样式 ========== */
 
     /* ========== 智能简历解析器样式 ========== */
@@ -1665,7 +1950,7 @@
   <button class="sidebar-toggle" aria-label="切换侧边栏" aria-controls="profileSidebar" aria-expanded="true">
     <span class="toggle-icon">◀</span>
   </button>
-  
+
   <!-- 用户信息区域 -->
   <section class="user-info-section">
     <div class="user-avatar-wrapper" role="button" tabindex="0" aria-label="点击上传头像">
@@ -1674,7 +1959,7 @@
     </div>
     <div class="user-name" contenteditable="true" data-placeholder="用户">用户</div>
   </section>
-  
+
   <!-- 简历列表区域 -->
   <section class="resume-list-section" aria-labelledby="resumeListTitle">
     <h3 id="resumeListTitle" class="section-title">
@@ -1683,7 +1968,7 @@
     <ul class="resume-list" role="list"></ul>
     <div class="empty-state">还没有上传简历</div>
   </section>
-  
+
   <!-- 上传区域 -->
   <section class="upload-area-section">
     <input type="file" id="sidebarFileInput" accept=".pdf,.docx" style="display: none;" />
@@ -1839,6 +2124,8 @@
   <div class="tagline">AI 简历解析 · MBTI 推断 · 岗位推荐</div>
 </header>
 
+<div class="main-area">
+
 <div class="layout">
 
   <!-- 左侧：简历诊断 -->
@@ -1855,7 +2142,7 @@
     <div id="diagComment" class="diag-comment"></div>
 
     <div class="diag-section">
-      <div class="diag-section-title">🔤 错别字</div>
+      <div class="diag-section-title">🔤 书写错误</div>
       <div id="diagTypos"></div>
     </div>
     <div class="diag-section">
@@ -1865,6 +2152,10 @@
     <div class="diag-section">
       <div class="diag-section-title">♻️ 语意冗杂</div>
       <div id="diagRedundancy"></div>
+    </div>
+    <div class="diag-section">
+      <div class="diag-section-title">🎯 成果量化 (STAR法则)</div>
+      <div id="diagStar"></div>
     </div>
   </div>
 
@@ -2012,39 +2303,82 @@
 
     </div>
   </div>
-</div>
 
-<!-- 聊天区域 -->
-<div class="chat-section">
-  <div class="chat-panel">
-    <div class="chat-header">
-      <div class="chat-header-icon">✍️</div>
-      <div class="chat-header-text">
-        <h3>简历助手</h3>
-        <p>告诉我你的经历，我来帮你写</p>
+<!-- Agent 求职面板 -->
+<div class="agent-section">
+  <div class="agent-panel">
+    <!-- Header -->
+    <div class="agent-header">
+      <div class="agent-header-left">
+        <span class="agent-icon">🤖</span>
+        <div class="agent-header-text">
+          <h3 id="agentTitle">求职小助手</h3>
+          <p id="agentSubtitle" style="font-size:13px;color:var(--gray-600);font-weight:500;">同学你好👋，我是你的智能求职小助手。无论是想精准跨行、复刻金牌简历，还是需要职业规划、全真模拟面试，你需要的职场助力，我这里都有。准备好了吗？让我们开始复盘，直通心仪 Offer！</p>
+        </div>
+      </div>
+      <button class="btn-clear-chat" onclick="clearAgentChat()" title="新建对话">
+        <span>新建对话+</span>
+      </button>
+    </div>
+
+    <!-- Function cards (horizontal) -->
+    <div class="agent-cards" id="agentCards">
+      <div class="agent-card" data-mode="career_switch" onclick="handleCardClick(this)">
+        <span class="card-icon">🚀</span>
+        <div class="card-info">
+          <span class="card-title">换赛道</span>
+          <span class="card-desc">跨行业转型策略分析</span>
+        </div>
+      </div>
+      <div class="agent-card" data-mode="resume_tailor" onclick="handleCardClick(this)">
+        <span class="card-icon">📝</span>
+        <div class="card-info">
+          <span class="card-title">修改简历</span>
+          <span class="card-desc">针对目标岗位优化简历</span>
+        </div>
+      </div>
+      <div class="agent-card" data-mode="career_planning" onclick="handleCardClick(this)">
+        <span class="card-icon">🗺️</span>
+        <div class="card-info">
+          <span class="card-title">职业规划</span>
+          <span class="card-desc">短中长期发展路径建议</span>
+        </div>
+      </div>
+      <div class="agent-card" data-mode="interview_sim" onclick="handleCardClick(this)">
+        <span class="card-icon">🎤</span>
+        <div class="card-info">
+          <span class="card-title">面试模拟</span>
+          <span class="card-desc">模拟真实面试场景练习</span>
+        </div>
       </div>
     </div>
 
-    <div class="chat-prompts">
-      <div class="prompt-chip" onclick="sendPrompt('我是应届生，还没有简历，帮我生成一份')">🎓 我是应届生</div>
-      <div class="prompt-chip" onclick="sendPrompt('我有工作经验想换行，帮我重新写一份简历')">💼 我想换行业</div>
-      <div class="prompt-chip" onclick="sendPrompt('我是实习生，帮我写一份实习简历')">🌱 我要找实习</div>
-      <div class="prompt-chip" onclick="sendPrompt('帮我生成一份产品经理方向的简历')">📱 产品经理方向</div>
-      <div class="prompt-chip" onclick="sendPrompt('帮我生成一份数据分析方向的简历')">📊 数据分析方向</div>
-    </div>
-
-    <div class="chat-messages" id="chatMessages">
-      <div class="chat-welcome" id="chatWelcome">
-        <div class="welcome-icon">👋</div>
-        <div>点击上方快捷选项，或直接输入你的情况</div>
+    <!-- Chat messages area -->
+    <div class="agent-messages" id="agentMessages">
+      <!-- Preset questions (shown initially) -->
+      <div class="preset-questions" id="presetQuestions">
+        <div class="preset-question" onclick="sendPresetQuestion(this)">
+          <span>有哪些技巧可以使简历更加吸引HR的注意？</span>
+        </div>
+        <div class="preset-question" onclick="sendPresetQuestion(this)">
+          <span>有什么秘诀可以使得简历在众多求职者中脱颖而出？</span>
+        </div>
+        <div class="preset-question" onclick="sendPresetQuestion(this)">
+          <span>有哪些常见的面试问题以及回答方式？</span>
+        </div>
       </div>
     </div>
 
-    <div class="chat-input-area">
-      <textarea id="chatInput" class="chat-input" placeholder="描述你的情况，比如：我是大三学生，学金融的..." rows="1"></textarea>
-      <button id="sendBtn" class="btn-send" onclick="sendChat()">↑</button>
+    <!-- Input area -->
+    <div class="agent-input-area">
+      <textarea id="agentInput" class="agent-input" placeholder="输入你的想法，我来帮你分析..." rows="1"></textarea>
+      <button id="agentSendBtn" class="agent-send-btn" onclick="sendAgentChat()">
+        <span>✈️</span>
+      </button>
     </div>
   </div>
+</div>
+</div>
 </div>
 
 <script src="./config.js"></script>
@@ -2053,7 +2387,7 @@
   const API_BASE_URL = (window.APP_CONFIG?.API_BASE_URL || DEFAULT_API_BASE_URL).replace(/\/+$/, "");
 
   // ========== StorageManager 工具类 ==========
-  
+
   class StorageManager {
     static KEYS = {
       USER_PROFILE: 'userProfile',
@@ -2062,9 +2396,9 @@
       SIDEBAR_STATE: 'sidebarState',
       VERSION: 'version'
     };
-    
+
     static CURRENT_VERSION = '1.0';
-    
+
     /**
      * 保存数据到 localStorage
      * @param {string} key - 存储键
@@ -2086,7 +2420,7 @@
         return false;
       }
     }
-    
+
     /**
      * 从 localStorage 加载数据
      * @param {string} key - 存储键
@@ -2101,7 +2435,7 @@
         return null;
       }
     }
-    
+
     /**
      * 从 localStorage 删除数据
      * @param {string} key - 存储键
@@ -2113,29 +2447,29 @@
         console.error('Failed to remove from localStorage:', error);
       }
     }
-    
+
     /**
      * 数据迁移（用于版本升级）
      */
     static migrate() {
       const version = this.load(this.KEYS.VERSION);
-      
+
       if (!version) {
         // 首次使用，设置版本号
         this.save(this.KEYS.VERSION, this.CURRENT_VERSION);
         return;
       }
-      
+
       if (version === this.CURRENT_VERSION) {
         return;
       }
-      
+
       // 未来版本迁移逻辑
       console.log('Migrating data from version', version, 'to', this.CURRENT_VERSION);
       this.save(this.KEYS.VERSION, this.CURRENT_VERSION);
     }
   }
-  
+
   /**
    * 生成 UUID v4
    * @returns {string} UUID
@@ -2151,7 +2485,7 @@
       return v.toString(16);
     });
   }
-  
+
   // ========== 结束：StorageManager ==========
 
   // ========== 六维评分功能 ==========
@@ -2650,7 +2984,7 @@ const reqScores = DIMENSION_KEYS.map(k => (first.position_requirements || {})[k]
   };
 
   // ========== 辅助函数：新增功能 ==========
-  
+
   /**
    * 根据匹配度分数返回等级和样式类
    * @param {number} score - 匹配度分数 (0-100)
@@ -2671,7 +3005,7 @@ const reqScores = DIMENSION_KEYS.map(k => (first.position_requirements || {})[k]
     if (!skills || !Array.isArray(skills) || skills.length === 0) {
       return '<div class="skill-complete">技能完全匹配 ✓</div>';
     }
-    return skills.slice(0, 5).map(skill => 
+    return skills.slice(0, 5).map(skill =>
       `<span class="skill-tag">${skill}</span>`
     ).join('');
   }
@@ -2685,7 +3019,7 @@ const reqScores = DIMENSION_KEYS.map(k => (first.position_requirements || {})[k]
     if (!pathText || typeof pathText !== 'string' || !pathText.trim()) {
       return '';
     }
-    
+
     // 按箭头符号分割为阶段
     const stages = pathText.split(/[→>]/);
     return stages.map((stage, index) => `
@@ -2705,13 +3039,13 @@ const reqScores = DIMENSION_KEYS.map(k => (first.position_requirements || {})[k]
       console.warn('Missing required fields in job data:', job);
       return false;
     }
-    
+
     // 验证并修正match_score
     if (typeof job.match_score !== 'number' || job.match_score < 0 || job.match_score > 100) {
       console.warn(`Invalid match_score: ${job.match_score}, using default 70`);
       job.match_score = 70;
     }
-    
+
     // 验证并修正missing_skills
     if (!Array.isArray(job.missing_skills)) {
       console.warn('missing_skills is not an array, using empty array');
@@ -2721,16 +3055,16 @@ const reqScores = DIMENSION_KEYS.map(k => (first.position_requirements || {})[k]
         .filter(skill => typeof skill === 'string' && skill.trim())
         .slice(0, 5);
     }
-    
+
     // 验证并修正career_path
     if (typeof job.career_path !== 'string') {
       console.warn('career_path is not a string, using empty string');
       job.career_path = '';
     }
-    
+
     return true;
   }
-  
+
   // ========== 结束：辅助函数 ==========
 
   // 16personalities 人物图片（使用官方 CDN）
@@ -2754,7 +3088,7 @@ const reqScores = DIMENSION_KEYS.map(k => (first.position_requirements || {})[k]
   };
 
   // ========== 主页上传功能已移除，现在使用侧边栏上传 ==========
-  
+
   function renderResult(data) {
     cachedResumeText = data.raw_text || "";
     const d = data.parsed_data || {};
@@ -2839,14 +3173,14 @@ const reqScores = DIMENSION_KEYS.map(k => (first.position_requirements || {})[k]
             console.warn('Skipping invalid job card:', job);
             return;
           }
-          
+
           const card = document.createElement("div");
           card.className = "job-card";
-          
+
           // 使用match_score计算匹配等级
           const matchScore = job.match_score || 70;
           const matchInfo = getMatchLevel(matchScore);
-          
+
           // 添加匹配度等级data属性用于CSS渐变
           if (matchScore >= 80) {
             card.setAttribute('data-match-level', 'high');
@@ -2855,7 +3189,7 @@ const reqScores = DIMENSION_KEYS.map(k => (first.position_requirements || {})[k]
           } else {
             card.setAttribute('data-match-level', 'low');
           }
-          
+
           // 构建薪资显示HTML
           let salaryHTML = '';
           if (job.salary_range && job.salary_range.min_salary && job.salary_range.max_salary) {
@@ -2868,7 +3202,7 @@ const reqScores = DIMENSION_KEYS.map(k => (first.position_requirements || {})[k]
               </div>
             `;
           }
-          
+
           // 构建推荐原因模块
           const reasonHTML = `
             <div class="job-section">
@@ -2879,7 +3213,7 @@ const reqScores = DIMENSION_KEYS.map(k => (first.position_requirements || {})[k]
               </div>
             </div>
           `;
-          
+
           // 构建缺失技能模块
           const missingSkillsHTML = `
             <div class="job-section">
@@ -2892,7 +3226,7 @@ const reqScores = DIMENSION_KEYS.map(k => (first.position_requirements || {})[k]
               </div>
             </div>
           `;
-          
+
           // 构建成长路径模块（仅当有内容时显示）
           const careerPathContent = renderCareerPath(job.career_path);
           const careerPathHTML = careerPathContent ? `
@@ -2906,7 +3240,7 @@ const reqScores = DIMENSION_KEYS.map(k => (first.position_requirements || {})[k]
               </div>
             </div>
           ` : '';
-          
+
           // 组装完整卡片HTML
           card.innerHTML = `
             <div class="job-header">
@@ -2975,7 +3309,7 @@ const reqScores = DIMENSION_KEYS.map(k => (first.position_requirements || {})[k]
           console.error('Failed to render job card:', error, job);
         }
       });
-      
+
       // 如果所有卡片都渲染失败
       if (jobsEl.children.length === 0) {
         jobsEl.innerHTML = '<div class="empty-state" style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--gray-500);">岗位数据加载失败</div>';
@@ -3038,43 +3372,214 @@ const reqScores = DIMENSION_KEYS.map(k => (first.position_requirements || {})[k]
       items.forEach(item => {
         const div = document.createElement("div");
         div.className = "diag-item";
-        div.innerHTML = `<div class="diag-original">${item.original || ""}</div><div class="diag-suggestion">→ ${item.suggestion || ""}</div>`;
+        const deductionHtml = item.deduction ? `<span style="color:#ff4d4f; font-weight:bold; margin-left:10px; font-size:13px;">(-${item.deduction}分)</span>` : '';
+        div.innerHTML = `<div class="diag-original">${item.original || ""}</div><div class="diag-suggestion">→ ${item.suggestion || ""}${deductionHtml}</div>`;
         el.appendChild(div);
       });
     }
 
-    renderDiagItems("diagTypos", diag.typos);
+    const combinedErrors = (diag.typos || []).concat(diag.contact_info || []).concat(diag.timeline_issues || []);
+    renderDiagItems("diagTypos", combinedErrors);
     renderDiagItems("diagGrammar", diag.grammar_issues);
     renderDiagItems("diagRedundancy", diag.redundancy);
+    renderDiagItems("diagStar", diag.star_issues);
   }
 
-  // ── 聊天功能 ──
-  let chatHistory = [];
-  let isChatLoading = false;
+  // ── Agent 求职机器人 ──
+  let agentChatHistory = [];
+  let isAgentLoading = false;
+  let currentMode = 'default';
+  let interviewState = {
+    is_active: false,
+    target_position: "",
+    interview_type: "",
+    current_question_index: 0,
+    total_questions: 8,
+    scores: [],
+    feedbacks: []
+  };
 
-  const chatMessages = document.getElementById("chatMessages");
-  const chatInput = document.getElementById("chatInput");
-  const sendBtn = document.getElementById("sendBtn");
+  const agentMessages = document.getElementById("agentMessages");
+  const agentInput = document.getElementById("agentInput");
+  const agentSendBtn = document.getElementById("agentSendBtn");
 
-  // 自动调整输入框高度
-  chatInput.addEventListener("input", () => {
-    chatInput.style.height = "auto";
-    chatInput.style.height = Math.min(chatInput.scrollHeight, 120) + "px";
+  // 输入框自动调整高度
+  agentInput.addEventListener("input", () => {
+    agentInput.style.height = "auto";
+    agentInput.style.height = Math.min(agentInput.scrollHeight, 120) + "px";
   });
 
   // 回车发送（Shift+Enter 换行）
-  chatInput.addEventListener("keydown", e => {
-    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendChat(); }
+  agentInput.addEventListener("keydown", e => {
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendAgentChat(); }
   });
 
-  function sendPrompt(text) {
-    chatInput.value = text;
-    sendChat();
+  /**
+   * 更新 Agent Header 标题和副标题
+   */
+  function updateAgentHeader(mode) {
+    const titleEl = document.getElementById("agentTitle");
+
+    const titles = {
+      default:       "求职小助手",
+      career_switch: "求职小助手 · 换赛道",
+      resume_tailor: "求职小助手 · 修改简历",
+      career_planning: "求职小助手 · 职业规划",
+      interview_sim: "🎯 面试模拟中"
+    };
+
+    titleEl.textContent = titles[mode] || titles.default;
+    // 副标题已固定显示欢迎语，不再动态更新
   }
 
+  /**
+   * 更新输入框 placeholder
+   */
+  function updateInputPlaceholder(mode) {
+    const placeholders = {
+      default: "输入你的想法，我来帮你分析...",
+      career_switch: "说说你当前行业和想转的方向...",
+      resume_tailor: "说说你的目标岗位或想优化的方向...",
+      career_planning: "聊聊你的职业现状和未来想法...",
+      interview_sim: "输入你的回答，我来给你评分和反馈..."
+    };
+    agentInput.placeholder = placeholders[mode] || placeholders.default;
+  }
+
+  /**
+   * 获取当前简历上下文
+   */
+  function getResumeContext() {
+    const activeResumeId = StorageManager.load(StorageManager.KEYS.ACTIVE_RESUME);
+    if (!activeResumeId) {
+      return { has_resume: false };
+    }
+
+    const resumes = StorageManager.load(StorageManager.KEYS.RESUMES) || [];
+    const active = resumes.find(r => r.id === activeResumeId);
+    if (!active || !active.parseResult || !active.parseResult.parsed_data) {
+      return { has_resume: false };
+    }
+
+    const d = active.parseResult.parsed_data;
+    return {
+      has_resume: true,
+      resume_id: activeResumeId,
+      candidate_summary: d.candidate_summary || "",
+      inferred_mbti: d.inferred_mbti || "",
+      mbti_description: d.mbti_description || "",
+      city: d.city || "",
+      resume_diagnosis: d.resume_diagnosis || null,
+      extracted_skills: d.extracted_skills || [],
+      resume_text: active.rawText || "",
+      job_recommendations: d.job_recommendations || []
+    };
+  }
+
+  /**
+   * 显示预设问题
+   */
+  function showPresetQuestions() {
+    let pq = document.getElementById("presetQuestions");
+    if (pq) pq.remove();
+
+    pq = document.createElement("div");
+    pq.className = "preset-questions";
+    pq.id = "presetQuestions";
+
+    const questions = [
+      "有哪些技巧可以使简历更加吸引HR的注意？",
+      "有什么秘诀可以使得简历在众多求职者中脱颖而出？",
+      "有哪些常见的面试问题以及回答方式？"
+    ];
+
+    questions.forEach(q => {
+      const el = document.createElement("div");
+      el.className = "preset-question";
+      el.onclick = () => sendPresetQuestion(el);
+      el.innerHTML = `<span>${q}</span>`;
+      pq.appendChild(el);
+    });
+
+    // 插入到消息区域最前面
+    agentMessages.insertBefore(pq, agentMessages.firstChild);
+  }
+
+  /**
+   * 隐藏预设问题（用户发送第一条消息后）
+   */
+  function hidePresetQuestions() {
+    const pq = document.getElementById("presetQuestions");
+    if (pq) pq.remove();
+  }
+
+  /**
+   * 处理功能卡片点击
+   */
+  function handleCardClick(card) {
+    const mode = card.dataset.mode;
+
+    // 同一卡片再次点击不做变化
+    if (card.classList.contains("active")) return;
+
+    // 更新卡片激活状态
+    document.querySelectorAll(".agent-card").forEach(c => c.classList.remove("active"));
+    card.classList.add("active");
+
+    // 自动填充提示语
+    const prompts = {
+      career_switch: "我想了解一下如何从当前行业转到目标行业，你能帮我分析一下吗？",
+      resume_tailor: "我想针对目标岗位优化我的简历，你能给我一些具体的修改建议吗？",
+      career_planning: "我想规划一下未来的职业发展路径，你能给我一些建议吗？",
+      interview_sim: "我想进行面试模拟练习，你能扮演面试官来提问吗？"
+    };
+
+    agentInput.value = prompts[mode] || "";
+    agentInput.style.height = "auto";
+    agentInput.style.height = Math.min(agentInput.scrollHeight, 120) + "px";
+
+    // 更新模式
+    currentMode = mode;
+    updateAgentHeader(mode);
+    updateInputPlaceholder(mode);
+
+    // 点击面试模拟时重置面试状态，并移除旧进度显示
+    if (mode === 'interview_sim') {
+      interviewState = {
+        is_active: false,
+        target_position: "",
+        interview_type: "",
+        current_question_index: 0,
+        total_questions: 8,
+        scores: [],
+        feedbacks: []
+      };
+      const oldProgress = document.getElementById('interviewProgress');
+      if (oldProgress) oldProgress.remove();
+    }
+
+    // 自动发送消息（携带简历上下文）
+    setTimeout(() => sendAgentChat(), 100);
+  }
+
+  /**
+   * 发送预设问题（点击即自动发送）
+   */
+  function sendPresetQuestion(el) {
+    const text = el.querySelector("span").textContent.trim();
+    if (!text) return;
+
+    hidePresetQuestions();
+    agentInput.value = text;
+    sendAgentChat();
+  }
+
+  /**
+   * 添加消息到对话区域
+   */
   function appendMsg(role, content, isResume = false) {
-    const welcome = document.getElementById("chatWelcome");
-    if (welcome) welcome.remove();
+    // 移除预设问题（如果用户直接输入而非点击预设问题）
+    hidePresetQuestions();
 
     const msg = document.createElement("div");
     msg.className = `msg ${role}`;
@@ -3099,16 +3604,19 @@ const reqScores = DIMENSION_KEYS.map(k => (first.position_requirements || {})[k]
     } else {
       const bubble = document.createElement("div");
       bubble.className = "msg-bubble";
-      bubble.textContent = content;
+      bubble.textContent = content.replace(/\*\*(.+?)\*\*/g, '$1').replace(/\*(.+?)\*/g, '$1').replace(/__(.+?)__/g, '$1').replace(/#{1,6}\s/g, '').replace(/`{1,3}/g, '').replace(/>\s/g, '');
       msg.appendChild(avatar);
       msg.appendChild(bubble);
     }
 
-    chatMessages.appendChild(msg);
-    chatMessages.scrollTop = chatMessages.scrollHeight;
+    agentMessages.appendChild(msg);
+    agentMessages.scrollTop = agentMessages.scrollHeight;
     return msg;
   }
 
+  /**
+   * 添加打字指示器
+   */
   function appendTyping() {
     const msg = document.createElement("div");
     msg.className = "msg ai";
@@ -3122,15 +3630,21 @@ const reqScores = DIMENSION_KEYS.map(k => (first.position_requirements || {})[k]
           <div class="typing-dot"></div>
         </div>
       </div>`;
-    chatMessages.appendChild(msg);
-    chatMessages.scrollTop = chatMessages.scrollHeight;
+    agentMessages.appendChild(msg);
+    agentMessages.scrollTop = agentMessages.scrollHeight;
   }
 
+  /**
+   * 移除打字指示器
+   */
   function removeTyping() {
     const t = document.getElementById("typingMsg");
     if (t) t.remove();
   }
 
+  /**
+   * 复制简历
+   */
   function copyResume(btn) {
     const content = btn.closest(".resume-bubble").querySelector(".resume-content").textContent;
     navigator.clipboard.writeText(content).then(() => {
@@ -3139,24 +3653,140 @@ const reqScores = DIMENSION_KEYS.map(k => (first.position_requirements || {})[k]
     });
   }
 
-  async function sendChat() {
-    const text = chatInput.value.trim();
-    if (!text || isChatLoading) return;
+  /**
+   * 清除对话（带确认弹窗）
+   */
+  function clearAgentChat() {
+    // 创建确认弹窗
+    const overlay = document.createElement("div");
+    overlay.className = "modal-overlay";
+    overlay.innerHTML = `
+      <div class="modal-box">
+        <h3>新建对话</h3>
+        <p>确定要开始新对话吗？这将清空当前的对话历史。</p>
+        <div class="modal-actions">
+          <button class="modal-btn modal-btn-cancel" id="modalCancel">取消</button>
+          <button class="modal-btn modal-btn-confirm" id="modalConfirm">确定</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
 
-    chatInput.value = "";
-    chatInput.style.height = "auto";
-    isChatLoading = true;
-    sendBtn.disabled = true;
+    document.getElementById("modalCancel").addEventListener("click", () => {
+      overlay.remove();
+    });
+
+    document.getElementById("modalConfirm").addEventListener("click", () => {
+      // 清空状态
+      agentChatHistory = [];
+      agentMessages.innerHTML = "";
+      currentMode = "default";
+
+      // 重置 header
+      updateAgentHeader("default");
+      updateInputPlaceholder("default");
+
+      // 移除卡片激活状态
+      document.querySelectorAll(".agent-card").forEach(c => c.classList.remove("active"));
+
+      // 重置面试状态（如果是面试模式）
+      interviewState = {
+        is_active: false,
+        target_position: "",
+        interview_type: "",
+        current_question_index: 0,
+        total_questions: 8,
+        scores: [],
+        feedbacks: []
+      };
+      const oldProgress = document.getElementById('interviewProgress');
+      if (oldProgress) oldProgress.remove();
+
+      // 重新显示预设问题
+      showPresetQuestions();
+
+      overlay.remove();
+    });
+
+    // 点击遮罩关闭
+    overlay.addEventListener("click", (e) => {
+      if (e.target === overlay) overlay.remove();
+    });
+  }
+
+  /**
+   * 更新面试模拟进度显示条
+   */
+  function updateInterviewProgress() {
+    // 清除旧的进度条
+    const oldProgress = document.getElementById('interviewProgress');
+    if (oldProgress) oldProgress.remove();
+
+    // 非面试模式或未激活时不显示
+    if (currentMode !== 'interview_sim' || !interviewState.is_active) return;
+
+    const answered = interviewState.scores.length;
+    const total = interviewState.total_questions;
+    const pct = Math.round((answered / total) * 100);
+
+    const progress = document.createElement('div');
+    progress.id = 'interviewProgress';
+    progress.style.cssText =
+      'display:flex;align-items:center;gap:12px;padding:10px 24px;' +
+      'background:var(--sakura-lighter);border-bottom:1px solid var(--gray-200);' +
+      'font-size:13px;color:var(--gray-700);';
+
+    progress.innerHTML = `
+      <span>🎯 面试进度</span>
+      <div style="flex:1;height:6px;background:var(--gray-200);border-radius:999px;overflow:hidden;">
+        <div style="width:${pct}%;height:100%;background:linear-gradient(90deg,#FFB7C5,#FF9DB3);border-radius:999px;transition:width 0.4s ease;"></div>
+      </div>
+      <span style="font-weight:700;color:var(--sakura-dark);white-space:nowrap;">
+        ${answered}/${total} 题
+      </span>
+      ${interviewState.target_position ? `<span style="color:var(--gray-500);font-size:12px;">| ${interviewState.target_position}</span>` : ''}
+    `;
+
+    // 插入到 agent-cards 之后、agent-messages 之前
+    const cards = document.getElementById('agentCards');
+    if (cards && cards.nextSibling) {
+      cards.parentNode.insertBefore(progress, cards.nextSibling);
+    }
+  }
+
+  /**
+   * 发送消息到 Agent
+   */
+  async function sendAgentChat() {
+    const text = agentInput.value.trim();
+    if (!text || isAgentLoading) return;
+
+    agentInput.value = "";
+    agentInput.style.height = "auto";
+    isAgentLoading = true;
+    agentSendBtn.disabled = true;
+
+    // 隐藏预设问题（用户已开始对话）
+    hidePresetQuestions();
 
     appendMsg("user", text);
-    chatHistory.push({ role: "user", content: text });
+    agentChatHistory.push({ role: "user", content: text });
     appendTyping();
+
+    // 获取简历上下文
+    const resumeCtx = getResumeContext();
+    console.log("📤 Agent 发送的简历上下文:", JSON.stringify({has_resume: resumeCtx.has_resume, fields: Object.keys(resumeCtx)}));
 
     try {
       const res = await fetch(`${API_BASE_URL}/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: chatHistory }),
+        body: JSON.stringify({
+          messages: agentChatHistory,
+          mode: currentMode,
+          resume_context: resumeCtx,
+          interview_state: currentMode === 'interview_sim' ? interviewState : {}
+        }),
       });
       const data = await res.json();
       removeTyping();
@@ -3164,23 +3794,41 @@ const reqScores = DIMENSION_KEYS.map(k => (first.position_requirements || {})[k]
       if (!res.ok) throw new Error(data.detail || "请求失败");
 
       const reply = data.reply || "";
-      chatHistory.push({ role: "assistant", content: reply });
-      appendMsg("ai", reply, data.has_resume);
+      agentChatHistory.push({ role: "assistant", content: reply });
+
+      // 如果后端返回了模式切换，更新当前模式
+      if (data.mode && data.mode !== currentMode) {
+        currentMode = data.mode;
+        updateAgentHeader(currentMode);
+        updateInputPlaceholder(currentMode);
+      }
+
+      // 面试模拟模式：更新面试状态 & 进度显示
+      if (data.interview_state) {
+        interviewState = data.interview_state;
+        updateInterviewProgress();
+      }
+
+      appendMsg("ai", reply, data.has_resume_template || false);
 
     } catch (err) {
       removeTyping();
       appendMsg("ai", "抱歉，出了点问题：" + err.message);
     } finally {
-      isChatLoading = false;
-      sendBtn.disabled = false;
+      isAgentLoading = false;
+      agentSendBtn.disabled = false;
     }
   }
-  
+
+  // 初始化显示预设问题和输入框placeholder
+  showPresetQuestions();
+  updateInputPlaceholder("default");
+
   // ========== 侧边栏功能初始化 ==========
-  
+
   // 初始化数据迁移
   StorageManager.migrate();
-  
+
   // 侧边栏元素
   const profileSidebar = document.getElementById('profileSidebar');
   const sidebarToggle = profileSidebar.querySelector('.sidebar-toggle');
@@ -3195,78 +3843,59 @@ const reqScores = DIMENSION_KEYS.map(k => (first.position_requirements || {})[k]
   const uploadProgressSidebar = profileSidebar.querySelector('.upload-progress-sidebar');
   const progressBarSidebar = profileSidebar.querySelector('.progress-bar-sidebar');
   const progressTextSidebar = profileSidebar.querySelector('.progress-text-sidebar');
-  
+
   // 调试：检查元素是否找到
   console.log('Sidebar elements:', {
     sidebarFileInput,
     uploadDropzoneSidebar,
     btnParseSidebar
   });
-  
+
   let sidebarSelectedFile = null;
-  
+
   /**
    * 切换侧边栏展开/收起状态
    */
   function toggleSidebar() {
     const currentState = profileSidebar.getAttribute('data-state');
     const newState = currentState === 'expanded' ? 'collapsed' : 'expanded';
-    
+
     profileSidebar.setAttribute('data-state', newState);
     sidebarToggle.setAttribute('aria-expanded', newState === 'expanded');
-    
+
     // 保存状态到 localStorage
     StorageManager.save(StorageManager.KEYS.SIDEBAR_STATE, newState);
-    
+
     // 调整主布局
     adjustMainLayout(newState);
-    
+
     // 屏幕阅读器通知
     announceToScreenReader(`侧边栏已${newState === 'expanded' ? '展开' : '收起'}`);
   }
-  
+
   /**
    * 调整主布局以适应侧边栏状态
    * @param {string} state - 'expanded' 或 'collapsed'
    */
   function adjustMainLayout(state) {
-    const layout = document.querySelector('.layout');
-    const chatSection = document.querySelector('.chat-section');
-    
+    const mainArea = document.querySelector('.main-area');
+
     if (state === 'collapsed') {
-      if (layout) layout.style.marginLeft = '84px';
-      if (chatSection) {
-        chatSection.style.marginLeft = '116px'; // 84px + 32px padding
-        chatSection.style.marginRight = '32px';
-        chatSection.style.maxWidth = 'calc(100vw - 116px - 32px)';
-      }
+      if (mainArea) mainArea.style.marginLeft = '84px';
     } else {
-      // 根据屏幕宽度计算侧边栏宽度
       if (window.innerWidth > 1024) {
-        if (layout) layout.style.marginLeft = 'calc(20% + 48px)';
-        if (chatSection) {
-          chatSection.style.marginLeft = 'calc(20% + 80px)'; // 20% + 48px + 32px
-          chatSection.style.marginRight = '32px';
-          chatSection.style.maxWidth = 'calc(80% - 80px - 32px)';
-        }
+        const ml = 'calc(20% + 48px)';
+        if (mainArea) mainArea.style.marginLeft = ml;
       } else if (window.innerWidth > 768) {
-        if (layout) layout.style.marginLeft = 'calc(25% + 24px)';
-        if (chatSection) {
-          chatSection.style.marginLeft = 'calc(25% + 56px)'; // 25% + 24px + 32px
-          chatSection.style.marginRight = '32px';
-          chatSection.style.maxWidth = 'calc(75% - 56px - 32px)';
-        }
+        const ml = 'calc(25% + 24px)';
+        if (mainArea) mainArea.style.marginLeft = ml;
       } else {
-        if (layout) layout.style.marginLeft = '24px';
-        if (chatSection) {
-          chatSection.style.marginLeft = '56px'; // 24px + 32px
-          chatSection.style.marginRight = '32px';
-          chatSection.style.maxWidth = 'calc(100vw - 56px - 32px)';
-        }
+        const ml = '24px';
+        if (mainArea) mainArea.style.marginLeft = ml;
       }
     }
   }
-  
+
   /**
    * 屏幕阅读器通知
    * @param {string} message - 通知消息
@@ -3288,21 +3917,21 @@ const reqScores = DIMENSION_KEYS.map(k => (first.position_requirements || {})[k]
       liveRegion.style.overflow = 'hidden';
       document.body.appendChild(liveRegion);
     }
-    
+
     liveRegion.textContent = message;
     setTimeout(() => liveRegion.textContent = '', 1000);
   }
-  
+
   /**
    * 恢复侧边栏状态
    */
   function restoreSidebarState() {
     const savedState = StorageManager.load(StorageManager.KEYS.SIDEBAR_STATE);
-    
+
     // 检查是否是首次访问
     const resumes = StorageManager.load(StorageManager.KEYS.RESUMES) || [];
     const isFirstVisit = resumes.length === 0;
-    
+
     if (isFirstVisit) {
       // 首次访问，默认展开
       profileSidebar.setAttribute('data-state', 'expanded');
@@ -3312,14 +3941,14 @@ const reqScores = DIMENSION_KEYS.map(k => (first.position_requirements || {})[k]
       profileSidebar.setAttribute('data-state', savedState);
       sidebarToggle.setAttribute('aria-expanded', savedState === 'expanded');
     }
-    
+
     // 调整布局
     adjustMainLayout(profileSidebar.getAttribute('data-state'));
   }
-  
+
   // 绑定切换按钮事件
   sidebarToggle.addEventListener('click', toggleSidebar);
-  
+
   // 键盘支持：Escape 键收起侧边栏（移动端）
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && window.innerWidth < 768) {
@@ -3328,7 +3957,7 @@ const reqScores = DIMENSION_KEYS.map(k => (first.position_requirements || {})[k]
       }
     }
   });
-  
+
   // 窗口大小改变时调整布局
   let resizeTimer;
   window.addEventListener('resize', () => {
@@ -3337,12 +3966,12 @@ const reqScores = DIMENSION_KEYS.map(k => (first.position_requirements || {})[k]
       adjustMainLayout(profileSidebar.getAttribute('data-state'));
     }, 200);
   });
-  
+
   // 页面加载时恢复状态
   restoreSidebarState();
-  
+
   // ========== 侧边栏上传功能 ==========
-  
+
   /**
    * 设置侧边栏选中的文件
    * @param {File} file - 选中的文件
@@ -3353,7 +3982,7 @@ const reqScores = DIMENSION_KEYS.map(k => (first.position_requirements || {})[k]
     btnParseSidebar.disabled = !sidebarSelectedFile;
     console.log('btnParseSidebar.disabled set to:', btnParseSidebar.disabled);
     console.log('sidebarSelectedFile:', sidebarSelectedFile);
-    
+
     // 更新上传区域显示
     const dropzoneContent = uploadDropzoneSidebar.querySelector('.dropzone-content');
     if (sidebarSelectedFile) {
@@ -3369,12 +3998,12 @@ const reqScores = DIMENSION_KEYS.map(k => (first.position_requirements || {})[k]
       `;
       console.log('Reset dropzone to default state');
     }
-    
+
     uploadProgressSidebar.hidden = true;
     progressBarSidebar.style.width = '0%';
     progressTextSidebar.textContent = '0%';
   }
-  
+
   /**
    * 验证文件类型
    * @param {File} file - 要验证的文件
@@ -3384,7 +4013,7 @@ const reqScores = DIMENSION_KEYS.map(k => (first.position_requirements || {})[k]
     const ext = (file.name.split(".").pop() || "").toLowerCase();
     return ext === "pdf" || ext === "docx";
   }
-  
+
   /**
    * 设置侧边栏上传进度
    * @param {number} percent - 进度百分比
@@ -3395,7 +4024,7 @@ const reqScores = DIMENSION_KEYS.map(k => (first.position_requirements || {})[k]
     progressBarSidebar.style.width = p + "%";
     progressTextSidebar.textContent = p + "%";
   }
-  
+
   // 侧边栏文件输入事件
   sidebarFileInput.addEventListener("change", e => {
     console.log('File input change event fired');
@@ -3409,20 +4038,20 @@ const reqScores = DIMENSION_KEYS.map(k => (first.position_requirements || {})[k]
     setSidebarFile(f);
     console.log('After setSidebarFile, btnParseSidebar.disabled:', btnParseSidebar.disabled);
   });
-  
+
   // 侧边栏拖拽区域事件
   uploadDropzoneSidebar.addEventListener("dragover", e => {
     e.preventDefault();
     e.stopPropagation();
     uploadDropzoneSidebar.style.background = 'var(--sakura-light)';
   });
-  
+
   uploadDropzoneSidebar.addEventListener("dragleave", e => {
     e.preventDefault();
     e.stopPropagation();
     uploadDropzoneSidebar.style.background = 'var(--sakura-lighter)';
   });
-  
+
   uploadDropzoneSidebar.addEventListener("drop", e => {
     e.preventDefault();
     e.stopPropagation();
@@ -3436,43 +4065,43 @@ const reqScores = DIMENSION_KEYS.map(k => (first.position_requirements || {})[k]
     }
     setSidebarFile(f);
   });
-  
+
   // 侧边栏解析按钮事件
   btnParseSidebar.addEventListener("click", async () => {
     console.log('Parse button clicked');
     console.log('sidebarSelectedFile:', sidebarSelectedFile);
-    
+
     if (!sidebarSelectedFile) {
       console.log('No file selected, returning');
       return;
     }
-    
+
     const formData = new FormData();
     formData.append("file", sidebarSelectedFile);
-    
+
     console.log('FormData created, starting upload to:', `${API_BASE_URL}/upload`);
-    
+
     btnParseSidebar.disabled = true;
     setSidebarProgress(0);
-    
+
     try {
       const data = await new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest();
         let parseStarted = false, parsePct = 75;
-        
+
         function startParse() {
           if (parseStarted) return;
           parseStarted = true;
           setSidebarProgress(72);
-          
+
           const parseTimer = setInterval(() => {
             parsePct = Math.min(95, parsePct + 1);
             setSidebarProgress(parsePct);
           }, 350);
-          
+
           xhr.parseTimer = parseTimer;
         }
-        
+
         xhr.upload.onprogress = e => {
           if (e.lengthComputable) {
             const progress = (e.loaded / e.total) * 70;
@@ -3484,8 +4113,8 @@ const reqScores = DIMENSION_KEYS.map(k => (first.position_requirements || {})[k]
           console.log('Upload complete, starting parse');
           startParse();
         };
-        xhr.onreadystatechange = () => { 
-          if (xhr.readyState >= 2) startParse(); 
+        xhr.onreadystatechange = () => {
+          if (xhr.readyState >= 2) startParse();
         };
         xhr.onload = () => {
           console.log('XHR onload, status:', xhr.status);
@@ -3517,16 +4146,16 @@ const reqScores = DIMENSION_KEYS.map(k => (first.position_requirements || {})[k]
           if (xhr.parseTimer) clearInterval(xhr.parseTimer);
           reject(new Error("请求超时，请稍后重试"));
         };
-        
+
         console.log('Opening XHR connection...');
         xhr.open("POST", `${API_BASE_URL}/upload`);
         console.log('Sending FormData...');
         xhr.send(formData);
       });
-      
+
       // 解析成功，渲染结果
       renderResult(data);
-      
+
       // 保存简历到 localStorage
       const resume = {
         id: generateUUID(),
@@ -3534,17 +4163,18 @@ const reqScores = DIMENSION_KEYS.map(k => (first.position_requirements || {})[k]
         uploadTime: Date.now(),
         fileSize: sidebarSelectedFile.size,
         fileType: sidebarSelectedFile.name.endsWith('.pdf') ? 'pdf' : 'docx',
-        parseResult: data
+        parseResult: data,
+        rawText: data.raw_text || ""
       };
-      
+
       const resumes = StorageManager.load(StorageManager.KEYS.RESUMES) || [];
       resumes.unshift(resume);
       StorageManager.save(StorageManager.KEYS.RESUMES, resumes);
       StorageManager.save(StorageManager.KEYS.ACTIVE_RESUME, resume.id);
-      
+
       // 更新简历列表显示
       renderResumeList();
-      
+
       // 首次上传后自动收起侧边栏
       const isFirstUpload = resumes.length === 1;
       if (isFirstUpload) {
@@ -3552,11 +4182,11 @@ const reqScores = DIMENSION_KEYS.map(k => (first.position_requirements || {})[k]
           toggleSidebar();
         }, 1000);
       }
-      
+
       // 清空选择
       setSidebarFile(null);
       sidebarFileInput.value = '';
-      
+
     } catch (err) {
       alert("解析失败：" + err.message);
       setSidebarProgress(0);
@@ -3564,31 +4194,31 @@ const reqScores = DIMENSION_KEYS.map(k => (first.position_requirements || {})[k]
       btnParseSidebar.disabled = !sidebarSelectedFile;
     }
   });
-  
+
   /**
    * 渲染简历列表
    */
   function renderResumeList() {
     const resumes = StorageManager.load(StorageManager.KEYS.RESUMES) || [];
     const activeResumeId = StorageManager.load(StorageManager.KEYS.ACTIVE_RESUME);
-    
+
     resumeList.innerHTML = '';
     resumeCount.textContent = resumes.length;
-    
+
     if (resumes.length === 0) {
       return;
     }
-    
+
     resumes.forEach(resume => {
       const li = document.createElement('li');
       li.className = 'resume-item';
       li.setAttribute('data-resume-id', resume.id);
       li.setAttribute('data-active', resume.id === activeResumeId);
-      
+
       const uploadDate = new Date(resume.uploadTime);
       const dateStr = `${uploadDate.getMonth() + 1}-${uploadDate.getDate()} ${uploadDate.getHours()}:${String(uploadDate.getMinutes()).padStart(2, '0')}`;
       const sizeStr = (resume.fileSize / 1024 / 1024).toFixed(1) + ' MB';
-      
+
       li.innerHTML = `
         <div class="resume-item-content">
           <div class="resume-icon">📄</div>
@@ -3605,7 +4235,7 @@ const reqScores = DIMENSION_KEYS.map(k => (first.position_requirements || {})[k]
           </div>
         </div>
       `;
-      
+
       // 点击切换简历
       li.addEventListener('click', (e) => {
         console.log('Resume item clicked, target:', e.target, 'closest btn-delete:', e.target.closest('.btn-delete'));
@@ -3614,11 +4244,11 @@ const reqScores = DIMENSION_KEYS.map(k => (first.position_requirements || {})[k]
           switchResume(resume.id);
         }
       });
-      
+
       resumeList.appendChild(li);
     });
   }
-  
+
   /**
    * 切换简历
    * @param {string} resumeId - 简历 ID
@@ -3651,7 +4281,7 @@ const reqScores = DIMENSION_KEYS.map(k => (first.position_requirements || {})[k]
     // 更新列表显示
     renderResumeList();
   }
-  
+
   /**
    * 删除简历
    * @param {string} resumeId - 简历 ID
@@ -3660,15 +4290,15 @@ const reqScores = DIMENSION_KEYS.map(k => (first.position_requirements || {})[k]
     if (!confirm('确定要删除这份简历吗？')) {
       return;
     }
-    
+
     const resumes = StorageManager.load(StorageManager.KEYS.RESUMES) || [];
     const index = resumes.findIndex(r => r.id === resumeId);
-    
+
     if (index === -1) return;
-    
+
     resumes.splice(index, 1);
     StorageManager.save(StorageManager.KEYS.RESUMES, resumes);
-    
+
     // 如果删除的是活动简历，选择最新的
     const activeResumeId = StorageManager.load(StorageManager.KEYS.ACTIVE_RESUME);
     if (activeResumeId === resumeId) {
@@ -3682,15 +4312,15 @@ const reqScores = DIMENSION_KEYS.map(k => (first.position_requirements || {})[k]
         document.getElementById("jobsGrid").innerHTML = '';
       }
     }
-    
+
     renderResumeList();
   }
-  
+
   // 页面加载时渲染简历列表
   renderResumeList();
-  
+
   // ========== 结束：侧边栏上传功能 ==========
-  
+
   // ========== 结束：侧边栏功能 ==========
 </script>
 <script src="./parser.js"></script>

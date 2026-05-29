@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>小小求职拿下</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@700;900&family=Inter:wght@400;600;700;800;900&display=swap');
+body { margin: 0; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+.float-card { transition: transform 0.4s ease, box-shadow 0.4s ease; transform-style: preserve-3d; }
+.float-card:hover { transform: perspective(800px) rotateY(0deg) rotateX(0deg) translateY(-10px) translateZ(20px) scale(1.03) !important; box-shadow: 0 32px 80px rgba(0,0,0,0.25); }
+.float-obj { animation: floatAnim 4s ease-in-out infinite; }
+.float-obj-2 { animation: floatAnim 5s ease-in-out infinite 1s; }
+.float-obj-3 { animation: floatAnim 6s ease-in-out infinite 2s; }
+.float-obj-4 { animation: floatAnim 4.5s ease-in-out infinite 0.5s; }
+@keyframes floatAnim { 0%,100%{transform:translateY(0) rotate(0deg)} 50%{transform:translateY(-10px) rotate(3deg)} }
+/* 书页展开 - 更强的 3D */
+.card-tilt-1 { transform: perspective(500px) rotateY(10deg) rotateX(-3deg) translateZ(0px); }
+.card-tilt-2 { transform: perspective(500px) rotateY(4deg) rotateX(-2deg) translateZ(10px); }
+.card-tilt-3 { transform: perspective(500px) rotateY(-4deg) rotateX(2deg) translateZ(10px); }
+.card-tilt-4 { transform: perspective(500px) rotateY(-10deg) rotateX(3deg) translateZ(0px); }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+function Ring({value, label, size=90, color='#6C63FF'}) {
+  const r=34, c=2*Math.PI*r, offset=c-(value/100)*c;
+  return <svg width={size} height={size} viewBox="0 0 80 80">
+    <circle cx="40" cy="40" r={r} fill="none" stroke="#f0eef5" strokeWidth="6"/>
+    <circle cx="40" cy="40" r={r} fill="none" stroke={color} strokeWidth="6" strokeDasharray={c} strokeDashoffset={offset} strokeLinecap="round" transform="rotate(-90 40 40)"/>
+    <text x="40" y="42" textAnchor="middle" dominantBaseline="middle" fontSize="18" fontWeight="900" fill="#333">{value}{value<100?'':''}%</text>
+    <text x="40" y="58" textAnchor="middle" fontSize="7" fill="#999">{label}</text>
+  </svg>;
+}
+
+function MultiRing({data, size=90}) {
+  const r=34, c=2*Math.PI*r, total=data.reduce((s,d)=>s+d.v,0);
+  let angle=-90;
+  return <svg width={size} height={size} viewBox="0 0 80 80">
+    <circle cx="40" cy="40" r={r} fill="none" stroke="#f0eef5" strokeWidth="6"/>
+    {data.map((d,i)=>{const len=(d.v/total)*c; const el=<circle key={i} cx="40" cy="40" r={r} fill="none" stroke={d.color} strokeWidth="6" strokeDasharray={`${len} ${c-len}`} strokeLinecap="round" transform={`rotate(${angle} 40 40)`}/>; angle+=(d.v/total)*360; return el;})}
+    <text x="40" y="42" textAnchor="middle" dominantBaseline="middle" fontSize="18" fontWeight="900" fill="#333">{total}</text>
+    <text x="40" y="58" textAnchor="middle" fontSize="7" fill="#999">总投递</text>
+  </svg>;
+}
+
+function RadarChart({data}) {
+  const cx=50,cy=50,r=38,n=data.length;
+  const pts=data.map((d,i)=>{const a=(Math.PI*2*i/n)-Math.PI/2;return[cx+r*(d.v/100)*Math.cos(a),cy+r*(d.v/100)*Math.sin(a)];});
+  return <svg viewBox="0 0 100 100" className="w-full h-20">
+    {[0.25,0.5,0.75,1].map(l=><polygon key={l} points={Array.from({length:n},(_,i)=>{const a=(Math.PI*2*i/n)-Math.PI/2;return`${cx+r*l*Math.cos(a)},${cy+r*l*Math.sin(a)}`;}).join(' ')} fill="none" stroke="#e8e0f0" strokeWidth="0.5"/>)}
+    <polygon points={pts.map(p=>p.join(',')).join(' ')} fill="rgba(108,99,255,0.15)" stroke="#6C63FF" strokeWidth="1.5"/>
+    {data.map((d,i)=>{const a=(Math.PI*2*i/n)-Math.PI/2;return<text key={i} x={cx+(r+8)*Math.cos(a)} y={cy+(r+8)*Math.sin(a)} textAnchor="middle" dominantBaseline="middle" fontSize="5" fill="#888">{d.s}</text>;})}
+  </svg>;
+}
+
+function MiniLine({data}) {
+  const w=140,h=40,pad=5,maxV=Math.max(...data.map(d=>d.v));
+  const pts=data.map((d,i)=>[pad+i*(w-2*pad)/(data.length-1),h-pad-(d.v/maxV)*(h-2*pad)]);
+  return <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-10">
+    <polyline points={pts.map(p=>p.join(',')).join(' ')} fill="none" stroke="#6C63FF" strokeWidth="2" strokeLinecap="round"/>
+    {pts.map((p,i)=><circle key={i} cx={p[0]} cy={p[1]} r="2.5" fill="#6C63FF"/>)}
+    {data.map((d,i)=><text key={i} x={pts[i][0]} y={h-1} textAnchor="middle" fontSize="5" fill="#bbb">{d.d}</text>)}
+  </svg>;
+}
+
+function App() {
+  return <div className="min-h-screen relative px-4 py-10" style={{background:'linear-gradient(to left, #e8dff5 0%, #f0e6f6 30%, #f8f4fa 60%, #fdf8fc 100%)'}}>
+    {/* 3D 装饰物件 - 重复多个+放大 */}
+    <img src="./3D/3dicons-copy-dynamic-gradient.png" className="float-obj absolute w-14" style={{top:'15%',left:'3%'}} alt=""/>
+    <img src="./3D/3dicons-copy-dynamic-gradient.png" className="float-obj-3 absolute w-10" style={{top:'70%',right:'5%'}} alt=""/>
+    <img src="./3D/3dicons-target-dynamic-gradient.png" className="float-obj-2 absolute w-14" style={{top:'55%',right:'2%'}} alt=""/>
+    <img src="./3D/3dicons-target-dynamic-gradient.png" className="float-obj absolute w-10" style={{top:'20%',right:'25%'}} alt=""/>
+    <img src="./3D/3dicons-tick-dynamic-gradient.png" className="float-obj-3 absolute w-12" style={{top:'80%',left:'5%'}} alt=""/>
+    <img src="./3D/3dicons-tick-dynamic-gradient.png" className="float-obj-4 absolute w-9" style={{top:'30%',left:'20%'}} alt=""/>
+    <img src="./3D/3dicons-trophy-dynamic-gradient.png" className="float-obj-4 absolute w-14" style={{top:'25%',right:'3%'}} alt=""/>
+    <img src="./3D/3dicons-trophy-dynamic-gradient.png" className="float-obj-2 absolute w-10" style={{top:'75%',left:'22%'}} alt=""/>
+
+    {/* Header - 大标题 + 大女生 */}
+    <div className="max-w-[1100px] mx-auto flex items-center justify-between mb-6">
+      <div>
+        <h1 className="text-6xl font-black text-[#2d1b69] mb-4" style={{fontFamily:'Noto Serif SC'}}>
+          小小求职<span className="text-[#6C63FF]">拿下</span>！
+        </h1>
+        <p className="text-gray-500 text-lg leading-relaxed">
+          AI 帮你优化简历、匹配岗位、模拟面试、追踪投递进度<br/>让求职更高效，更有方向
+        </p>
+      </div>
+      <img src="./girls.png" className="w-36 h-36 object-contain float-obj drop-shadow-2xl" alt=""/>
+    </div>
+
+    {/* CTA */}
+    <div className="flex justify-center mb-10">
+      <button id="startBtn" className="bg-gradient-to-r from-[#6C63FF] to-[#9C27B0] text-white font-bold text-lg px-12 py-4 rounded-full shadow-2xl shadow-purple-900/40 hover:shadow-purple-900/50 hover:-translate-y-1 transition-all">
+        🚀 开启高效求职之旅 →
+      </button>
+    </div>
+
+    {/* Cards - 立体弹出 */}
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 max-w-[1100px] mx-auto" style={{perspective:'1000px'}}>
+      <div className="float-card card-tilt-1 bg-white rounded-2xl p-6 border border-white/80" style={{boxShadow:'0 20px 50px rgba(0,0,0,0.15), 0 8px 20px rgba(108,99,255,0.1)'}}>
+        <div className="flex items-center gap-2 mb-4"><span className="text-lg">📋</span><span className="font-bold text-[#6C63FF] text-sm">简历诊断报告</span></div>
+        <div className="flex justify-center mb-3"><Ring value={86} label="综合评分"/></div>
+        <div className="space-y-2">
+          {[['内容完整性',90],['关键词匹配',82],['表达流畅度',65],['结构规范性',88]].map(([n,v])=>
+            <div key={n} className="flex items-center gap-2 text-[11px] text-gray-600">
+              <span className="w-14 text-right shrink-0">{n}</span>
+              <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden"><div className="h-full bg-gradient-to-r from-[#6C63FF] to-[#FFB7C5] rounded-full" style={{width:v+'%'}}/></div>
+              <span className="w-5 font-bold text-gray-800">{v}</span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="float-card card-tilt-2 bg-white rounded-2xl p-6 border border-white/80" style={{boxShadow:'0 20px 50px rgba(0,0,0,0.15), 0 8px 20px rgba(108,99,255,0.1)'}}>
+        <div className="flex items-center gap-2 mb-4"><span className="text-lg">🧠</span><span className="font-bold text-[#6C63FF] text-sm">岗位推荐</span></div>
+        <div className="flex justify-center mb-3"><Ring value={92} label="匹配度"/></div>
+        <div className="space-y-2">
+          {[['产品经理','20-35K','#6C63FF'],['用户研究员','18-28K','#9C27B0'],['数据分析师','15-25K','#FFB7C5']].map(([t,s,c])=>
+            <div key={t} className="flex items-center gap-2 text-xs text-gray-600 bg-purple-50 rounded-lg px-3 py-2">
+              <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{background:c}}/><span className="font-medium">{t}</span>
+              <span className="ml-auto font-bold text-[#6C63FF] italic text-[11px]">{s}</span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="float-card card-tilt-3 bg-white rounded-2xl p-6 border border-white/80" style={{boxShadow:'0 20px 50px rgba(0,0,0,0.15), 0 8px 20px rgba(108,99,255,0.1)'}}>
+        <div className="flex items-center gap-2 mb-4"><span className="text-lg">💬</span><span className="font-bold text-[#6C63FF] text-sm">面试辅导</span></div>
+        <div className="flex justify-center mb-2 text-5xl">🎤</div>
+        <div className="flex justify-center gap-4 mb-3">
+          {[['8','模拟面试'],['92%','表达流畅度'],['24','已完成(h)']].map(([n,l])=>
+            <div key={l} className="text-center"><div className="text-lg font-black text-[#6C63FF]">{n}</div><div className="text-[9px] text-gray-400">{l}</div></div>
+          )}
+        </div>
+        <RadarChart data={[{s:'专业',v:85},{s:'表达',v:90},{s:'逻辑',v:75},{s:'应变',v:80},{s:'自信',v:88}]}/>
+      </div>
+
+      <div className="float-card card-tilt-4 bg-white rounded-2xl p-6 border border-white/80" style={{boxShadow:'0 20px 50px rgba(0,0,0,0.15), 0 8px 20px rgba(108,99,255,0.1)'}}>
+        <div className="flex items-center gap-2 mb-4"><span className="text-lg">📊</span><span className="font-bold text-[#6C63FF] text-sm">投递追踪</span></div>
+        <div className="flex justify-center mb-3"><MultiRing data={[{v:12,color:'#6C63FF'},{v:2,color:'#9C27B0'},{v:10,color:'#FFB7C5'},{v:8,color:'#e0d8f0'}]}/></div>
+        <div className="space-y-1.5 mb-3">
+          {[['面试中 12','#6C63FF'],['Offer 2','#9C27B0'],['已拒绝 10','#FFB7C5']].map(([t,c])=>
+            <div key={t} className="flex items-center gap-2 text-xs text-gray-600"><span className="w-2.5 h-2.5 rounded-full shrink-0" style={{background:c}}/><span>{t}</span></div>
+          )}
+        </div>
+        <MiniLine data={[{d:'05-20',v:5},{d:'05-27',v:8},{d:'06-03',v:12},{d:'06-10',v:8},{d:'06-17',v:2}]}/>
+      </div>
+    </div>
+  </div>;
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+document.addEventListener('click', e => {
+  if (e.target.id === 'startBtn' || e.target.closest('#startBtn')) window.parent.postMessage('ob-start', '*');
+});
+</script>
+</body>
+</html>

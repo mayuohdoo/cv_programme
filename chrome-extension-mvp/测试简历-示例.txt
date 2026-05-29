@@ -1,0 +1,175 @@
+# 测试简历示例
+
+## 中文简历示例
+
+```
+张三
+电话：+86 138 0000 0000
+邮箱：zhangsan@example.com
+地址：北京市海淀区中关村大街1号
+
+教育经历
+清华大学
+工学硕士，计算机科学与技术
+2020年9月 - 2023年6月
+GPA: 3.9/4.0
+
+北京大学
+工学学士，软件工程
+2016年9月 - 2020年6月
+GPA: 3.7/4.0
+
+工作经历
+字节跳动
+高级前端工程师
+2023年7月 - 至今
+北京
+• 负责抖音主站前端开发，优化首屏加载时间减少40%
+• 主导前端架构升级，提升团队开发效率30%
+• 指导3名初级工程师，建立代码审查机制
+
+腾讯科技
+前端工程师
+2020年7月 - 2023年6月
+深圳
+• 参与微信小程序开发，服务用户超过1000万
+• 优化页面性能，减少白屏时间50%
+
+项目经历
+开源 UI 组件库
+一个轻量级的 React 组件库，提供常用的 UI 组件
+角色：核心维护者
+2021年1月 - 至今
+技术栈：React, TypeScript, Rollup, Jest
+• GitHub Star 数超过 2000
+• 每周 npm 下载量超过 10000
+
+个人博客系统
+基于 Next.js 的个人博客平台
+角色：独立开发者
+2022年3月 - 2022年8月
+技术栈：Next.js, TypeScript, Tailwind CSS, Vercel
+• 支持 Markdown 编辑和预览
+• 集成评论系统和访问统计
+
+专业技能
+编程语言：JavaScript, TypeScript, Python, Go
+前端框架：React, Vue.js, Next.js, Nuxt.js
+后端技术：Node.js, Express, Nest.js, Django
+数据库：MySQL, PostgreSQL, MongoDB, Redis
+工具链：Webpack, Vite, Git, Docker, CI/CD
+语言：中文（母语），英语（流利，CET-6）
+证书：AWS Certified Developer
+
+个人简介
+5年前端开发经验，擅长 React 生态和性能优化。热爱开源，活跃于技术社区。
+具备良好的团队协作能力和技术领导力，能够独立负责复杂项目的架构设计和实施。
+```
+
+## 英文简历示例
+
+```
+John Doe
+Phone: +1 (555) 123-4567
+Email: john.doe@example.com
+Address: San Francisco, CA 94102
+LinkedIn: linkedin.com/in/johndoe
+GitHub: github.com/johndoe
+Portfolio: https://johndoe.dev
+
+Education
+Stanford University
+Master of Science in Computer Science
+Sep 2018 - Jun 2020
+GPA: 3.9/4.0
+• Dean's List (2019, 2020)
+• Graduate Research Assistant
+
+University of California, Berkeley
+Bachelor of Science in Computer Science
+Sep 2014 - Jun 2018
+GPA: 3.7/4.0
+• Honors Program
+• Teaching Assistant for CS 61A
+
+Work Experience
+Google Inc.
+Senior Software Engineer
+Jul 2020 - Present
+Mountain View, CA
+• Led development of search ranking algorithms, improving relevance by 25%
+• Designed and implemented distributed caching system, reducing latency by 40%
+• Mentored 5 junior engineers and conducted technical interviews
+
+Facebook (Meta)
+Software Engineer
+Jul 2018 - Jun 2020
+Menlo Park, CA
+• Developed features for News Feed, serving 2 billion users
+• Optimized React components, improving rendering performance by 30%
+• Collaborated with cross-functional teams on product launches
+
+Projects
+Open Source UI Library
+A lightweight React component library for modern web applications
+Role: Core Maintainer
+Jan 2021 - Present
+Technologies: React, TypeScript, Rollup, Jest, Storybook
+• 2000+ GitHub stars
+• 10000+ weekly npm downloads
+• Used by 50+ companies
+https://github.com/johndoe/ui-library
+
+Personal Blog Platform
+A full-stack blog platform built with Next.js
+Role: Solo Developer
+Mar 2022 - Aug 2022
+Technologies: Next.js, TypeScript, Tailwind CSS, PostgreSQL, Vercel
+• Markdown editor with live preview
+• Comment system and analytics
+• SEO optimized
+https://blog.johndoe.dev
+
+Skills
+Programming Languages: JavaScript, TypeScript, Python, Go, Java
+Frontend: React, Vue.js, Next.js, Redux, GraphQL
+Backend: Node.js, Express, Django, Flask, PostgreSQL
+Tools: Git, Docker, Kubernetes, AWS, CI/CD, Webpack
+Languages: English (Native), Spanish (Fluent), French (Basic)
+Certifications: AWS Certified Developer, Google Cloud Professional
+
+Summary
+5 years of software engineering experience specializing in web technologies and distributed systems.
+Passionate about open source and building scalable applications. Strong problem-solving skills and
+ability to work effectively in fast-paced environments.
+```
+
+## 使用方法
+
+1. **创建测试文件**：
+   - 复制上面的中文或英文简历示例
+   - 粘贴到 Word 文档中
+   - 另存为 `.docx` 格式
+   - 或者打印为 PDF 格式
+
+2. **测试解析**：
+   - 打开扩展
+   - 选择"📄 上传简历"标签页
+   - 上传刚才创建的文件
+   - 点击"🔍 解析简历"
+   - 查看解析结果
+
+3. **验证字段**：
+   - 姓名：张三 / John Doe
+   - 邮箱：zhangsan@example.com / john.doe@example.com
+   - 电话：+86 138 0000 0000 / +1 (555) 123-4567
+   - 学校：清华大学 / Stanford University
+   - 专业：计算机科学与技术 / Computer Science
+   - 学历：硕士 / Master
+
+## 注意事项
+
+- 这些是示例简历，请根据实际情况修改
+- 解析准确度取决于简历格式的规范性
+- 如果某些字段未被识别，可以手动补充
+- 建议使用标准的简历模板以获得最佳解析效果
